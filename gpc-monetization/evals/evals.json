@@ -1,0 +1,44 @@
+{
+  "skill_name": "gpc-monetization",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I need to create a monthly subscription for our premium tier at $4.99/month with a 7-day free trial offer. The subscription ID should be premium_monthly. Can you show me the JSON files I need and the GPC commands to set it all up?",
+      "expected_output": "Provides subscription JSON with base plan, creates it with gpc subscriptions create, then creates a free trial offer",
+      "files": [],
+      "expectations": [
+        "Shows a subscription JSON with productId premium_monthly and a base plan with P1M billing period",
+        "Shows the price object with units 4 and nanos 990000000 for $4.99",
+        "Uses gpc subscriptions create --file with --dry-run first",
+        "Shows an offer JSON with PRICING_PHASE_TYPE_FREE and P1W duration",
+        "Uses gpc subscriptions offers create to add the free trial"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "We have about 30 in-app products (coins packs, power-ups, etc.) defined as JSON files in our iap/ directory. We want to sync them all to the Play Store at once. Some are new, some are updated. How do we do this safely?",
+      "expected_output": "Shows how to use gpc iap sync with dry-run preview before applying",
+      "files": [],
+      "expectations": [
+        "Shows gpc iap sync --dir iap/ --dry-run to preview changes",
+        "Explains that sync creates, updates, and deletes to match the directory",
+        "Warns that missing files in the directory will cause deletions",
+        "Shows gpc iap sync --dir iap/ to apply changes",
+        "Mentions the JSON structure for IAP files (sku, defaultPrice, listings)"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "A user reported they purchased our premium unlock but didn't get the feature. They sent us the purchase token. How do I verify the purchase, check if it was acknowledged, and fix it if needed? Also we need to convert our $9.99 price to all regional prices.",
+      "expected_output": "Shows purchase verification, acknowledgement check, and regional price conversion",
+      "files": [],
+      "expectations": [
+        "Shows gpc purchases get <product-id> <token> --json to verify",
+        "Explains purchaseState (0=purchased) and acknowledgementState (0=not acknowledged)",
+        "Shows gpc purchases acknowledge <product-id> <token> if not acknowledged",
+        "Mentions the 3-day acknowledgement deadline before auto-refund",
+        "Shows gpc pricing convert --from USD --amount 9.99 for regional pricing"
+      ]
+    }
+  ]
+}

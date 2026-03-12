@@ -1,0 +1,46 @@
+{
+  "skill_name": "gpc-ci-integration",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I need to set up a GitHub Actions workflow that automatically uploads our AAB to the internal track whenever we push a tag like v1.2.3. Our app is com.widgetco.app and we already have the service account JSON stored as a GitHub secret called PLAY_SA_KEY. Can you write the workflow file?",
+      "expected_output": "Complete GitHub Actions workflow YAML that triggers on tag push, installs GPC, and uploads to internal track",
+      "files": [],
+      "expectations": [
+        "Provides a complete .github/workflows/ YAML file",
+        "Triggers on push tags v* pattern",
+        "Sets GPC_SERVICE_ACCOUNT from the PLAY_SA_KEY secret",
+        "Sets GPC_APP to com.widgetco.app",
+        "Installs GPC with npm install -g gpc",
+        "Runs gpc releases upload or gpc publish with --track internal"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Our CI pipeline keeps failing intermittently with NETWORK_ERROR when uploading to Play Store. The AAB is about 80MB and we're on a shared CI runner. Sometimes it works, sometimes it times out. How can I make this more reliable?",
+      "expected_output": "Configures retry and timeout environment variables to handle transient network failures",
+      "files": [],
+      "expectations": [
+        "Suggests increasing GPC_TIMEOUT (e.g., 120000 for 2 minutes)",
+        "Suggests increasing GPC_MAX_RETRIES (e.g., 5)",
+        "Mentions GPC_BASE_DELAY and GPC_MAX_DELAY for backoff tuning",
+        "Suggests --retry-log for debugging transient failures",
+        "Shows the env vars in a CI YAML format"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "We want a full release pipeline: upload to beta on tag push, then a manual workflow_dispatch to promote from beta to production with a staged rollout. The promotion step should check vitals first and only promote if crash rate is under 2%. We also want the release status written to the GitHub step summary.",
+      "expected_output": "Two GitHub Actions workflows: auto-upload on tag and manual promote with vitals gating and step summary",
+      "files": [],
+      "expectations": [
+        "Provides two workflow files or a single file with two jobs",
+        "First workflow triggers on tag push and uploads to beta",
+        "Second workflow uses workflow_dispatch for manual promotion",
+        "Includes gpc vitals crashes --threshold 2.0 before promotion",
+        "Uses gpc releases promote --from beta --to production with rollout percentage",
+        "Writes to $GITHUB_STEP_SUMMARY with --output markdown"
+      ]
+    }
+  ]
+}

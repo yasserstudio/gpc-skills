@@ -1,0 +1,44 @@
+{
+  "skill_name": "gpc-setup",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I just downloaded a service account JSON key from Google Cloud Console for our Android app com.acme.todo. I need to set up gpc so I can start using it to manage releases. The key file is at ~/Downloads/play-api-key.json. Can you walk me through the whole setup?",
+      "expected_output": "GPC is installed, authenticated with the service account, configured with the app package name, and gpc doctor passes all checks",
+      "files": [],
+      "expectations": [
+        "Installs GPC via npm install -g gpc or suggests npx",
+        "Runs gpc auth login --service-account with the key path",
+        "Sets the default app to com.acme.todo via gpc config or .gpcrc.json",
+        "Runs gpc doctor to verify the setup",
+        "Mentions GPC_SERVICE_ACCOUNT env var as CI alternative"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "gpc auth status is showing AUTH_EXPIRED and I can't figure out why. I'm using a service account but it was working fine yesterday. We're behind a corporate proxy at proxy.internal.corp:8080 and I think they recently changed the SSL cert.",
+      "expected_output": "Diagnoses the likely cause as proxy/SSL issue, provides fix with HTTPS_PROXY and GPC_CA_CERT environment variables, and re-auth steps",
+      "files": [],
+      "expectations": [
+        "Identifies proxy/SSL as likely cause given the context",
+        "Suggests setting HTTPS_PROXY environment variable",
+        "Mentions GPC_CA_CERT for custom CA certificate",
+        "Suggests re-running gpc auth login after fixing network config",
+        "Recommends gpc doctor to verify connectivity"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "We have 3 different Google Play developer accounts — one for our main app, one for a white-label client, and a sandbox account for testing. How do I switch between them without re-authenticating every time?",
+      "expected_output": "Explains GPC auth profiles for managing multiple accounts, shows how to set up and switch between them",
+      "files": [],
+      "expectations": [
+        "Explains gpc auth profiles concept",
+        "Shows how to create named profiles with different service accounts",
+        "Shows gpc auth switch for switching between profiles",
+        "Mentions --profile flag for per-command override",
+        "References GPC_PROFILE env var"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "skill_name": "gpc-vitals-monitoring",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We just pushed a new release to production 2 days ago (version code 287) and I want to check how it's doing. Specifically I want to see crash rate, ANR rate, and if there are any new 1 or 2 star reviews mentioning crashes. Can you show me how to check all of this?",
+      "expected_output": "Shows commands to check crash rate, ANR rate, and negative reviews filtered by recent time window",
+      "files": [],
+      "expectations": [
+        "Shows gpc vitals crashes --version 287",
+        "Shows gpc vitals anr --version 287",
+        "Shows gpc reviews list --stars 1-2 --since 2d or similar recent filter",
+        "Mentions gpc vitals overview for a high-level dashboard",
+        "Suggests gpc vitals compare crashes --days 7 for trend comparison"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "We keep getting bad reviews about the same bug and I want to reply to all the 1-star reviews from the past week saying we're working on a fix. There are probably about 15 of them. What's the most efficient way?",
+      "expected_output": "Shows how to list, filter, and reply to reviews, with rate limit awareness",
+      "files": [],
+      "expectations": [
+        "Shows gpc reviews list --stars 1 --since 7d to find the reviews",
+        "Shows gpc reviews reply <review-id> with a template message",
+        "Mentions the 350-character reply limit",
+        "Warns about Reviews API rate limits (200 GET/hour, 2000 POST/day)",
+        "Suggests exporting reviews for record-keeping with gpc reviews export"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I want to set up an automated check that blocks our deploy pipeline if the crash rate is above 1.5% or ANR rate is above 0.4%. We're using GitHub Actions. How does the threshold thing work in gpc?",
+      "expected_output": "Explains threshold-based exit codes and shows a GitHub Actions workflow that gates deployment on vitals",
+      "files": [],
+      "expectations": [
+        "Explains that --threshold makes GPC exit with code 6 when breached",
+        "Shows gpc vitals crashes --threshold 1.5",
+        "Shows gpc vitals anr --threshold 0.4",
+        "Provides a GitHub Actions YAML snippet with the vitals check before promotion",
+        "Mentions that exit code 6 means threshold breached, blocking the next step"
+      ]
+    }
+  ]
+}

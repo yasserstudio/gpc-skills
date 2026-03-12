@@ -1,0 +1,44 @@
+{
+  "skill_name": "gpc-multi-app",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We have 3 white-label Android apps that share the same codebase but have different package names (com.brand-a.app, com.brand-b.app, com.brand-c.app). They all use the same developer account. How do I set up GPC to deploy all 3 efficiently?",
+      "expected_output": "Shows profile configuration for 3 apps and batch deployment patterns",
+      "files": [],
+      "expectations": [
+        "Sets up named profiles in config.json for each brand",
+        "Shows --profile flag for per-command app targeting",
+        "Provides a batch shell script to deploy all 3 apps",
+        "Mentions GitHub Actions matrix strategy as a CI option",
+        "Notes that same service account works if all apps are under one developer account"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "We have a monorepo with 2 Android apps in apps/main/ and apps/lite/. Each has its own build output. How should I structure the GPC config so commands automatically target the right app depending on which directory I'm in?",
+      "expected_output": "Shows per-directory .gpcrc.json pattern for monorepos",
+      "files": [],
+      "expectations": [
+        "Creates .gpcrc.json in each app's directory with the correct package name",
+        "Explains that GPC walks up from cwd to find .gpcrc.json",
+        "Shows running gpc commands from each app's directory",
+        "Mentions that a root .gpcrc.json can hold shared config",
+        "No need for --app flag when .gpcrc.json is correctly placed"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I manage apps for 2 different clients, each with their own Google Play developer account and service account key. I need to switch between them frequently. What's the cleanest setup?",
+      "expected_output": "Shows profile-based setup with different auth per client",
+      "files": [],
+      "expectations": [
+        "Creates profiles with different auth.serviceAccount paths per client",
+        "Includes developerId in profiles for user management commands",
+        "Shows GPC_PROFILE env var for session-level switching",
+        "Shows --profile flag for per-command switching",
+        "Mentions that different developer accounts need separate service accounts"
+      ]
+    }
+  ]
+}

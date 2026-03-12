@@ -1,0 +1,44 @@
+{
+  "skill_name": "gpc-migrate-fastlane",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We currently use Fastlane supply in our GitHub Actions workflow to upload AABs to the beta track. The workflow uses SUPPLY_JSON_KEY_DATA secret and runs bundle exec fastlane supply --aab app.aab --track beta. How do I switch this to gpc without changing our service account?",
+      "expected_output": "Shows the GPC equivalent workflow replacing Fastlane, using the same service account key",
+      "files": [],
+      "expectations": [
+        "Maps SUPPLY_JSON_KEY_DATA to GPC_SERVICE_ACCOUNT env var",
+        "Replaces bundle exec fastlane supply with npx gpc releases upload",
+        "Shows a complete GitHub Actions YAML snippet with GPC",
+        "Mentions that the same service account key file works for both tools",
+        "Removes Ruby/Bundler setup steps and replaces with Node.js"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I want to use gpc but keep Fastlane around for a while as a fallback. Our metadata is at fastlane/metadata/android/ with 8 languages. Can both tools work with the same metadata directory? What should I test first?",
+      "expected_output": "Confirms directory compatibility and shows how to test GPC with existing Fastlane metadata",
+      "files": [],
+      "expectations": [
+        "Confirms GPC reads the same Fastlane metadata directory structure natively",
+        "Shows gpc listings push --dir fastlane/metadata/android/ --dry-run for safe testing",
+        "Explains both tools can coexist without conflicts",
+        "Warns about not running both tools simultaneously (edit conflicts)",
+        "Suggests gpc doctor to verify the setup before switching"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Our Fastlane setup does: upload AAB to beta, wait for QA approval, then promote to production at 10% rollout. The rollout uses --rollout 0.1 in Fastlane. I also want to add crash rate checking before promotion which Fastlane can't do. How does this translate to gpc?",
+      "expected_output": "Shows complete pipeline with upload, vitals check, and promotion with correct rollout percentage",
+      "files": [],
+      "expectations": [
+        "Shows gpc releases upload with --track beta",
+        "Notes rollout difference: Fastlane 0.1 = GPC 10 (percentage vs decimal)",
+        "Shows gpc vitals crashes --threshold with a recommended value",
+        "Shows gpc releases promote --from beta --to production --rollout 10",
+        "Highlights this as a capability GPC has that Fastlane doesn't"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "skill_name": "gpc-user-management",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We just hired a new QA engineer (qa@example.com) and need to give them access to our Play Console. They should be able to view app info and manage testing for all apps, plus manage production releases only for com.widgetco.app. They also need to be an internal tester. Our developer account ID is 9876543210.",
+      "expected_output": "Shows how to invite with mixed developer-level and per-app permissions, then add as tester",
+      "files": [],
+      "expectations": [
+        "Uses gpc users invite qa@example.com with --role VIEW_APP_INFORMATION MANAGE_TESTING",
+        "Uses --grant com.widgetco.app:MANAGE_PRODUCTION_RELEASES for per-app permission",
+        "Includes --developer-id 9876543210",
+        "Shows gpc testers add qa@example.com --track internal",
+        "Mentions the 48-hour propagation delay for permissions"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "We need to set up our beta testing program. We have a Google Group (beta@googlegroups.com) with about 200 members, plus a CSV file with 50 additional individual testers. How should we organize this?",
+      "expected_output": "Shows how to add Google Group and import CSV testers to beta track",
+      "files": [],
+      "expectations": [
+        "Shows gpc testers add beta@googlegroups.com --track beta",
+        "Shows gpc testers import --track beta --file testers.csv",
+        "Mentions --dry-run for previewing before applying",
+        "Describes the CSV format (header row with email, one per line)",
+        "Recommends Google Groups for scale over individual emails"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "An employee left the company last week. I need to fully remove their access — they were dev@example.com in our developer account (ID 1111111111) and also a tester on internal and beta tracks. Can you walk me through the offboarding?",
+      "expected_output": "Shows complete offboarding: remove from testing tracks, then remove from developer account",
+      "files": [],
+      "expectations": [
+        "Shows gpc testers remove dev@example.com --track internal",
+        "Shows gpc testers remove dev@example.com --track beta",
+        "Shows gpc users remove dev@example.com --developer-id 1111111111",
+        "Suggests using --dry-run before the actual removal",
+        "Recommends verifying removal with gpc users list or gpc testers list"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "skill_name": "gpc-troubleshooting",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "My gpc releases upload command is failing with exit code 4 and the error says API_FORBIDDEN. I'm using a service account and it works for gpc releases list but not upload. What's going on?",
+      "expected_output": "Diagnoses insufficient permissions and shows how to fix in Play Console",
+      "files": [],
+      "expectations": [
+        "Explains exit code 4 is an API error",
+        "Identifies API_FORBIDDEN as a permissions issue",
+        "Explains that list (read) and upload (write) require different permission levels",
+        "Suggests granting 'Release to production' or 'Release manager' role in Play Console",
+        "Shows gpc auth status and gpc doctor for verification"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Our CI pipeline keeps failing with exit code 5 and NETWORK_TIMEOUT. The AAB is about 150MB. It works sometimes but fails maybe 40% of the time. We're on a shared GitLab runner.",
+      "expected_output": "Configures timeout and retry environment variables for large uploads on flaky networks",
+      "files": [],
+      "expectations": [
+        "Explains exit code 5 is a network error",
+        "Suggests increasing GPC_TIMEOUT to 120000 or higher for 150MB uploads",
+        "Suggests increasing GPC_MAX_RETRIES to 5",
+        "Mentions GPC_BASE_DELAY and GPC_MAX_DELAY for backoff tuning",
+        "Shows the env vars in GitLab CI YAML format"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I'm getting exit code 6 from gpc vitals crashes --threshold 1.5 in our GitHub Actions workflow. Is this a bug? The command seems to run fine but the step shows as failed.",
+      "expected_output": "Explains exit code 6 is an intentional threshold breach signal, not a bug",
+      "files": [],
+      "expectations": [
+        "Explains exit code 6 means threshold was breached (not an error)",
+        "Shows that the crash rate exceeded the 1.5% threshold",
+        "Suggests gpc vitals crashes --json to see the actual crash rate value",
+        "Shows how to use exit code 6 in CI with continue-on-error or conditional steps",
+        "Explains this is designed for CI gating — blocking promotion when vitals are bad"
+      ]
+    }
+  ]
+}

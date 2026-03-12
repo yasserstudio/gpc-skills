@@ -1,0 +1,44 @@
+{
+  "skill_name": "gpc-plugin-development",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I want to build a GPC plugin that sends a Slack message whenever a release upload succeeds or fails. It should include the track name, duration, and error details if it failed. How do I get started?",
+      "expected_output": "Scaffolds a plugin with afterCommand and onError hooks that send Slack notifications",
+      "files": [],
+      "expectations": [
+        "Shows gpc plugins init or manual setup with @gpc-cli/plugin-sdk",
+        "Implements afterCommand hook to send success notifications",
+        "Implements onError hook to send failure notifications with error.code and error.message",
+        "Accesses event.command and result.durationMs for the message",
+        "Shows the package.json permissions declaration for a third-party plugin"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I built a plugin but it's not loading. I added it to the plugins array in .gpcrc.json but gpc plugins list doesn't show it. The plugin is called gpc-plugin-metrics and it's installed in node_modules. What's wrong?",
+      "expected_output": "Diagnoses the missing approvedPlugins entry for third-party plugins",
+      "files": [],
+      "expectations": [
+        "Identifies that third-party plugins need to be in approvedPlugins config",
+        "Shows the correct .gpcrc.json with both plugins and approvedPlugins arrays",
+        "Mentions the @gpc-cli/* vs gpc-plugin-* trust model difference",
+        "Suggests checking that the plugin exports a valid GpcPlugin object",
+        "Mentions that standalone binary mode disables plugins"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I want to add a custom gpc command called 'gpc deploy' that uploads to internal, waits, checks vitals, and then promotes to beta automatically. Can I do this with a plugin?",
+      "expected_output": "Shows how to use registerCommands hook to add a custom command",
+      "files": [],
+      "expectations": [
+        "Uses hooks.registerCommands with registry.add to create the command",
+        "Shows the command action function with the deploy workflow logic",
+        "Includes commands:register in the permissions declaration",
+        "Shows the plugin interface with name, version, and register method",
+        "Mentions that custom commands are registered during plugin load"
+      ]
+    }
+  ]
+}

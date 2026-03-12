@@ -1,0 +1,44 @@
+{
+  "skill_name": "gpc-metadata-sync",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We currently use Fastlane supply for our store listings and the metadata is at fastlane/metadata/android/ with en-US, ja-JP, and fr-FR translations. We want to switch to gpc for everything. Can we keep using the same directory structure or do we need to convert something?",
+      "expected_output": "Confirms Fastlane metadata format is directly compatible, shows how to push existing metadata with GPC",
+      "files": [],
+      "expectations": [
+        "Confirms GPC reads Fastlane metadata directory format natively",
+        "Shows gpc listings push --dir fastlane/metadata/android/",
+        "Suggests --dry-run first to preview changes",
+        "Mentions gpc listings pull for downloading current listings",
+        "Notes that the same directory structure works for both tools"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I need to update our app screenshots for the phone category in en-US. I have 5 new PNGs in ~/screenshots/ and I want to replace all the existing screenshots. What's the process?",
+      "expected_output": "Shows how to list existing screenshots, delete old ones, and upload new ones",
+      "files": [],
+      "expectations": [
+        "Shows gpc listings images list to see existing images",
+        "Shows gpc listings images delete to remove old screenshots",
+        "Shows gpc listings images upload with the correct --type phoneScreenshots",
+        "Mentions the --lang en-US flag",
+        "Notes image format requirements (PNG/JPEG, size limits)"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Our app supports 12 languages and the product team wants to pull all current listings into git so translators can work on them in PRs. Then we need a way to push changes back after review. How should we set this up?",
+      "expected_output": "Describes a pull → edit → PR → push workflow using GPC with version-controlled metadata",
+      "files": [],
+      "expectations": [
+        "Shows gpc listings pull --dir metadata/ to download all languages",
+        "Explains the directory structure that gets created (lang/title.txt, etc.)",
+        "Suggests committing the pulled metadata to git",
+        "Shows gpc listings push --dir metadata/ --dry-run for previewing",
+        "Recommends using --dry-run in CI to validate before pushing"
+      ]
+    }
+  ]
+}

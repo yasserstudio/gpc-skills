@@ -1,0 +1,44 @@
+{
+  "skill_name": "gpc-sdk-usage",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I want to build a Node.js backend service that verifies in-app purchases and acknowledges them automatically. I have a service account key. Can you show me how to use @gpc-cli/api and @gpc-cli/auth to do this programmatically?",
+      "expected_output": "Shows how to set up auth, create API client, verify purchases, and acknowledge them",
+      "files": [],
+      "expectations": [
+        "Installs @gpc-cli/api and @gpc-cli/auth packages",
+        "Uses resolveAuth with serviceAccountPath or serviceAccountJson",
+        "Creates client with createApiClient({ auth })",
+        "Shows client.purchases.getProduct to verify a purchase",
+        "Shows client.purchases.acknowledgeProduct for acknowledgement"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I need to write a script that uploads an AAB to the beta track using the TypeScript SDK, not the CLI. I want to handle the full edit lifecycle — insert, upload, set track, validate, commit. Show me the complete code.",
+      "expected_output": "Complete TypeScript code showing the full edit lifecycle for uploading a release",
+      "files": [],
+      "expectations": [
+        "Shows client.edits.insert to create an edit",
+        "Shows client.bundles.upload to upload the AAB",
+        "Shows client.tracks.update to set the beta track with the version code",
+        "Shows client.edits.validate before committing",
+        "Shows client.edits.commit to apply all changes"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I'm building a dashboard that shows all reviews across our 3 apps and lets us reply. The reviews API has rate limits. How do I set up the API client with rate limiting and pagination to handle this safely?",
+      "expected_output": "Shows rate limiter setup with review-specific buckets and pagination for listing reviews",
+      "files": [],
+      "expectations": [
+        "Uses createRateLimiter with RATE_LIMIT_BUCKETS.reviewsGet and reviewsPost",
+        "Shows pagination with paginate or paginateAll for listing reviews",
+        "Creates separate auth or uses the same auth for multiple apps",
+        "Shows client.reviews.list and client.reviews.reply",
+        "Mentions the 200 GET/hour and 2000 POST/day rate limits"
+      ]
+    }
+  ]
+}

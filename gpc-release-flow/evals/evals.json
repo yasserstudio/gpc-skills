@@ -1,0 +1,44 @@
+{
+  "skill_name": "gpc-release-flow",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I just finished building my app and the AAB is at app/build/outputs/bundle/release/app-release.aab. I want to push it to our internal testing track first so QA can look at it, then if it's good we'll promote it to beta. What's the fastest way to do this with gpc?",
+      "expected_output": "Shows how to upload to internal track and then promote to beta, with validation step",
+      "files": [],
+      "expectations": [
+        "Uses gpc publish or gpc releases upload with --track internal",
+        "Mentions gpc validate as optional pre-check",
+        "Shows gpc releases promote --from internal --to beta for promotion",
+        "Mentions gpc releases status to verify the release landed correctly",
+        "Suggests --dry-run for previewing before executing"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Our production release is at 25% rollout and we're seeing a spike in crashes on Samsung devices running Android 13. The crash rate jumped from 0.5% to 3.2%. Should we halt the rollout? How do I do that and what are our options after halting?",
+      "expected_output": "Recommends halting immediately, shows the command, explains options after halting (fix and re-release vs resume)",
+      "files": [],
+      "expectations": [
+        "Recommends halting given crash rate exceeds safe threshold",
+        "Shows gpc releases rollout halt --track production",
+        "Explains that halting stops new installs but doesn't remove from existing users",
+        "Suggests checking vitals with gpc vitals crashes --version",
+        "Recommends creating a new release with the fix rather than resuming the bad one"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I want to set up a safe production rollout strategy. We release every 2 weeks and right now we just push to 100% which is scary. Can you help me design a staged rollout plan I can follow each release?",
+      "expected_output": "Provides a multi-day staged rollout plan with GPC commands and vitals checks at each stage",
+      "files": [],
+      "expectations": [
+        "Provides a multi-stage rollout plan (e.g., 1% → 10% → 50% → 100%)",
+        "Includes vitals checks between stages using gpc vitals crashes --threshold",
+        "Shows gpc releases rollout increase commands for each stage",
+        "Shows gpc releases rollout complete for final stage",
+        "Mentions exit code 6 for threshold breach as safety gate"
+      ]
+    }
+  ]
+}
