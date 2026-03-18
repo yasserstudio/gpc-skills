@@ -1,9 +1,9 @@
 ---
 name: gpc-setup
 description: "Use when setting up GPC (Google Play Console CLI): authentication with service accounts, OAuth, or Application Default Credentials; configuration files (.gpcrc.json, env vars, XDG paths); auth profiles; running gpc doctor; troubleshooting auth errors. Make sure to use this skill whenever the user mentions gpc auth, service account setup, gpc config, gpc doctor, GPC_SERVICE_ACCOUNT, gpc auth login, Google Play API credentials, Play Console authentication, or wants to install/configure GPC — even if they don't explicitly say 'setup.' Also trigger when someone is troubleshooting auth failures, token expiration, keychain issues, or proxy/network configuration for GPC."
-compatibility: "GPC v0.9.9+. Requires Node.js 20+, pnpm 9+ (for development). npm for installation."
+compatibility: "GPC v0.9+. Requires Node.js 20+, pnpm 9+ (for development). npm for installation."
 metadata:
-  version: 1.0.0
+  version: 1.1.0
 ---
 
 # GPC Setup
@@ -51,9 +51,23 @@ Three auth strategies, in order of recommendation:
 
 #### A) Service Account (recommended for CI/CD)
 
-1. Create a service account in Google Cloud Console
-2. Grant it access in Google Play Console (Settings → API access)
-3. Download the JSON key file
+**New to Google Cloud or setting up for the first time?** Use the interactive GCP setup guide:
+
+```bash
+gpc auth setup-gcp
+```
+
+This fully interactive wizard walks through every step required to connect GPC to the Play Developer API:
+
+1. Enabling the Google Play Developer API in your GCP project
+2. Creating a service account in the GCP Console
+3. Granting the service account access in Google Play Console (Settings → API access)
+4. Downloading the JSON key file to your machine
+5. Running `gpc auth login` with the downloaded key
+
+No flags needed — just run the command and follow the prompts. Ideal for first-time setup on any machine.
+
+Once the wizard completes, or if you already have a key file:
 
 ```bash
 gpc auth login --service-account path/to/key.json
@@ -90,12 +104,17 @@ gpc apps list
 
 ### 2) Configure defaults
 
-#### Interactive setup:
+#### Interactive setup wizard:
 ```bash
 gpc config init
 ```
 
-Prompts for package name, output format, and service account path.
+Guided wizard that:
+1. Selects auth method (`service-account` / `adc` / `skip`)
+2. For service account: validates the file exists (retries if path is wrong)
+3. Prompts for default package name (warns if format is invalid)
+4. Writes `.gpcrc.json` and prints a post-init summary
+5. Ends with: `Run \`gpc doctor\` to verify your setup.`
 
 #### Manual config file (`.gpcrc.json` in project root or `~/.config/gpc/config.json`):
 ```json
@@ -142,11 +161,14 @@ gpc doctor
 ```
 
 Checks:
-- Node.js version
+- Node.js version (≥ 20)
 - Configuration loaded
-- Default app set
+- Default app set and valid Android package name format
 - Authentication valid
-- API connectivity
+- API connectivity (googleapis.com + playdeveloperreporting.googleapis.com)
+- Proxy configuration (if set)
+
+JSON output is supported: `gpc doctor --json` or `gpc doctor --output json`.
 
 ### 5) Network configuration (if needed)
 
