@@ -39,6 +39,44 @@
         "Shows how to use exit code 6 in CI with continue-on-error or conditional steps",
         "Explains this is designed for CI gating — blocking promotion when vitals are bad"
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "I'm getting 400 INVALID_ARGUMENT when I run 'gpc vitals lmk'. All other vitals commands work fine. What's wrong?",
+      "expected_output": "Diagnoses the LMK metrics API requirement and shows the correct command",
+      "files": [],
+      "expectations": [
+        "Explains that 'lmk' (Low Memory Kills) requires different metrics and DAILY aggregation",
+        "Confirms that gpc vitals lmk uses a dedicated endpoint (stuckBackgroundWakelockRateMetricSet or lmkRateMetricSet)",
+        "Shows the correct usage: gpc vitals lmk",
+        "Mentions that other vitals use HOURLY aggregation but lmk requires DAILY",
+        "Suggests using gpc vitals overview for a combined dashboard if lmk is still failing"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "gpc quota usage is showing '[object Object]' instead of actual numbers. I'm on v0.9.35 or earlier. Is this a known bug?",
+      "expected_output": "Identifies the fixed bug and advises upgrading",
+      "files": [],
+      "expectations": [
+        "Confirms this was a known bug fixed in v0.9.36 where quota usage displayed as [object Object]",
+        "Advises upgrading: npm update -g @gpc-cli/cli or gpc update",
+        "Shows what correct quota usage output looks like",
+        "Explains the bug was in serializing the usage object to string"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "My release upload keeps failing with 'API_EDIT_EXPIRED'. I think it's because a previous gpc command crashed mid-edit. How do I recover?",
+      "expected_output": "Explains the stale edit issue and shows how GPC auto-retries, plus manual recovery",
+      "files": [],
+      "expectations": [
+        "Explains that edit IDs expire if a session crashes before committing",
+        "Notes that GPC v0.9.35+ auto-retries with a fresh edit on FAILED_PRECONDITION/API_EDIT_EXPIRED",
+        "If still failing, suggests using Play Console UI to discard any pending edits",
+        "Advises upgrading to v0.9.35+ which has the withFreshEdit() auto-retry fix",
+        "Shows gpc releases upload as the command that triggers edit creation"
+      ]
     }
   ]
 }

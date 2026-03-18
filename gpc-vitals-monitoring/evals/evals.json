@@ -39,6 +39,45 @@
         "Provides a GitHub Actions YAML snippet with the vitals check before promotion",
         "Mentions that exit code 6 means threshold breached, blocking the next step"
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "I want to compare vitals between version code 285 (previous release) and 287 (current release) to see if we introduced a regression. What's the best way to do this?",
+      "expected_output": "Shows gpc vitals compare-versions with the two version codes",
+      "files": [],
+      "expectations": [
+        "Shows gpc vitals compare-versions 285 287",
+        "Explains that the output shows crash rate, ANR rate, startup time, and rendering side-by-side",
+        "Mentions that regressions are highlighted in red",
+        "Suggests --json output for programmatic comparison",
+        "Notes the command uses parallel API calls for efficiency"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "We want to set up automatic rollout halting if our crash rate goes above 2% while we're doing a staged rollout. Can GPC monitor vitals in the background and halt automatically?",
+      "expected_output": "Shows gpc vitals watch --auto-halt-rollout with threshold configuration",
+      "files": [],
+      "expectations": [
+        "Shows gpc vitals watch --auto-halt-rollout --threshold 2.0",
+        "Explains that watch polls vitals on an interval (default or --interval flag)",
+        "Explains that when threshold is breached, it automatically calls gpc releases rollout halt",
+        "Mentions that the track must be specified: --track production",
+        "Warns that this keeps the process running and is typically used in a deployment watch script"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "I want to understand our review sentiment over the past month — what topics come up most, what's the overall sentiment trend, and which keywords appear in negative reviews.",
+      "expected_output": "Shows gpc reviews analyze command for local NLP-based review analysis",
+      "files": [],
+      "expectations": [
+        "Shows gpc reviews analyze --since 30d",
+        "Explains it runs local NLP — no external API needed",
+        "Mentions output includes: sentiment trend, topic clusters, keyword frequency, rating distribution by version",
+        "Suggests --json for programmatic access to sentiment data",
+        "Notes it works best with at least 50 reviews for meaningful clustering"
+      ]
     }
   ]
 }

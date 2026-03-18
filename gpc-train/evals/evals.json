@@ -1,0 +1,57 @@
+{
+  "skill_name": "gpc-train",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I want to set up an automated release pipeline for my app. The plan is: push to internal first, then after 2 days move to alpha at 100%, then after 7 days go to production at 10%, and after 14 days complete the rollout to 100%. I also want it to stop automatically if crash rate goes above 1.5% or ANR rate above 0.5%. How do I configure this with gpc?",
+      "expected_output": "Shows the full .gpcrc.json release-train config and the gpc train start command",
+      "files": [],
+      "expectations": [
+        "Provides a .gpcrc.json release-train block with 4 stages: internal@100, alpha@100 after 2d, production@10 after 7d, production@100 after 14d",
+        "Includes gates config with crashes.max: 1.5 and anr.max: 0.5",
+        "Shows gpc train start to kick off the pipeline",
+        "Mentions gpc train status for checking progress",
+        "Explains that gate checks happen automatically before each stage transition"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "My release train stopped progressing and I'm not sure why. It was on stage 3 — production at 10% — and it was supposed to move to 100% two days ago but nothing happened. How do I find out what went wrong?",
+      "expected_output": "Explains gate failure as the most likely cause, shows how to diagnose and resume",
+      "files": [],
+      "expectations": [
+        "Suggests running gpc train status to see gate health and any failure reason",
+        "Explains that a crash or ANR rate above the configured gate threshold will pause progression",
+        "Shows gpc vitals crashes and gpc vitals anr to check current metric values against configured thresholds",
+        "Explains that the user must fix the regression (new release) and then run gpc train start --resume or gpc train status --resume",
+        "Mentions that the after time delay must also have elapsed before progression can occur"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "We found a critical crash affecting a large percentage of users on our latest release. The release train is currently at stage 3 — production at 10% rollout. We need to stop everything immediately. What's the fastest way to kill the train and halt the rollout?",
+      "expected_output": "Shows gpc train abort and explains what it does, with follow-up steps to investigate",
+      "files": [],
+      "expectations": [
+        "Shows gpc train abort as the primary command",
+        "Explains that abort halts all active rollouts managed by the train, not just pauses progression",
+        "Distinguishes abort from gpc train pause (pause does not halt the rollout)",
+        "Suggests gpc vitals crashes --version <code> to investigate the regression after aborting",
+        "Mentions gpc releases rollout halt --track production as an alternative if the train has already exited but rollout is still active"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "How do I check which stage my release train is currently on and whether the gates are healthy?",
+      "expected_output": "Shows gpc train status with a description of the output format",
+      "files": [],
+      "expectations": [
+        "Shows gpc train status as the primary command",
+        "Describes the output: current stage number, track, rollout percentage, last progression time",
+        "Describes gate health display: current crash rate and ANR rate vs configured max thresholds",
+        "Mentions that time remaining until the next stage is shown when the after delay has not yet elapsed",
+        "Notes that gpc status (without train) can confirm rollout percentages on each track match the active stage"
+      ]
+    }
+  ]
+}

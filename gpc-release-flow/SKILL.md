@@ -1,9 +1,9 @@
 ---
 name: gpc-release-flow
 description: "Use when uploading, releasing, promoting, or managing rollouts on Google Play. Make sure to use this skill whenever the user mentions gpc releases, upload AAB, upload APK, staged rollout, promote to production, halt rollout, gpc publish, release notes, track management, internal testing, beta release, production rollout, version code, rollout percentage, or wants to ship an Android app to any Play Store track. Also trigger when someone asks about the Google Play edit lifecycle, release validation, or how to do a phased rollout — even if they don't mention GPC by name. For metadata and listings, see gpc-metadata-sync. For CI/CD integration, see gpc-ci-integration."
-compatibility: "GPC v0.9.9+. Requires authenticated GPC setup (see gpc-setup skill)."
+compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill)."
 metadata:
-  version: 1.0.0
+  version: 1.1.0
 ---
 
 # GPC Release Flow
@@ -81,9 +81,17 @@ Read:
 ### 2) Check release status
 
 ```bash
-gpc releases status                      # All tracks overview
-gpc releases status --track production   # Specific track
-gpc status                               # Cross-track overview (shorthand)
+# Full picture — releases, vitals, and reviews in one command
+gpc status
+
+# Releases only, all tracks
+gpc releases status
+
+# Specific track detail
+gpc releases status --track production
+
+# JSON for scripting
+gpc status --output json | jq '.releases[] | select(.track == "production")'
 ```
 
 ### 3) Promote between tracks
@@ -145,11 +153,11 @@ Disable with `--no-interactive` or `GPC_NO_INTERACTIVE=1`.
 
 ## Verification
 
-- `gpc releases status` shows the release on the expected track
-- Version code matches the uploaded AAB
+- `gpc status` shows the release on the expected track with correct status and rollout
+- `gpc releases status` confirms version code matches the uploaded AAB
 - Rollout percentage is correct
 - Release notes are set for the expected languages
-- `gpc vitals crashes --version <code>` shows no spikes (post-release)
+- `gpc vitals crashes --version <code>` shows no spikes post-release (or use `gpc status` to check vitals across all metrics)
 
 ## Failure modes / debugging
 
@@ -163,6 +171,7 @@ Disable with `--no-interactive` or `GPC_NO_INTERACTIVE=1`.
 
 Read:
 - `references/troubleshooting.md`
+- `references/pre-release-pipeline.md` — end-to-end: validate → upload → vitals gate → promote → staged rollout
 
 ## Related skills
 

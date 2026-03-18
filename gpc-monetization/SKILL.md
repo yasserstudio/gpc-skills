@@ -1,9 +1,9 @@
 ---
 name: gpc-monetization
-description: "Use when managing in-app purchases, subscriptions, or pricing in Google Play. Make sure to use this skill whenever the user mentions gpc subscriptions, gpc iap, gpc purchases, gpc pricing, in-app products, base plans, subscription offers, one-time purchases, consumable products, purchase verification, purchase acknowledgement, purchase token, subscription cancellation, subscription deferral, voided purchases, refunds, regional pricing, currency conversion, price migration, SKU management, monetization, revenue, billing — even if they don't explicitly say 'monetization.' Also trigger when someone wants to create or update subscriptions, manage base plan lifecycle (activate/deactivate), set up introductory offers, verify server-side purchases, handle refunds, convert prices across regions, sync IAP products from files, or troubleshoot purchase flows. For release management, see gpc-release-flow. For CI automation, see gpc-ci-integration."
-compatibility: "GPC v0.9.9+. Requires authenticated GPC setup (see gpc-setup skill). Subscriptions and IAP require products configured in Google Play Console."
+description: "Use when managing in-app purchases, subscriptions, or pricing in Google Play. Make sure to use this skill whenever the user mentions gpc subscriptions, gpc iap, gpc purchases, gpc pricing, in-app products, base plans, subscription offers, one-time purchases, consumable products, purchase verification, purchase acknowledgement, purchase token, subscription cancellation, subscription deferral, voided purchases, refunds, regional pricing, currency conversion, price migration, SKU management, monetization, revenue, billing, subscription analytics, churn, trial conversion, subscriber count — even if they don't explicitly say 'monetization.' Also trigger when someone wants to create or update subscriptions, manage base plan lifecycle (activate/deactivate), set up introductory offers, verify server-side purchases, handle refunds, convert prices across regions, sync IAP products from files, migrate subscribers to new prices, or view subscription analytics. For release management, see gpc-release-flow. For CI automation, see gpc-ci-integration."
+compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). Subscriptions and IAP require products configured in Google Play Console."
 metadata:
-  version: 1.0.0
+  version: 0.10.0
 ---
 
 # gpc-monetization
@@ -18,6 +18,8 @@ Manage subscriptions, in-app products, purchases, and pricing with GPC.
 - Verifying, acknowledging, or consuming purchases server-side
 - Cancelling, deferring, or revoking subscriptions
 - Handling refunds and voided purchases
+- Viewing subscription analytics (active, trial, churn, conversion)
+- Migrating subscribers to new price points
 - Converting prices across regions and currencies
 
 ## Inputs required
@@ -222,7 +224,35 @@ All write operations support `--dry-run`.
 
 `Read:` `references/purchase-verification.md` for server-side verification patterns and best practices.
 
-### 6. Regional pricing
+### 6. Subscription analytics
+
+Get insights on subscriber counts, conversion, and churn:
+
+```bash
+# Active subscribers, in-trial counts, trial→paid conversion, churn cohort
+gpc subscriptions analytics
+
+# JSON output for dashboards
+gpc subscriptions analytics --json
+```
+
+Reports: active count, in-trial count, cancelled count, trial-to-paid conversion rate, estimated churn by cohort.
+
+### 7. Base plan price migration
+
+Migrate existing subscribers to a new price point:
+
+```bash
+# Migrate all subscribers on a base plan to a new price
+gpc subscriptions base-plans migrate-prices <product-id> <base-plan-id> \
+  --file prices.json
+
+# Prices file format: regional prices JSON (same as base plan prices)
+```
+
+Subscribers are notified by Google Play and must accept or cancel. Use `--dry-run` to preview the migration.
+
+### 8. Regional pricing
 
 Convert a base price to all Google Play supported regions:
 

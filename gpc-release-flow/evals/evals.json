@@ -39,6 +39,32 @@
         "Shows gpc releases rollout complete for final stage",
         "Mentions exit code 6 for threshold breach as safety gate"
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "I want to fully automate our staged rollout — internal → alpha → 10% production → 100% production with time gates and crash gates. Can GPC handle this automatically without me manually running commands each time?",
+      "expected_output": "Shows gpc train with .gpcrc.json config as the automated release pipeline solution",
+      "files": [],
+      "expectations": [
+        "Introduces gpc train as the automated release pipeline solution",
+        "Shows the .gpcrc.json release-train config with stages and gates",
+        "Shows gpc train start to kick off the pipeline",
+        "Explains that gates (crash/ANR thresholds) automatically pause progression",
+        "Shows gpc train status to monitor current stage and time remaining"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "I'm getting EDIT_CONFLICT when trying to upload a new release. I think I had a previous gpc command crash mid-upload. How do I fix this?",
+      "expected_output": "Explains stale edit conflict and shows recovery steps",
+      "files": [],
+      "expectations": [
+        "Explains that a crashed session can leave an open (pending) edit on the API",
+        "Notes that GPC v0.9.35+ auto-retries with a fresh edit via withFreshEdit()",
+        "Suggests discarding the pending edit via Google Play Console UI if still stuck",
+        "Recommends upgrading to v0.9.35+ which handles this automatically",
+        "Shows the retry is automatic — no manual cleanup needed in v0.9.35+"
+      ]
     }
   ]
 }
