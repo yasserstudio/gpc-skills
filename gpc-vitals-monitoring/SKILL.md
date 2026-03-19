@@ -98,7 +98,7 @@ gpc vitals anr --threshold 0.47  # Google's bad behavior threshold
 ### 4) Performance metrics
 
 ```bash
-# Cold/warm startup times
+# Cold/warm startup times (auto-includes startType as a required dimension)
 gpc vitals startup
 
 # Frame rate / rendering
@@ -269,7 +269,11 @@ In CI, use exit code 6 to block promotion:
 Read:
 - `references/ci-gating.md`
 
-### 9) Monitoring pipelines
+### 9) Reporting API rate limit
+
+The Play Developer Reporting API is rate-limited to **10 queries per second**. GPC handles this automatically — if you hit the limit, requests are queued and retried with backoff. No configuration needed.
+
+### 10) Monitoring pipelines
 
 Pipe JSON output to your monitoring stack:
 
@@ -281,7 +285,7 @@ gpc vitals crashes --output json | jq '.data' | curl -X POST ...
 gpc vitals overview --output json >> /var/log/gpc-vitals.jsonl
 ```
 
-### 10) Reports
+### 11) Reports
 
 ```bash
 # List available reports

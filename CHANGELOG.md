@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.3.0 — 2026-03-19
+
+Synced with GPC v0.9.38. Resumable uploads, retry improvements, vitals and monetization updates.
+
+### Updated Skills
+
+- **gpc-release-flow** — File size limits updated (AAB 2 GB, APK 1 GB), resumable upload protocol with chunked streaming and auto-resume, edit expiry warning at 5 minutes
+- **gpc-setup** — Default `GPC_MAX_RETRIES` updated from 3 to 5
+- **gpc-troubleshooting** — `GPC_MAX_RETRIES` default updated to 5, added HTTP 408 to retryable errors
+- **gpc-ci-integration** — HTTP 408 now retried alongside 429 and 5xx
+- **gpc-vitals-monitoring** — Reporting API rate limit (10 queries/sec, automatic), `gpc vitals startup` auto-includes `startType` dimension
+- **gpc-monetization** — V1 subscription purchase API deprecation notice (Google shutdown Aug 2027), `gpc pricing convert` friendly error on apps without monetization
+- **gpc-onboarding** — `gpc quickstart` spawn fix for Homebrew and binary installs
+
+---
+
 ## v1.2.0 — 2026-03-19
 
 Synced with GPC v0.9.37. Two new skills, five updated.

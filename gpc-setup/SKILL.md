@@ -181,7 +181,7 @@ export GPC_CA_CERT=/path/to/ca-bundle.crt
 
 Retry configuration:
 ```bash
-export GPC_MAX_RETRIES=3
+export GPC_MAX_RETRIES=5
 export GPC_TIMEOUT=30000
 export GPC_BASE_DELAY=1000
 export GPC_MAX_DELAY=60000

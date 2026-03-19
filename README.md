@@ -164,7 +164,7 @@ gpc-<skill>/
 
 ## Compatibility
 
-- GPC v0.9.9+ (`npm install -g @gpc-cli/cli`)
+- GPC v0.9.38+ (`npm install -g @gpc-cli/cli`)
 - Node.js 20+ (or standalone binary)
 - Google Play Developer API access (service account)
 

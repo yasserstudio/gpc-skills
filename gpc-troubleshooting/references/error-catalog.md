@@ -21,6 +21,7 @@ All known GPC error codes with causes and fixes.
 | `API_NOT_FOUND` | 404 | Resource not found | Verify app, track, or resource ID |
 | `API_CONFLICT` | 409 | Edit conflict | Wait; another edit may be open |
 | `API_RATE_LIMITED` | 429 | Rate limit exceeded | Auto-retries; increase `GPC_BASE_DELAY` |
+| `API_REQUEST_TIMEOUT` | 408 | Request timeout | Auto-retries with exponential backoff |
 | `API_SERVER_ERROR` | 5xx | Google server error | Retry later |
 | `API_BAD_REQUEST` | 400 | Invalid request data | Check JSON payload structure |
 | `API_GONE` | 410 | Resource no longer available | Resource was deleted or deprecated |
@@ -84,7 +85,7 @@ All known GPC error codes with causes and fixes.
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `GPC_TIMEOUT` | 30000 | Request timeout in ms |
-| `GPC_MAX_RETRIES` | 3 | Max retry attempts |
+| `GPC_MAX_RETRIES` | 5 | Max retry attempts |
 | `GPC_BASE_DELAY` | 1000 | Initial retry delay in ms |
 | `GPC_MAX_DELAY` | 15000 | Maximum retry delay in ms |
 | `GPC_CA_CERT` | — | Path to custom CA certificate |

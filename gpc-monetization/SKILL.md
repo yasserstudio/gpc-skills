@@ -195,6 +195,8 @@ gpc purchases consume <product-id> <token>
 
 #### B. Subscription purchases
 
+> **Deprecation notice:** The V1 subscription purchase API (`purchases.subscriptions.get`) is deprecated by Google and will be shut down in **August 2027**. Use the V2 API (`purchases.subscriptionsv2.get`) instead. GPC defaults to V2 for all subscription purchase commands.
+
 ```bash
 # Get subscription purchase details (v2 API)
 gpc purchases subscription get <token>
@@ -265,6 +267,8 @@ gpc pricing convert --from USD --amount 4.99 --json
 ```
 
 The conversion uses Google Play's official exchange rates and rounds to locally appropriate price points.
+
+**Note:** `gpc pricing convert` requires the app to have monetization enabled. If the app does not have monetization set up, a friendly error is shown with instructions on how to enable it in Play Console.
 
 ## Verification
 

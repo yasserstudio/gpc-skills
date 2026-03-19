@@ -255,6 +255,8 @@ gpc vitals overview --output markdown >> $GITHUB_STEP_SUMMARY
 
 ### 11) Retry and timeout configuration
 
+GPC automatically retries HTTP 408 (Request Timeout), 429 (Rate Limited), and 5xx (Server Error) responses with exponential backoff.
+
 ```yaml
 env:
   GPC_MAX_RETRIES: '5'
