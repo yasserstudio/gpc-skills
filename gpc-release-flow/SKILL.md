@@ -130,7 +130,7 @@ gpc releases count
 
 # Show release history from GitHub
 gpc changelog
-gpc changelog --version v0.9.43
+gpc changelog --version v0.9.44
 ```
 
 ### 4) Manage staged rollouts

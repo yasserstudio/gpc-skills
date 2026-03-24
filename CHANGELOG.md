@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.4.1 — 2026-03-24
+
+Synced with GPC v0.9.44.
+
+- **gpc-preflight** — Added to repo (was missing). Added "Known limitations" section for manifest parsing fallback on large AABs.
+- **gpc-release-flow** — Updated `gpc changelog` example version to v0.9.44.
+- **README** — Compatibility updated to GPC v0.9.44+.
+
+---
+
 ## v1.4.0 — 2026-03-24
 
 Synced with GPC v0.9.43. Major update across all 16 skills — 13 issues fixed.
