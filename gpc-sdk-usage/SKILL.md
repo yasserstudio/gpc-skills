@@ -203,7 +203,7 @@ const client = createApiClient({ auth, rateLimiter: limiter });
 ### 7. Error handling
 
 ```typescript
-import { ApiError } from "@gpc-cli/api";
+import { PlayApiError } from "@gpc-cli/api";
 import { AuthError } from "@gpc-cli/auth";
 
 try {
@@ -211,7 +211,7 @@ try {
 } catch (error) {
   if (error instanceof AuthError) {
     console.error(`Auth failed: ${error.code}`);
-  } else if (error instanceof ApiError) {
+  } else if (error instanceof PlayApiError) {
     console.error(`API error ${error.status}: ${error.code}`);
     console.error(`Suggestion: ${error.suggestion}`);
   }
@@ -224,7 +224,7 @@ try {
 - `createApiClient({ auth })` creates a working client
 - `client.edits.insert(APP)` successfully opens an edit
 - API calls return typed responses
-- Error handling catches `ApiError` and `AuthError`
+- Error handling catches `PlayApiError` and `AuthError`
 
 ## Failure modes / debugging
 
@@ -234,7 +234,7 @@ try {
 | `AUTH_INVALID_KEY` | Bad JSON in key file | Re-download from Google Cloud Console |
 | Edit insert fails with 403 | Service account lacks API access | Enable Google Play Developer API in GCP |
 | Concurrent edit conflict | Another edit is open | Commit or delete the existing edit first |
-| `ApiError` with status 429 | Rate limited | Use `createRateLimiter()` with appropriate buckets |
+| `PlayApiError` with status 429 | Rate limited | Use `createRateLimiter()` with appropriate buckets |
 | Types not resolving | Wrong TypeScript config | Ensure `moduleResolution: "bundler"` or `"node16"` |
 
 ## Related skills

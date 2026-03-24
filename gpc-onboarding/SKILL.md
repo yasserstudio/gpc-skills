@@ -100,7 +100,18 @@ gpc quickstart
 
 Follow the prompts. The wizard is idempotent — re-run it at any point.
 
-### 2) If credentials are not yet set up
+### 2) Scaffold project files with `gpc init`
+
+After quickstart completes, scaffold project config, metadata, and CI templates:
+
+```bash
+# Scaffold project files (config, metadata, CI templates)
+gpc init --app com.example.app --ci-template github
+```
+
+This creates `.gpcrc.json`, `.preflightrc.json`, a metadata directory, and CI workflow files in one command.
+
+### 3) If credentials are not yet set up
 
 Option A — you already have a service account JSON key:
 ```bash
@@ -112,7 +123,7 @@ Option B — you need to create a GCP project and service account from scratch:
 gpc auth setup-gcp
 ```
 
-### 3) Fix remaining doctor issues
+### 4) Fix remaining doctor issues
 
 ```bash
 gpc doctor --fix
@@ -120,7 +131,7 @@ gpc doctor --fix
 
 Review any checks that still fail and follow the inline suggestions.
 
-### 4) Verify
+### 5) Verify
 
 ```bash
 gpc status

@@ -102,6 +102,35 @@ gpc releases promote --from internal --to beta
 
 # Promote from beta to production with staged rollout
 gpc releases promote --from beta --to production --rollout 5
+
+# Copy release notes from another track when promoting
+gpc releases promote --from internal --to production --copy-notes-from internal
+```
+
+> **Note:** Since v0.9.39, `gpc releases promote` auto-retries once on 409 EDIT_CONFLICT (another edit is open).
+
+### 3b) Preview before publishing
+
+```bash
+# Read-only preview of release state across all tracks
+gpc diff
+
+# Compare two specific tracks
+gpc diff --from internal --to production
+
+# Compare local metadata vs remote
+gpc diff --metadata fastlane/metadata
+```
+
+### 3c) Release stats and history
+
+```bash
+# Release count per track with status breakdown
+gpc releases count
+
+# Show release history from GitHub
+gpc changelog
+gpc changelog --version v0.9.43
 ```
 
 ### 4) Manage staged rollouts
@@ -161,13 +190,18 @@ Disable with `--no-interactive` or `GPC_NO_INTERACTIVE=1`.
 
 ## Failure modes / debugging
 
-| Symptom | Likely Cause | Fix |
-|---------|-------------|-----|
-| `Version code already used` | Same version code exists on this track | Increment `versionCode` in build |
+| Error Code | Symptom | Fix |
+|------------|---------|-----|
+| `API_DUPLICATE_VERSION_CODE` | Version code already uploaded | Increment `versionCode` in build.gradle. Check current: `gpc releases status` |
+| `API_VERSION_CODE_TOO_LOW` | Version code lower than current | Google Play requires increasing version codes per track |
+| `API_PACKAGE_NAME_MISMATCH` | AAB package doesn't match target app | Verify `applicationId` in build.gradle. Check: `gpc config show` |
+| `API_BUNDLE_TOO_LARGE` | File exceeds size limit | AAB max: 2 GB, APK max: 1 GB. Check: `gpc preflight <file>` |
+| `API_INVALID_BUNDLE` | Corrupted or malformed file | Ensure properly signed. Validate: `gpc preflight <file>`. Rebuild: `./gradlew bundleRelease` |
+| `API_EDIT_CONFLICT` | Another edit session open | GPC auto-retries once. Wait and retry, or discard stale edit in Console |
+| `API_ROLLOUT_ALREADY_COMPLETED` | Release at 100% | Deploy a new version: `gpc releases upload --track <track>` |
+| `API_RELEASE_NOTES_TOO_LONG` | Notes exceed 500 chars | Shorten per language. Preview: `gpc releases notes get` |
 | `APK_NOT_SIGNED` | Missing or invalid signing | Use Play App Signing or check keystore |
-| `EDIT_CONFLICT` | Another edit is in progress | Wait and retry, or use Console UI to discard pending edit |
 | Rollout stuck | Rollout was halted | `gpc releases rollout resume --track <track>` |
-| Wrong track | Promoted to wrong track | Create new release on correct track |
 
 Read:
 - `references/troubleshooting.md`

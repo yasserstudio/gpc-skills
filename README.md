@@ -10,23 +10,26 @@ These skills teach Claude Code how to use GPC for common Google Play workflows: 
 npx skills add yasserstudio/gpc-skills
 ```
 
-## Available Skills (13)
+## Available Skills (16)
 
 | Skill | Description |
 |-------|-------------|
 | **gpc-setup** | Authentication (service account, OAuth, ADC), configuration, profiles, `gpc doctor` |
-| **gpc-release-flow** | Upload AAB, create releases, promote tracks, manage staged rollouts, `gpc publish` |
+| **gpc-onboarding** | First-run guided setup, `gpc quickstart`, `gpc init`, `gpc auth` wizard |
+| **gpc-release-flow** | Upload AAB, create releases, promote tracks, staged rollouts, `gpc publish`, `gpc diff` |
 | **gpc-metadata-sync** | Store listings, screenshots, images, Fastlane metadata compatibility, pull/push |
-| **gpc-vitals-monitoring** | Crash rates, ANR, startup time, vitals thresholds, reviews, reports |
+| **gpc-vitals-monitoring** | Crash rates, ANR, startup, LMK, vitals thresholds, reviews, reports |
 | **gpc-ci-integration** | GitHub Actions, GitLab CI, Bitbucket, CircleCI, JSON output, exit codes |
-| **gpc-monetization** | Subscriptions, IAP, base plans, offers, purchases, pricing, regional conversion |
+| **gpc-monetization** | Subscriptions, IAP, one-time products, purchase options, pricing, regional conversion |
 | **gpc-user-management** | Developer account users, permissions, grants, testers, CSV import |
 | **gpc-migrate-fastlane** | Fastlane-to-GPC migration, command mapping, CI migration |
 | **gpc-plugin-development** | Plugin SDK, lifecycle hooks, permissions, custom commands |
-| **gpc-troubleshooting** | Exit codes, error catalog, debug mode, common fixes |
+| **gpc-troubleshooting** | Exit codes, error catalog (40+ codes), debug mode, common fixes |
 | **gpc-sdk-usage** | @gpc-cli/api and @gpc-cli/auth as standalone TypeScript SDK |
 | **gpc-multi-app** | Multiple apps, profiles, batch operations, monorepo patterns |
 | **gpc-security** | Credential storage, key rotation, audit logging, incident response |
+| **gpc-preflight** | Offline AAB compliance scanner (9 scanners), `.preflightrc.json` config |
+| **gpc-train** | Automated staged rollout pipeline with crash/ANR gates and time gates |
 
 ## Skill Structure
 
@@ -73,6 +76,11 @@ gpc-<skill>/
 | "Set up profiles for different clients" | `gpc-multi-app` |
 | "Where does GPC store credentials?" | `gpc-security` |
 | "Rotate our service account key" | `gpc-security` |
+| "Scan AAB for policy violations before upload" | `gpc-preflight` |
+| "Configure preflight thresholds" | `gpc-preflight` |
+| "Automate staged rollout with crash gates" | `gpc-train` |
+| "First time setting up GPC" | `gpc-onboarding` |
+| "Show what changed in the latest release" | `gpc-release-flow` |
 
 ## Reference Files Index
 
@@ -162,9 +170,24 @@ gpc-<skill>/
 | `references/credential-storage.md` | Storage architecture and security model |
 | `references/key-rotation.md` | Key rotation procedures and automation |
 
+### gpc-preflight
+| File | Topic |
+|------|-------|
+| (inline) | Preflight scanners, `.preflightrc.json` configuration, CI gating |
+
+### gpc-train
+| File | Topic |
+|------|-------|
+| `references/rollout-pipeline.md` | Staged rollout pipeline with crash/ANR gates |
+
+### gpc-onboarding
+| File | Topic |
+|------|-------|
+| (inline) | First-run setup, `gpc quickstart`, `gpc init`, `gpc doctor --fix` |
+
 ## Compatibility
 
-- GPC v0.9.38+ (`npm install -g @gpc-cli/cli`)
+- GPC v0.9.43+ (`npm install -g @gpc-cli/cli`)
 - Node.js 20+ (or standalone binary)
 - Google Play Developer API access (service account)
 

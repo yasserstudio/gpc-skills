@@ -25,6 +25,13 @@ All known GPC error codes with causes and fixes.
 | `API_SERVER_ERROR` | 5xx | Google server error | Retry later |
 | `API_BAD_REQUEST` | 400 | Invalid request data | Check JSON payload structure |
 | `API_GONE` | 410 | Resource no longer available | Resource was deleted or deprecated |
+| `API_DUPLICATE_VERSION_CODE` | 409 | Version code already uploaded | Increment versionCode in build.gradle and rebuild |
+| `API_VERSION_CODE_TOO_LOW` | 400 | Version code lower than current | Version code must increase per track |
+| `API_PACKAGE_NAME_MISMATCH` | 400 | Package name doesn't match | Verify applicationId matches target app |
+| `API_APP_NOT_FOUND` | 404 | App not in developer account | Verify package name and developer account |
+| `API_INSUFFICIENT_PERMISSIONS` | 403 | Service account missing permissions | Grant required roles in Play Console → Settings → API access |
+| `API_BUNDLE_TOO_LARGE` | 400 | AAB or APK exceeds size limit | AAB max 2 GB, APK max 1 GB |
+| `API_INVALID_BUNDLE` | 400 | Corrupt or improperly signed bundle | Ensure properly signed AAB/APK |
 
 ## Network errors (exit code 5)
 
@@ -43,7 +50,19 @@ All known GPC error codes with causes and fixes.
 | `CONFIG_INVALID` | Malformed .gpcrc.json | Fix JSON syntax |
 | `CONFIG_APP_MISSING` | No app specified | `gpc config set app` or `--app` flag |
 
-## Upload and release errors (exit code 4)
+## Upload errors (exit code 4)
+
+| Code | Message | Fix |
+|------|---------|-----|
+| `UPLOAD_CHUNK_FAILED` | Chunk could not be sent after retries | Check network; increase `GPC_MAX_RETRIES` or `GPC_UPLOAD_TIMEOUT` |
+| `UPLOAD_NO_COMPLETION` | All bytes sent but no completion response | Retry upload; check `GPC_UPLOAD_TIMEOUT` |
+| `UPLOAD_INITIATE_FAILED` | Session initiation failed | Check auth and permissions; retry |
+| `UPLOAD_NO_SESSION_URI` | No Location header in initiation response | API error; retry or check service account permissions |
+| `UPLOAD_SESSION_NOT_FOUND` | Session expired (404) | Start a new upload session |
+| `UPLOAD_SESSION_EXPIRED` | Session gone (410) | Start a new upload session |
+| `UPLOAD_INVALID_CHUNK_SIZE` | Chunk size not multiple of 256 KB | Set `GPC_UPLOAD_CHUNK_SIZE` to a multiple of 262144 (256 KB) |
+
+## Release errors (exit code 4)
 
 | Code | Message | Fix |
 |------|---------|-----|
@@ -91,3 +110,5 @@ All known GPC error codes with causes and fixes.
 | `GPC_CA_CERT` | — | Path to custom CA certificate |
 | `HTTPS_PROXY` | — | HTTP proxy URL |
 | `GPC_DEBUG` | — | Set to `1` for verbose output |
+| `GPC_UPLOAD_TIMEOUT` | 300000 | Upload request timeout in ms (5 min) |
+| `GPC_UPLOAD_CHUNK_SIZE` | 8388608 | Upload chunk size in bytes (8 MB) |

@@ -264,6 +264,8 @@ env:
   GPC_BASE_DELAY: '2000'
   GPC_MAX_DELAY: '120000'
   GPC_RATE_LIMIT: '50'
+  GPC_UPLOAD_TIMEOUT: "300000"    # 5 min timeout for large AABs
+  GPC_UPLOAD_CHUNK_SIZE: "8388608"  # 8 MB chunks (default)
 ```
 
 Use `--retry-log` to debug transient failures:
@@ -284,7 +286,7 @@ gpc releases upload app.aab --track beta --retry-log retries.log
 |---------|-------------|-----|
 | `AUTH_INVALID` in CI | Secret not set or wrong format | Verify `PLAY_SERVICE_ACCOUNT` secret contains valid JSON |
 | `Permission denied` | Service account lacks Play Console access | Grant access in Play Console → Settings → API access |
-| Timeout on upload | Large AAB + slow CI network | Increase `GPC_TIMEOUT` |
+| Timeout on upload | Large AAB + slow CI network | Increase `GPC_TIMEOUT` or `GPC_UPLOAD_TIMEOUT` |
 | Rate limited | Too many API calls | Increase `GPC_BASE_DELAY`, reduce parallelism |
 | Exit code 6 | Vitals threshold breached | Review crash/ANR data, fix issues before promoting |
 | `EDIT_CONFLICT` | Parallel runs editing same app | Serialize release jobs or use job concurrency limits |

@@ -26,7 +26,7 @@ Complete guide for migrating from Fastlane supply to GPC.
 
 ## Procedure
 
-### 0. Assess current Fastlane usage
+### 1. Assess current Fastlane usage
 
 Identify which Fastlane supply features you use:
 
@@ -41,7 +41,7 @@ ls fastlane/metadata/android/
 cat fastlane/Appfile
 ```
 
-### 1. Install GPC (keep Fastlane installed)
+### 2. Install GPC (keep Fastlane installed)
 
 ```bash
 npm install -g @gpc-cli/cli
@@ -49,7 +49,7 @@ npm install -g @gpc-cli/cli
 
 Both tools can coexist — they share the same service account keys and metadata directory structure.
 
-### 2. Authenticate with the same service account
+### 3. Authenticate with the same service account
 
 ```bash
 # Use the same key file from Fastlane
@@ -65,7 +65,7 @@ gpc config set app com.example.app
 gpc doctor
 ```
 
-### 3. Map your Fastlane commands to GPC
+### 4. Map your Fastlane commands to GPC
 
 `Read:` `references/command-mapping.md` for the complete command mapping table.
 
@@ -98,7 +98,7 @@ gpc listings push --dir metadata/
 gpc listings images upload --lang en-US --type phoneScreenshots *.png
 ```
 
-### 4. Test with dry-run
+### 5. Test with dry-run
 
 Before switching any CI pipeline, verify GPC produces the same results:
 
@@ -113,7 +113,7 @@ gpc validate app.aab
 gpc listings view --lang en-US --json
 ```
 
-### 5. Migrate CI configuration
+### 6. Migrate CI configuration
 
 `Read:` `references/ci-migration.md` for platform-specific CI migration examples.
 
@@ -132,7 +132,7 @@ Replace Fastlane supply calls in your CI with GPC equivalents:
   run: npx @gpc-cli/cli releases upload app.aab --track beta
 ```
 
-### 6. Clean up Fastlane (optional)
+### 7. Clean up Fastlane (optional)
 
 Once fully migrated and confident:
 

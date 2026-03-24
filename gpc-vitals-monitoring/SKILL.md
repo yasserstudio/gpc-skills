@@ -112,9 +112,16 @@ gpc vitals memory
 
 # Wakeup time metric (low-memory killer)
 gpc vitals wakeup
+
+# Low memory killer stats (LMK)
+gpc vitals lmk
 ```
 
 `gpc vitals wakeup` shows the wakeup rate from low-memory kills (LMK events). Supports the same flags as other vitals subcommands: `--days <n>`, `--threshold <value>`, `--json`.
+
+`gpc vitals lmk` shows low memory killer statistics. Columns: `stuckBgWakelockRate`, `stuckBgWakelockRate7dUserWeighted`, `stuckBgWakelockRate28dUserWeighted`, `distinctUsers`. Supports the same flags as other vitals subcommands: `--days <n>`, `--threshold <value>`, `--json`.
+
+**Note:** Vitals lmk/memory data accuracy was improved in v0.9.41 (Bug H: metric field names corrected from `stuckBackground` to `stuckBg`).
 
 ### 4a) Compare vitals across versions
 

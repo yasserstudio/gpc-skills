@@ -53,7 +53,7 @@ gpc <failing-command> --json
 | 1 | Config | Configuration error (missing .gpcrc.json, invalid fields) |
 | 2 | Usage | Invalid arguments or flags |
 | 3 | Auth | Authentication failure (expired token, invalid key, no credentials) |
-| 4 | API | Google Play API error (403, 404, 409, rate limit) |
+| 4 | API | Google Play API error (403, 404, 408, 409, rate limit) |
 | 5 | Network | Connection failure, DNS error, timeout |
 | 6 | Threshold | Vitals threshold breached (used in CI gating) |
 | 10 | Plugin | Plugin permission validation error |
@@ -89,8 +89,14 @@ export GPC_SERVICE_ACCOUNT=$(cat ~/path/to/key.json)
 | `API_NOT_FOUND` | 404 | App, track, or resource doesn't exist | Verify package name, track name, or resource ID |
 | `API_CONFLICT` | 409 | Edit already in progress | Wait and retry; another edit may be open |
 | `API_RATE_LIMITED` | 429 | Too many requests | GPC auto-retries; increase `GPC_BASE_DELAY` |
+| `API_REQUEST_TIMEOUT` | 408 | Request timed out | GPC auto-retries with exponential backoff |
 | `API_SERVER_ERROR` | 5xx | Google server issue | Retry later; check Google status dashboard |
 | `EDIT_CONFLICT` | 409 | Concurrent edit from another tool/user | Only one edit at a time; check if Fastlane or Play Console has an open edit |
+| `API_DUPLICATE_VERSION_CODE` | 409 | Version code already uploaded | Increment versionCode in build.gradle and rebuild |
+| `API_VERSION_CODE_TOO_LOW` | 400 | Version code lower than current | Version code must increase per track |
+| `API_PACKAGE_NAME_MISMATCH` | 400 | applicationId doesn't match target app | Verify applicationId matches target app |
+| `API_APP_NOT_FOUND` | 404 | App not in developer account | Verify package name and developer account |
+| `API_INSUFFICIENT_PERMISSIONS` | 403 | Service account missing permissions | Grant required roles in Play Console → Settings → API access |
 
 ```bash
 # Check if an edit is stuck
@@ -153,6 +159,13 @@ gpc config list
 | `RELEASE_NOT_FOUND` | No release on the specified track | Check track name; use `gpc releases list --track <track>` |
 | `ROLLOUT_INVALID` | Invalid rollout percentage | Use 0-100 (not 0.0-1.0); use `--rollout 10` not `--rollout 0.1` |
 | `PROMOTE_NO_SOURCE` | Source track has no release to promote | Upload to source track first |
+| `UPLOAD_CHUNK_FAILED` | Chunk could not be sent after retries | Check network; increase `GPC_MAX_RETRIES` or `GPC_UPLOAD_TIMEOUT` |
+| `UPLOAD_NO_COMPLETION` | All bytes sent but no completion response | Retry upload; check `GPC_UPLOAD_TIMEOUT` |
+| `UPLOAD_INITIATE_FAILED` | Session initiation failed | Check auth and permissions; retry |
+| `UPLOAD_NO_SESSION_URI` | No Location header in initiation response | API error; retry or check service account permissions |
+| `UPLOAD_SESSION_NOT_FOUND` | Session expired (404) | Start a new upload session |
+| `UPLOAD_SESSION_EXPIRED` | Session gone (410) | Start a new upload session |
+| `UPLOAD_INVALID_CHUNK_SIZE` | Chunk size not multiple of 256 KB | Set `GPC_UPLOAD_CHUNK_SIZE` to a multiple of 262144 (256 KB) |
 
 ```bash
 # Validate before uploading
@@ -202,6 +215,22 @@ gpc releases upload app.aab --track beta --json
 
 # Combine for maximum detail
 GPC_DEBUG=1 gpc releases upload app.aab --track beta --json 2>debug.log
+```
+
+### 10. Retryable HTTP status codes
+
+GPC automatically retries the following HTTP status codes with exponential backoff:
+
+- **408** — Request Timeout
+- **429** — Too Many Requests (rate limited)
+- **5xx** — Server errors (500, 502, 503, etc.)
+
+Configure retry behavior:
+```bash
+export GPC_MAX_RETRIES=5        # Default: 5
+export GPC_BASE_DELAY=1000      # Initial delay in ms
+export GPC_MAX_DELAY=15000      # Max delay in ms
+export GPC_UPLOAD_TIMEOUT=300000  # Upload timeout in ms (5 min)
 ```
 
 ## Verification

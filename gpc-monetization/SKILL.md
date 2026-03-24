@@ -177,7 +177,53 @@ gpc iap sync --dir products/
 
 Each JSON file in the directory represents one product. GPC compares local files against the Play Store and creates, updates, or deletes as needed.
 
-### 5. Purchases — verification and lifecycle
+### 5. Purchase options and one-time products (newer APIs)
+
+#### A. Purchase options
+
+Manage purchase options for subscriptions:
+
+```bash
+# List purchase options for a subscription
+gpc purchase-options list <product-id>
+
+# Get purchase option details
+gpc purchase-options get <product-id> <purchase-option-id>
+
+# Create a purchase option
+gpc purchase-options create <product-id> --file option.json
+
+# Update a purchase option
+gpc purchase-options update <product-id> <purchase-option-id> --file option.json
+
+# Delete a purchase option
+gpc purchase-options delete <product-id> <purchase-option-id>
+```
+
+#### B. One-time products
+
+Manage one-time products (replaces legacy IAP for new integrations):
+
+```bash
+# List one-time products
+gpc one-time-products list
+
+# Get one-time product details
+gpc one-time-products get <product-id>
+
+# Create a one-time product
+gpc one-time-products create --file product.json
+
+# Update a one-time product
+gpc one-time-products update <product-id> --file product.json
+
+# Delete a one-time product
+gpc one-time-products delete <product-id>
+```
+
+All purchase option and one-time product commands support `--dry-run` and `--json`.
+
+### 6. Purchases — verification and lifecycle
 
 #### A. Product purchases
 
@@ -226,7 +272,7 @@ All write operations support `--dry-run`.
 
 `Read:` `references/purchase-verification.md` for server-side verification patterns and best practices.
 
-### 6. Subscription analytics
+### 7. Subscription analytics
 
 Get insights on subscriber counts, conversion, and churn:
 
@@ -240,7 +286,7 @@ gpc subscriptions analytics --json
 
 Reports: active count, in-trial count, cancelled count, trial-to-paid conversion rate, estimated churn by cohort.
 
-### 7. Base plan price migration
+### 8. Base plan price migration
 
 Migrate existing subscribers to a new price point:
 
@@ -254,7 +300,7 @@ gpc subscriptions base-plans migrate-prices <product-id> <base-plan-id> \
 
 Subscribers are notified by Google Play and must accept or cancel. Use `--dry-run` to preview the migration.
 
-### 8. Regional pricing
+### 9. Regional pricing
 
 Convert a base price to all Google Play supported regions:
 

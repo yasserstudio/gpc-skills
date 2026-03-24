@@ -104,6 +104,13 @@ gpc apps list
 
 ### 2) Configure defaults
 
+#### Project scaffolding (recommended for new projects):
+```bash
+gpc init --app com.example.app
+```
+
+For new projects, `gpc init --app com.example.app` scaffolds `.gpcrc.json`, `.preflightrc.json`, metadata directory, and CI templates in one command.
+
 #### Interactive setup wizard:
 ```bash
 gpc config init
@@ -134,6 +141,9 @@ Guided wizard that:
 | `GPC_NO_COLOR` | Disable color output |
 | `GPC_NO_INTERACTIVE` | Disable interactive prompts |
 | `GPC_SKIP_KEYCHAIN` | Skip OS keychain, use file storage |
+| `GPC_UPLOAD_TIMEOUT` | Upload timeout in ms |
+| `GPC_UPLOAD_CHUNK_SIZE` | Resumable upload chunk size in bytes |
+| `GPC_DEBUG` | Enable verbose debug output (`GPC_DEBUG=1`) |
 
 Read:
 - `references/configuration.md`

@@ -1,5 +1,36 @@
 # Changelog
 
+## v1.4.0 — 2026-03-24
+
+Synced with GPC v0.9.43. Major update across all 16 skills — 13 issues fixed.
+
+### Critical Fixes
+
+- **gpc-sdk-usage** — Renamed `ApiError` → `PlayApiError` throughout (class renamed in GPC v0.9.37, old name causes import errors)
+- **gpc-release-flow** — Fixed file size limits in upload-lifecycle reference (was 150 MB/100 MB, corrected to 2 GB AAB / 1 GB APK)
+- **gpc-metadata-sync** — Fixed title character limit in failure modes (was 50, corrected to 30)
+
+### Feature Updates
+
+- **gpc-release-flow** — Added `--copy-notes-from`, `gpc releases count`, `gpc diff`, `gpc changelog`, 409 auto-retry, 5 new error codes, resumable upload details (X-GUploader-No-308)
+- **gpc-troubleshooting** — Added 12 upload/API error codes, fixed GPC_MAX_RETRIES default (3 → 5), HTTP 408 retryable, GPC_UPLOAD_TIMEOUT env var
+- **gpc-vitals-monitoring** — Added `gpc vitals lmk` command, Bug H accuracy note
+- **gpc-ci-integration** — Added GPC_UPLOAD_TIMEOUT and GPC_UPLOAD_CHUNK_SIZE env vars
+- **gpc-setup** — Added `gpc init`, GPC_UPLOAD_TIMEOUT, GPC_UPLOAD_CHUNK_SIZE, GPC_DEBUG env vars
+- **gpc-onboarding** — Added `gpc init` as post-quickstart step
+- **gpc-monetization** — Added `gpc purchase-options` and `gpc one-time-products` commands
+- **gpc-multi-app** — Added `gpc status --all-apps`
+- **gpc-security** — Updated example dates (2025 → 2026)
+- **gpc-migrate-fastlane** — Fixed step numbering gap
+
+### README
+
+- Updated skill count from 13 to 16 (added gpc-onboarding, gpc-preflight, gpc-train)
+- Added missing skills to Selection Guide and Reference Files Index
+- Updated compatibility to GPC v0.9.43+
+
+---
+
 ## v1.3.0 — 2026-03-19
 
 Synced with GPC v0.9.38. Resumable uploads, retry improvements, vitals and monetization updates.

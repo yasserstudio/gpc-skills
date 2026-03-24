@@ -220,7 +220,7 @@ gpc listings push --dir metadata/ --dry-run
 |---------|-------------|-----|
 | `LISTING_NOT_FOUND` | Language not set up in Play Console | Add the language in Console first, then push |
 | Image upload fails | Wrong format or size | Check Google's image requirements (PNG/JPEG, size limits per type) |
-| Truncated description | Exceeds character limit | Title: 50 chars, short desc: 80 chars, full desc: 4000 chars |
+| Truncated description | Exceeds character limit | Title: 30 chars, short desc: 80 chars, full desc: 4000 chars |
 | Push shows no changes | Local files match remote | Confirm edits are saved in the correct file paths |
 | Encoding issues | Non-UTF-8 file encoding | Ensure all text files are UTF-8 encoded |
 

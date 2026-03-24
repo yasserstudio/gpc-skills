@@ -115,14 +115,14 @@ cat ~/.config/gpc/audit.log | jq 'select(.app == "com.example.app")'
 cat ~/.config/gpc/audit.log | jq 'select(.success == false)'
 
 # Filter by date range
-cat ~/.config/gpc/audit.log | jq 'select(.timestamp >= "2025-03-01")'
+cat ~/.config/gpc/audit.log | jq 'select(.timestamp >= "2026-03-01")'
 ```
 
 #### Audit entry structure
 
 ```json
 {
-  "timestamp": "2025-03-09T14:30:00.000Z",
+  "timestamp": "2026-03-09T14:30:00.000Z",
   "command": "releases upload",
   "app": "com.example.app",
   "args": { "track": "beta", "file": "app-release.aab" },

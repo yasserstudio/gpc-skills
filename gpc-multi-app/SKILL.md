@@ -36,7 +36,17 @@ GPC resolves the target app in this order:
 4. User config at `~/.config/gpc/config.json`
 5. Active profile override
 
-### 1. Per-app configuration with profiles
+### 1. Quick health check across all apps
+
+Use `gpc status --all-apps` to check health across all configured apps at once:
+
+```bash
+gpc status --all-apps
+```
+
+This reports the status of every app defined in your profiles or config, without needing to switch profiles or pass `--app` for each one.
+
+### 2. Per-app configuration with profiles
 
 Set up named profiles for each app:
 
@@ -81,7 +91,7 @@ gpc releases list  # uses enterprise profile
 
 `Read:` `references/profile-patterns.md` for advanced profile configurations.
 
-### 2. Project-level .gpcrc.json
+### 3. Project-level .gpcrc.json
 
 For monorepos, place `.gpcrc.json` in each app's directory:
 
@@ -102,7 +112,7 @@ monorepo/
 
 GPC walks up from the current directory to find `.gpcrc.json`, so running commands from each app's directory automatically uses the right package name.
 
-### 3. Batch operations with shell scripts
+### 4. Batch operations with shell scripts
 
 Run the same command across all apps:
 
@@ -122,7 +132,7 @@ for app in "${APPS[@]}"; do
 done
 ```
 
-### 4. Batch vitals check
+### 5. Batch vitals check
 
 ```bash
 #!/bin/bash
@@ -143,7 +153,7 @@ done
 exit $FAILED
 ```
 
-### 5. CI/CD for multiple apps
+### 6. CI/CD for multiple apps
 
 `Read:` `references/ci-multi-app.md` for CI platform-specific multi-app workflows.
 
@@ -176,7 +186,7 @@ jobs:
         run: npx @gpc-cli/cli releases upload ${{ matrix.app.aab }} --track internal
 ```
 
-### 6. Different service accounts per app
+### 7. Different service accounts per app
 
 When apps belong to different developer accounts:
 
@@ -203,7 +213,7 @@ Or use profiles (recommended):
 }
 ```
 
-### 7. Bulk metadata sync
+### 8. Bulk metadata sync
 
 Sync listings for all apps from a shared metadata structure:
 
