@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.5.0 — 2026-03-26
+
+Synced with GPC v0.9.45. Orders API, v2 purchases, subscription v2 cancel/defer.
+
+### Updated Skills
+
+- **gpc-monetization** — Added Orders API commands (`gpc orders get`, `gpc orders batch-get`), product purchases v2 (`gpc purchases product get-v2`), subscription v2 cancel/defer (`cancel-v2`, `defer-v2`), restructured purchase sections, deprecation guidance for subscription refunds via Orders API
+- **gpc-sdk-usage** — Added `getProductV2`, `cancelSubscriptionV2`, `deferSubscriptionV2`, `orders.get`, `orders.batchGet` to API reference
+
+---
+
 ## v1.4.1 — 2026-03-24
 
 Synced with GPC v0.9.44.
