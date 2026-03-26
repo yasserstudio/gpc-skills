@@ -12,11 +12,15 @@ Server-side purchase verification patterns using GPC.
 ## Product purchase verification
 
 ```bash
-# Verify a one-time purchase
+# Verify a one-time purchase (v1 — requires product-id)
 gpc purchases get <product-id> <purchase-token>
+
+# Verify a one-time purchase (v2 — supports multi-offer OTPs, no product-id needed)
+gpc purchases product get-v2 <purchase-token>
 
 # JSON output for parsing
 gpc purchases get <product-id> <purchase-token> --json
+gpc purchases product get-v2 <purchase-token> --json
 ```
 
 ### Purchase states
@@ -83,12 +87,19 @@ gpc purchases subscription get <purchase-token> --json
 ### Subscription lifecycle management
 
 ```bash
-# Cancel (takes effect at end of billing period)
+# Cancel (v1 — takes effect at end of billing period)
 gpc purchases subscription cancel <subscription-id> <token>
 
-# Defer expiry (extend the subscription)
+# Cancel (v2 — supports cancellation types)
+gpc purchases subscription cancel-v2 <token>
+gpc purchases subscription cancel-v2 <token> --type DEVELOPER_CANCELED
+
+# Defer expiry (v1 — extend the subscription)
 gpc purchases subscription defer <subscription-id> <token> \
   --expiry 2025-12-31T00:00:00Z
+
+# Defer expiry (v2 — supports add-on subscriptions)
+gpc purchases subscription defer-v2 <token> --until 2026-07-01T00:00:00Z
 
 # Revoke (immediate termination, v2 API)
 gpc purchases subscription revoke <token>
@@ -121,7 +132,19 @@ gpc purchases voided --start-time 2025-01-01 --json
 | `FRAUD` | Fraudulent transaction |
 | `FRIENDLY_FRAUD` | Chargeback |
 
+## Orders
+
+```bash
+# Get order details
+gpc purchases orders get <order-id>
+
+# Batch retrieve orders (up to 1000)
+gpc purchases orders batch-get --ids "GPA.1234,GPA.5678"
+```
+
 ## Refunds
+
+Google recommends using the Orders API for refunds (the v1 `subscriptions.refund` endpoint is deprecated):
 
 ```bash
 # Full refund
@@ -134,13 +157,18 @@ gpc purchases orders refund <order-id> --prorated-refund
 gpc purchases orders refund <order-id> --full-refund --dry-run
 ```
 
+For subscription refunds, use `gpc purchases subscription get <token> --json` to find the `latestSuccessfulOrderId`, then refund via `gpc purchases orders refund`.
+
 ## CI/CD integration
 
 Automate purchase verification in your backend deployment:
 
 ```bash
-# Verify a test purchase in CI
+# Verify a test purchase in CI (v1)
 gpc purchases get $PRODUCT_ID $TEST_TOKEN --json | jq '.purchaseState'
+
+# Verify a test purchase in CI (v2)
+gpc purchases product get-v2 $TEST_TOKEN --json | jq '.purchaseStateContext.state'
 ```
 
-Exit code 0 means the purchase exists. Check the JSON `purchaseState` field for the actual state.
+Exit code 0 means the purchase exists. Check the JSON state field for the actual state.

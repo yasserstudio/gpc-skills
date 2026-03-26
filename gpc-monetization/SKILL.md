@@ -177,53 +177,7 @@ gpc iap sync --dir products/
 
 Each JSON file in the directory represents one product. GPC compares local files against the Play Store and creates, updates, or deletes as needed.
 
-### 5. Purchase options and one-time products (newer APIs)
-
-#### A. Purchase options
-
-Manage purchase options for subscriptions:
-
-```bash
-# List purchase options for a subscription
-gpc purchase-options list <product-id>
-
-# Get purchase option details
-gpc purchase-options get <product-id> <purchase-option-id>
-
-# Create a purchase option
-gpc purchase-options create <product-id> --file option.json
-
-# Update a purchase option
-gpc purchase-options update <product-id> <purchase-option-id> --file option.json
-
-# Delete a purchase option
-gpc purchase-options delete <product-id> <purchase-option-id>
-```
-
-#### B. One-time products
-
-Manage one-time products (replaces legacy IAP for new integrations):
-
-```bash
-# List one-time products
-gpc one-time-products list
-
-# Get one-time product details
-gpc one-time-products get <product-id>
-
-# Create a one-time product
-gpc one-time-products create --file product.json
-
-# Update a one-time product
-gpc one-time-products update <product-id> --file product.json
-
-# Delete a one-time product
-gpc one-time-products delete <product-id>
-```
-
-All purchase option and one-time product commands support `--dry-run` and `--json`.
-
-### 6. Purchases — verification and lifecycle
+### 5. Purchases — verification and lifecycle
 
 #### A. Product purchases
 
@@ -241,23 +195,47 @@ gpc purchases consume <product-id> <token>
 
 #### B. Subscription purchases
 
-> **Deprecation notice:** The V1 subscription purchase API (`purchases.subscriptions.get`) is deprecated by Google and will be shut down in **August 2027**. Use the V2 API (`purchases.subscriptionsv2.get`) instead. GPC defaults to V2 for all subscription purchase commands.
-
 ```bash
 # Get subscription purchase details (v2 API)
 gpc purchases subscription get <token>
 
-# Cancel a subscription
+# Cancel a subscription (v1 — requires subscription-id)
 gpc purchases subscription cancel <subscription-id> <token>
 
-# Defer expiry to a later date
+# Cancel a subscription (v2 — supports cancellation types)
+gpc purchases subscription cancel-v2 <token>
+gpc purchases subscription cancel-v2 <token> --type DEVELOPER_CANCELED
+
+# Defer expiry to a later date (v1)
 gpc purchases subscription defer <subscription-id> <token> --expiry 2025-06-01T00:00:00Z
+
+# Defer expiry (v2 — supports add-on subscriptions)
+gpc purchases subscription defer-v2 <token> --until 2026-07-01T00:00:00Z
 
 # Revoke a subscription (v2 API)
 gpc purchases subscription revoke <token>
 ```
 
-#### C. Voided purchases and refunds
+#### C. Product purchases (v2 API)
+
+```bash
+# Get product purchase details (v2 — supports multi-offer OTPs)
+gpc purchases product get-v2 <token>
+```
+
+The v2 product purchase API returns `ProductPurchaseV2` with line items, offer details, and multi-product bundle support.
+
+#### D. Orders
+
+```bash
+# Get order details
+gpc purchases orders get <order-id>
+
+# Batch retrieve orders (up to 1000)
+gpc purchases orders batch-get --ids "GPA.1234,GPA.5678"
+```
+
+#### E. Voided purchases and refunds
 
 ```bash
 # List voided purchases
@@ -272,7 +250,7 @@ All write operations support `--dry-run`.
 
 `Read:` `references/purchase-verification.md` for server-side verification patterns and best practices.
 
-### 7. Subscription analytics
+### 6. Subscription analytics
 
 Get insights on subscriber counts, conversion, and churn:
 
@@ -286,7 +264,7 @@ gpc subscriptions analytics --json
 
 Reports: active count, in-trial count, cancelled count, trial-to-paid conversion rate, estimated churn by cohort.
 
-### 8. Base plan price migration
+### 7. Base plan price migration
 
 Migrate existing subscribers to a new price point:
 
@@ -300,7 +278,7 @@ gpc subscriptions base-plans migrate-prices <product-id> <base-plan-id> \
 
 Subscribers are notified by Google Play and must accept or cancel. Use `--dry-run` to preview the migration.
 
-### 9. Regional pricing
+### 8. Regional pricing
 
 Convert a base price to all Google Play supported regions:
 
@@ -314,13 +292,13 @@ gpc pricing convert --from USD --amount 4.99 --json
 
 The conversion uses Google Play's official exchange rates and rounds to locally appropriate price points.
 
-**Note:** `gpc pricing convert` requires the app to have monetization enabled. If the app does not have monetization set up, a friendly error is shown with instructions on how to enable it in Play Console.
-
 ## Verification
 
 - `gpc subscriptions list` returns your subscriptions
 - `gpc iap list` returns your in-app products
-- `gpc purchases get <product-id> <token>` returns purchase details for a valid token
+- `gpc purchases get <product-id> <token>` returns v1 purchase details for a valid token
+- `gpc purchases product get-v2 <token>` returns v2 purchase details with line items
+- `gpc purchases orders get <order-id>` returns order details
 - `gpc pricing convert --from USD --amount 9.99 --json` returns regional prices
 - All `--dry-run` commands show what would change without modifying data
 - JSON output works on all commands (`--json` flag)

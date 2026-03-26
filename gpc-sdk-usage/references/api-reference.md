@@ -100,19 +100,25 @@ client.inappproducts.delete(packageName, sku): Promise<void>
 
 ```typescript
 client.purchases.getProduct(packageName, productId, token): Promise<ProductPurchase>
+client.purchases.getProductV2(packageName, token): Promise<ProductPurchaseV2>
 client.purchases.acknowledgeProduct(packageName, productId, token, body?): Promise<void>
 client.purchases.consumeProduct(packageName, productId, token): Promise<void>
 client.purchases.getSubscriptionV2(packageName, token): Promise<SubscriptionPurchaseV2>
 client.purchases.getSubscriptionV1(packageName, subscriptionId, token): Promise<SubscriptionPurchase>
 client.purchases.cancelSubscription(packageName, subscriptionId, token): Promise<void>
+client.purchases.cancelSubscriptionV2(packageName, token, body?): Promise<void>
 client.purchases.deferSubscription(packageName, subscriptionId, token, body): Promise<DeferralInfo>
+client.purchases.deferSubscriptionV2(packageName, token, body): Promise<DeferralResponse>
 client.purchases.revokeSubscriptionV2(packageName, token): Promise<void>
+client.purchases.refundSubscriptionV2(packageName, token): Promise<void>
 client.purchases.listVoided(packageName, options?): Promise<VoidedPurchaseList>
 ```
 
-### orders — Refunds (no edit needed)
+### orders — Orders and refunds (no edit needed)
 
 ```typescript
+client.orders.get(packageName, orderId): Promise<Order>
+client.orders.batchGet(packageName, orderIds): Promise<Order[]>
 client.orders.refund(packageName, orderId, body?): Promise<void>
 ```
 
