@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.6.0 — 2026-03-26
+
+Synced with GPC v0.9.46. Doctor enhancements, 7 new API endpoints, batch operations, error handling overhaul.
+
+### Updated Skills
+
+- **gpc-setup** — Expanded doctor checks list (6 → 16), added token verification on login, `auth logout --profile`, `--json` auth output
+- **gpc-onboarding** — Updated doctor `--fix` capabilities (token cache fix), documented expanded check list
+- **gpc-release-flow** — Added `releases.list` lifecycle visibility (DRAFT, IN_REVIEW, PUBLISHED states)
+- **gpc-monetization** — Added `subscriptions batch-get/batch-update`, `iap batch-delete`, `purchases subscription acknowledge`
+- **gpc-sdk-usage** — Added 7 new client methods: `releases.list`, `tracks.patch`, `subscriptions.batchGet/batchUpdate`, `purchases.acknowledgeSubscription`, `inappproducts.batchDelete`
+- **gpc-troubleshooting** — Fixed `ApiError` → `PlayApiError` in exit codes reference
+- **README** — Compatibility updated to GPC v0.9.46+
+
+---
+
 ## v1.5.0 — 2026-03-26
 
 Synced with GPC v0.9.45. Orders API, v2 purchases, subscription v2 cancel/defer.

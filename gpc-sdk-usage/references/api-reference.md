@@ -35,6 +35,13 @@ client.bundles.upload(packageName, editId, filePath): Promise<Bundle>
 client.tracks.list(packageName, editId): Promise<Track[]>
 client.tracks.get(packageName, editId, track): Promise<Track>
 client.tracks.update(packageName, editId, track, release): Promise<Track>
+client.tracks.patch(packageName, editId, track, release): Promise<Track>
+```
+
+### releases — Release lifecycle (no edit needed)
+
+```typescript
+client.releases.list(packageName, track): Promise<ReleaseSummary[]>
 ```
 
 ### listings — Store listings
@@ -73,6 +80,8 @@ client.subscriptions.get(packageName, productId): Promise<Subscription>
 client.subscriptions.create(packageName, data): Promise<Subscription>
 client.subscriptions.update(packageName, productId, data, updateMask?): Promise<Subscription>
 client.subscriptions.delete(packageName, productId): Promise<void>
+client.subscriptions.batchGet(packageName, productIds): Promise<Subscription[]>
+client.subscriptions.batchUpdate(packageName, requests): Promise<SubscriptionsBatchUpdateResponse>
 client.subscriptions.activateBasePlan(packageName, productId, basePlanId): Promise<void>
 client.subscriptions.deactivateBasePlan(packageName, productId, basePlanId): Promise<void>
 client.subscriptions.deleteBasePlan(packageName, productId, basePlanId): Promise<void>
@@ -94,6 +103,7 @@ client.inappproducts.get(packageName, sku): Promise<InAppProduct>
 client.inappproducts.create(packageName, data): Promise<InAppProduct>
 client.inappproducts.update(packageName, sku, data): Promise<InAppProduct>
 client.inappproducts.delete(packageName, sku): Promise<void>
+client.inappproducts.batchDelete(packageName, skus): Promise<void>
 ```
 
 ### purchases — Purchase verification (no edit needed)
@@ -111,6 +121,7 @@ client.purchases.deferSubscription(packageName, subscriptionId, token, body): Pr
 client.purchases.deferSubscriptionV2(packageName, token, body): Promise<DeferralResponse>
 client.purchases.revokeSubscriptionV2(packageName, token): Promise<void>
 client.purchases.refundSubscriptionV2(packageName, token): Promise<void>
+client.purchases.acknowledgeSubscription(packageName, subscriptionId, token, body?): Promise<void>
 client.purchases.listVoided(packageName, options?): Promise<VoidedPurchaseList>
 ```
 

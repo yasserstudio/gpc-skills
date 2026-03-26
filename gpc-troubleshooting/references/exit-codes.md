@@ -10,7 +10,7 @@ Complete reference for all GPC exit codes and their meaning.
 | 1 | Config | `ConfigError` | Invalid config, missing fields, bad .gpcrc.json |
 | 2 | Usage | — | Invalid arguments, unknown flags, missing required args |
 | 3 | Auth | `AuthError` | Bad credentials, expired token, no auth configured |
-| 4 | API | `ApiError` | Google Play API returned an error (4xx, 5xx) |
+| 4 | API | `PlayApiError` | Google Play API returned an error (4xx, 5xx) |
 | 5 | Network | `NetworkError` | Connection failed, timeout, DNS error, SSL error |
 | 6 | Threshold | — | Vitals metric exceeded `--threshold` value |
 | 10 | Plugin | — | Plugin permission validation failed |

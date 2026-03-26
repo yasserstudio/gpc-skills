@@ -80,7 +80,9 @@ gpc doctor          # show current health
 gpc doctor --fix    # auto-fix what can be fixed
 ```
 
-Each failing check displays a suggestion. `--fix` applies those suggestions automatically where possible. Issues that require manual steps (e.g., Play Console API access grants) are shown with instructions but cannot be auto-fixed.
+Each failing check displays a suggestion. `--fix` applies those suggestions automatically where possible. Auto-fixable issues include corrupt or stale token cache (cleared and refreshed automatically), missing config keys, and outdated GPC versions. Issues that require manual steps (e.g., Play Console API access grants, service account key rotation) are shown with instructions but cannot be auto-fixed.
+
+**v0.9.46+:** `gpc doctor` now runs 16 checks (up from 6), including GPC version check, HTTPS connectivity probe, app access verification, service account key age warning (>90 days), conflicting credentials detection, config unknown keys validation, token cache health, disk space check, CI environment detection, and DNS latency.
 
 ## Procedure
 

@@ -73,6 +73,8 @@ Once the wizard completes, or if you already have a key file:
 gpc auth login --service-account path/to/key.json
 ```
 
+**v0.9.46+:** `gpc auth login` now verifies the token works (makes a test API call) before confirming success. If verification fails, it reports the error immediately instead of silently storing bad credentials.
+
 Or via environment variable (preferred in CI):
 ```bash
 export GPC_SERVICE_ACCOUNT=path/to/key.json
@@ -157,7 +159,11 @@ gpc auth profiles              # List profiles
 gpc auth switch production     # Switch active profile
 gpc auth whoami                # Show current identity
 gpc auth status                # Show auth state details
+gpc auth logout                # Log out of active profile
+gpc auth logout --profile ci   # Log out of a specific profile
 ```
+
+All auth commands support `--json` output (e.g., `gpc auth status --json`, `gpc auth whoami --json`).
 
 Use `--profile` flag to override per-command:
 ```bash
@@ -172,11 +178,21 @@ gpc doctor
 
 Checks:
 - Node.js version (≥ 20)
+- GPC version check (warns if outdated)
 - Configuration loaded
+- Config unknown keys validation (warns on unrecognized keys in `.gpcrc.json`)
 - Default app set and valid Android package name format
+- App access verification (confirms the configured app is accessible via the API)
 - Authentication valid
+- Conflicting credentials detection (warns if multiple auth methods are active)
+- Service account key age (warns if key is older than 90 days)
+- Token cache health (verifies cached tokens are valid and not corrupt)
 - API connectivity (googleapis.com + playdeveloperreporting.googleapis.com)
+- HTTPS connectivity probe (verifies TLS handshake to Google endpoints)
+- DNS latency (warns if DNS resolution is slow)
 - Proxy configuration (if set)
+- Disk space check (warns if disk space is critically low)
+- CI environment detection (detects CI platform and adjusts checks accordingly)
 
 JSON output is supported: `gpc doctor --json` or `gpc doctor --output json`.
 

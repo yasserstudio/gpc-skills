@@ -82,7 +82,18 @@ gpc subscriptions update <product-id> --file updated.json --dry-run
 
 The `--update-mask` flag controls which fields are updated. Omit it to replace the entire subscription.
 
-#### D. Delete a subscription
+#### D. Batch operations
+
+```bash
+# Batch-get multiple subscriptions at once
+gpc subscriptions batch-get <id1> <id2> <id3>
+
+# Batch-update multiple subscriptions from JSON
+gpc subscriptions batch-update --file batch-updates.json --dry-run
+gpc subscriptions batch-update --file batch-updates.json
+```
+
+#### E. Delete a subscription
 
 ```bash
 gpc subscriptions delete <product-id> --dry-run
@@ -163,7 +174,15 @@ gpc iap delete <sku>
 
 `Read:` `references/iap-schema.md` for the JSON structure and field reference.
 
-#### C. Sync from directory
+#### C. Batch delete
+
+```bash
+# Delete multiple IAP products at once
+gpc iap batch-delete <sku1> <sku2> <sku3> --dry-run
+gpc iap batch-delete <sku1> <sku2> <sku3>
+```
+
+#### D. Sync from directory
 
 Bulk-manage IAP products from a directory of JSON files:
 
@@ -196,6 +215,10 @@ gpc purchases consume <product-id> <token>
 #### B. Subscription purchases
 
 ```bash
+# Acknowledge a subscription purchase (v1 — required within 3 days)
+gpc purchases subscription acknowledge <subscription-id> <token>
+gpc purchases subscription acknowledge <subscription-id> <token> --payload "order-456"
+
 # Get subscription purchase details (v2 API)
 gpc purchases subscription get <token>
 

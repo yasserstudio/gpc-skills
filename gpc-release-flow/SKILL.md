@@ -122,7 +122,17 @@ gpc diff --from internal --to production
 gpc diff --metadata fastlane/metadata
 ```
 
-### 3c) Release stats and history
+### 3c) Release lifecycle visibility
+
+```bash
+# List releases on a track with lifecycle states (DRAFT, IN_REVIEW, PUBLISHED, etc.)
+gpc releases list --track production
+gpc releases list --track beta --json
+```
+
+> **New in v0.9.46:** The `releases.list` endpoint provides release lifecycle states without opening an edit session. Use it to check whether a release is still in review, has been published, or is in draft — useful for CI pipelines that need to gate on review completion.
+
+### 3d) Release stats and history
 
 ```bash
 # Release count per track with status breakdown
