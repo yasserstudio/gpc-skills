@@ -16,16 +16,16 @@ npx skills add yasserstudio/gpc-skills
 |-------|-------------|
 | **gpc-setup** | Authentication (service account, OAuth, ADC), configuration, profiles, `gpc doctor` |
 | **gpc-onboarding** | First-run guided setup, `gpc quickstart`, `gpc init`, `gpc auth` wizard |
-| **gpc-release-flow** | Upload AAB, create releases, promote tracks, staged rollouts, `gpc publish`, `gpc diff` |
+| **gpc-release-flow** | Upload AAB/APK, create releases, draft releases, promote tracks, staged rollouts, `gpc publish`, `gpc diff` |
 | **gpc-metadata-sync** | Store listings, screenshots, images, Fastlane metadata compatibility, pull/push |
-| **gpc-vitals-monitoring** | Crash rates, ANR, startup, LMK, vitals thresholds, reviews, reports |
+| **gpc-vitals-monitoring** | Crash rates, ANR, startup, LMK, vitals thresholds, reviews (auto-paginate), reports |
 | **gpc-ci-integration** | GitHub Actions, GitLab CI, Bitbucket, CircleCI, JSON output, exit codes |
-| **gpc-monetization** | Subscriptions, IAP, one-time products, purchase options, pricing, regional conversion |
+| **gpc-monetization** | Subscriptions, IAP, one-time products, RTDN notifications, voided purchases, pricing, regional conversion |
 | **gpc-user-management** | Developer account users, permissions, grants, testers, CSV import |
 | **gpc-migrate-fastlane** | Fastlane-to-GPC migration, command mapping, CI migration |
 | **gpc-plugin-development** | Plugin SDK, lifecycle hooks, permissions, custom commands |
 | **gpc-troubleshooting** | Exit codes, error catalog (40+ codes), debug mode, common fixes |
-| **gpc-sdk-usage** | @gpc-cli/api and @gpc-cli/auth as standalone TypeScript SDK |
+| **gpc-sdk-usage** | @gpc-cli/api and @gpc-cli/auth as standalone TypeScript SDK, 6-bucket rate limiter |
 | **gpc-multi-app** | Multiple apps, profiles, batch operations, monorepo patterns |
 | **gpc-security** | Credential storage, key rotation, audit logging, incident response |
 | **gpc-preflight** | Offline AAB compliance scanner (9 scanners), `.preflightrc.json` config |
@@ -56,15 +56,21 @@ gpc-<skill>/
 |------|-------|
 | "Set up GPC for the first time" | `gpc-setup` |
 | "Upload an AAB to the Play Store" | `gpc-release-flow` |
+| "Upload an APK to the Play Store" | `gpc-release-flow` |
+| "Create a draft release for review" | `gpc-release-flow` |
 | "Promote beta to production" | `gpc-release-flow` |
 | "Sync store listings from local files" | `gpc-metadata-sync` |
 | "Check crash rate before promoting" | `gpc-vitals-monitoring` |
 | "Reply to negative reviews" | `gpc-vitals-monitoring` |
+| "Fetch all reviews with auto-pagination" | `gpc-vitals-monitoring` |
 | "Set up GPC in GitHub Actions" | `gpc-ci-integration` |
 | "Automate staged rollout in CI" | `gpc-ci-integration` + `gpc-release-flow` |
 | "Create a subscription with a free trial" | `gpc-monetization` |
 | "Sync IAP products from JSON files" | `gpc-monetization` |
 | "Verify a purchase token" | `gpc-monetization` |
+| "Decode a Pub/Sub notification from Play" | `gpc-monetization` |
+| "Set up RTDN for subscriptions" | `gpc-monetization` |
+| "List voided purchases including subscriptions" | `gpc-monetization` |
 | "Invite a team member to Play Console" | `gpc-user-management` |
 | "Import beta testers from CSV" | `gpc-user-management` |
 | "Migrate from Fastlane supply" | `gpc-migrate-fastlane` |
@@ -81,6 +87,7 @@ gpc-<skill>/
 | "Automate staged rollout with crash gates" | `gpc-train` |
 | "First time setting up GPC" | `gpc-onboarding` |
 | "Show what changed in the latest release" | `gpc-release-flow` |
+| "Configure rate limiting for API calls" | `gpc-sdk-usage` |
 
 ## Reference Files Index
 
