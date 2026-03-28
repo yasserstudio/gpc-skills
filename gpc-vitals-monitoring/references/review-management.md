@@ -36,11 +36,8 @@ Shows full review text, user info, star rating, and device info.
 ## Replying to Reviews
 
 ```bash
-# Inline reply
-gpc reviews reply <review-id> "Thank you for your feedback"
-
-# From file (for longer replies)
-gpc reviews reply <review-id> --file reply.txt
+# Inline reply (max 350 characters — validated before sending)
+gpc reviews reply <review-id> --text "Thank you for your feedback"
 ```
 
 ### Reply Best Practices
