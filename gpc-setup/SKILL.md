@@ -193,8 +193,11 @@ Checks:
 - Proxy configuration (if set)
 - Disk space check (warns if disk space is critically low)
 - CI environment detection (detects CI platform and adjusts checks accordingly)
+- Developer ID format validation (must be a long numeric string)
 
 JSON output is supported: `gpc doctor --json` or `gpc doctor --output json`.
+
+> **New in v0.9.47:** Developer ID format validation added. If `developerId` is set in config, doctor verifies it looks like a valid numeric developer ID.
 
 ### 5) Network configuration (if needed)
 

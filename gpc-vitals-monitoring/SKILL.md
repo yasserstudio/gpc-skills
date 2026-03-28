@@ -187,6 +187,8 @@ gpc vitals anomalies
 gpc vitals errors search
 ```
 
+> **New in v0.9.47:** If the Reporting API is not enabled for your GCP project, vitals and anomalies commands now show a helpful message with the enable URL instead of a raw 403 error. Non-vitals commands continue to work normally.
+
 ### 6) Review sentiment analysis
 
 Local NLP-based sentiment analysis of reviews — no external API required:
@@ -234,13 +236,17 @@ gpc reviews list --since 7d
 # Single review details
 gpc reviews get <review-id>
 
-# Reply to a review
-gpc reviews reply <review-id> "Thank you for your feedback"
-gpc reviews reply <review-id> --file reply.txt
+# Reply to a review (max 350 chars — validated before sending)
+gpc reviews reply <review-id> --text "Thank you for your feedback"
+
+# Auto-paginate all reviews (API returns max 10 per page by default)
+gpc reviews list --all
 
 # Export reviews
 gpc reviews export --format csv --output reviews.csv
 ```
+
+> **New in v0.9.47:** `--all` auto-paginates through all review pages. Reply text is validated against the 350-character Google Play limit before sending — exceeding the limit exits code 2 immediately. Note: the Reviews API only returns production reviews from the last 7 days.
 
 Read:
 - `references/review-management.md`

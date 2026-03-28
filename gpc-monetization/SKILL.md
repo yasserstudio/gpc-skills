@@ -261,19 +261,46 @@ gpc purchases orders batch-get --ids "GPA.1234,GPA.5678"
 #### E. Voided purchases and refunds
 
 ```bash
-# List voided purchases
+# List voided purchases (default: in-app only)
 gpc purchases voided --start-time 2025-01-01 --end-time 2025-03-01
+
+# Include subscription voids (type=1)
+gpc purchases voided --type 1
+
+# Include quantity-based partial refunds
+gpc purchases voided --include-partial-refunds
 
 # Refund an order
 gpc purchases orders refund <order-id> --full-refund
 gpc purchases orders refund <order-id> --prorated-refund
 ```
 
+> **New in v0.9.47:** `--type 0` (default) returns only in-app purchase voids. `--type 1` includes subscription voids. `--include-partial-refunds` includes quantity-based partial refunds.
+
 All write operations support `--dry-run`.
 
 `Read:` `references/purchase-verification.md` for server-side verification patterns and best practices.
 
-### 6. Subscription analytics
+### 6. Real-Time Developer Notifications (RTDN)
+
+RTDN delivers Pub/Sub messages when subscription and purchase events occur. GPC can decode and inspect these notifications.
+
+```bash
+# Check RTDN topic configuration
+gpc rtdn status
+
+# Decode a base64-encoded Pub/Sub notification payload
+gpc rtdn decode <base64-payload>
+
+# Show setup instructions for RTDN
+gpc rtdn test
+```
+
+Notification types include: `SUBSCRIPTION_PURCHASED`, `SUBSCRIPTION_CANCELED`, `SUBSCRIPTION_RENEWED`, `SUBSCRIPTION_REVOKED`, `SUBSCRIPTION_EXPIRED`, `ONE_TIME_PRODUCT_PURCHASED`, `VOIDED_PURCHASE`, and more.
+
+> **New in v0.9.47:** RTDN commands help debug subscription lifecycle events. Set up a Pub/Sub topic in GCP, configure it in Play Console > Monetization setup, and use `gpc rtdn decode` to inspect payloads.
+
+### 7. Subscription analytics
 
 Get insights on subscriber counts, conversion, and churn:
 
@@ -287,7 +314,7 @@ gpc subscriptions analytics --json
 
 Reports: active count, in-trial count, cancelled count, trial-to-paid conversion rate, estimated churn by cohort.
 
-### 7. Base plan price migration
+### 8. Base plan price migration
 
 Migrate existing subscribers to a new price point:
 
@@ -301,7 +328,7 @@ gpc subscriptions base-plans migrate-prices <product-id> <base-plan-id> \
 
 Subscribers are notified by Google Play and must accept or cancel. Use `--dry-run` to preview the migration.
 
-### 8. Regional pricing
+### 9. Regional pricing
 
 Convert a base price to all Google Play supported regions:
 

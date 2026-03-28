@@ -186,19 +186,35 @@ const all = await paginateAll(
 
 ### 6. Rate limiting
 
-Configure rate limits to avoid API throttling:
+Since v0.9.47, `createApiClient()` automatically applies rate limiting to all API calls using Google's 6-bucket model (3,000 queries/min each). No manual configuration needed:
+
+```typescript
+// Rate limiting is automatic — all calls are throttled by resource type
+const client = createApiClient({ auth });
+// Buckets: edits, purchases, reviews, reporting, monetization, default
+```
+
+To customize rate limits (e.g., for shared quota across multiple processes):
 
 ```typescript
 import { createRateLimiter, RATE_LIMIT_BUCKETS } from "@gpc-cli/api";
 
+// Override specific buckets
 const limiter = createRateLimiter([
-  RATE_LIMIT_BUCKETS.default,
-  RATE_LIMIT_BUCKETS.reviewsGet,
-  RATE_LIMIT_BUCKETS.reviewsPost,
+  { ...RATE_LIMIT_BUCKETS.edits, maxTokens: 1500 },     // Half of default
+  { ...RATE_LIMIT_BUCKETS.purchases, maxTokens: 1500 },
 ]);
 
 const client = createApiClient({ auth, rateLimiter: limiter });
 ```
+
+The `resolveBucket(path)` function maps API paths to buckets automatically:
+- `/edits/` paths → `edits` bucket
+- `/purchases/`, `/orders` → `purchases` bucket
+- `/reviews` → `reviews` bucket
+- Reporting API → `reporting` bucket
+- `/subscriptions`, `/oneTimeProducts`, `/inappproducts` → `monetization` bucket
+- Everything else → `default` bucket
 
 ### 7. Error handling
 

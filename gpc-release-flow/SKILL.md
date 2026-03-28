@@ -24,7 +24,7 @@ Use this skill when the task involves:
 ## Inputs required
 
 - Path to AAB/APK file
-- Target track (internal, alpha, beta, production, or custom)
+- Target track (internal, qa, alpha, beta, production, or custom; form factor tracks: `wear:`, `automotive:`, `tv:`, `android_xr:`, `google_play_games_pc:`)
 - Rollout percentage (for staged rollouts)
 - Release notes (inline or from file)
 - Whether `--dry-run` is desired (preview without executing)
@@ -67,13 +67,21 @@ For more control, use individual commands:
 # Upload AAB (creates edit, uploads, assigns to track)
 gpc releases upload app-release.aab --track internal
 
+# Upload APK (auto-detected by extension, uses edits.apks.upload)
+gpc releases upload app-release.apk --track internal
+
 # Upload with staged rollout
 gpc releases upload app-release.aab --track production --rollout 10
+
+# Upload as draft (review in Play Console before going live)
+gpc releases upload app-release.aab --track production --status draft
 
 # Set release notes
 gpc releases notes set --track beta --lang en-US --notes "Bug fixes"
 gpc releases notes set --track beta --file release-notes/  # From directory
 ```
+
+> **New in v0.9.47:** APK files are auto-detected and uploaded via the correct `edits.apks.upload` endpoint. Use `--status draft` to create draft releases for manual review in the Play Console before going live.
 
 Read:
 - `references/upload-lifecycle.md`
@@ -105,6 +113,9 @@ gpc releases promote --from beta --to production --rollout 5
 
 # Copy release notes from another track when promoting
 gpc releases promote --from internal --to production --copy-notes-from internal
+
+# Promote as draft (review in Play Console before going live)
+gpc releases promote --from internal --to beta --status draft
 ```
 
 > **Note:** Since v0.9.39, `gpc releases promote` auto-retries once on 409 EDIT_CONFLICT (another edit is open).
@@ -140,7 +151,7 @@ gpc releases count
 
 # Show release history from GitHub
 gpc changelog
-gpc changelog --version v0.9.44
+gpc changelog --tag v0.9.47
 ```
 
 ### 4) Manage staged rollouts

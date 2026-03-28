@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.7.0 — 2026-03-28
+
+Synced with GPC v0.9.47. RTDN commands, APK upload, rate limiter rewrite, draft releases, batch endpoints.
+
+### Updated Skills
+
+- **gpc-release-flow** — Added APK upload procedure, `--status draft` workflow, fixed `--version` → `--tag` on changelog command
+- **gpc-vitals-monitoring** — Added `--all` auto-pagination for reviews, 350-char reply validation, graceful 403 degradation note for disabled Reporting API
+- **gpc-monetization** — Added RTDN section (`gpc rtdn status/decode/test`), voided purchases `--type` and `--include-partial-refunds` flags
+- **gpc-sdk-usage** — Updated rate limiter docs with 6-bucket model (3,000 queries/min each), auto rate-limiting for all API calls
+- **gpc-setup** — Added developer ID format validation to doctor checks, `qa` and `google_play_games_pc` form factor tracks
+- **README** — Compatibility updated to GPC v0.9.47+
+
+---
+
 ## v1.6.0 — 2026-03-26
 
 Synced with GPC v0.9.46. Doctor enhancements, 7 new API endpoints, batch operations, error handling overhaul.
