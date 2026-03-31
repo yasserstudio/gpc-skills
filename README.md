@@ -28,7 +28,7 @@ npx skills add yasserstudio/gpc-skills
 | **gpc-sdk-usage** | @gpc-cli/api and @gpc-cli/auth as standalone TypeScript SDK, 6-bucket rate limiter |
 | **gpc-multi-app** | Multiple apps, profiles, batch operations, monorepo patterns |
 | **gpc-security** | Credential storage, key rotation, audit logging, supply chain protection (12 layers), incident response |
-| **gpc-preflight** | Offline AAB compliance scanner (9 scanners), `.preflightrc.json` config |
+| **gpc-preflight** | Offline AAB/APK compliance scanner (9 scanners), `.preflightrc.json` config |
 | **gpc-train** | Automated staged rollout pipeline with crash/ANR gates and time gates |
 
 ## Skill Structure
@@ -88,6 +88,10 @@ gpc-<skill>/
 | "First time setting up GPC" | `gpc-onboarding` |
 | "Show what changed in the latest release" | `gpc-release-flow` |
 | "Configure rate limiting for API calls" | `gpc-sdk-usage` |
+| "Check Android developer verification status" | `gpc-setup` |
+| "Harden supply chain security" | `gpc-security` |
+| "Open docs from the terminal" | `gpc-setup` |
+| "Scan APK for policy violations" | `gpc-preflight` |
 
 ## Reference Files Index
 
