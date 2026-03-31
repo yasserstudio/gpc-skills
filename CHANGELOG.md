@@ -1,6 +1,21 @@
 # Changelog
 
-## v1.7.0 — 2026-03-28
+## v1.8.0 -- 2026-03-31
+
+Synced with GPC v0.9.50. Security hardening, supply chain protection, developer verification, expanded docs.
+
+### Updated Skills
+
+- **gpc-security** -- Added 12-layer supply chain protection table (Socket.dev CI, SHA-pinned Actions, SBOM, pnpm audit gate, CODEOWNERS, min-release-age), developer verification section (`gpc verify`)
+- **gpc-setup** -- Added `gpc auth setup-gcp --key` shortcut, expanded doctor checks (20 total with descriptions), added `gpc verify` and `gpc docs` (58 topics) sections
+- **gpc-onboarding** -- Added `--key` shortcut for `setup-gcp`, added `gpc verify` and `gpc docs --list` to post-setup commands
+- **gpc-release-flow** -- Added APK upload examples, `--status draft` on upload and promote, RTDN commands section (`gpc rtdn status/decode/test`)
+- **gpc-preflight** -- Added APK support throughout (description, quick reference, procedures), developer verification reminder note
+- **gpc-ci-integration** -- Added supply chain security section (version pinning, Socket.dev CI pattern), APK upload examples, draft release workflow
+
+---
+
+## v1.7.0 -- 2026-03-28
 
 Synced with GPC v0.9.47. RTDN commands, APK upload, rate limiter rewrite, draft releases, batch endpoints.
 

@@ -65,15 +65,21 @@ This fully interactive wizard walks through every step required to connect GPC t
 4. Downloading the JSON key file to your machine
 5. Running `gpc auth login` with the downloaded key
 
-No flags needed — just run the command and follow the prompts. Ideal for first-time setup on any machine.
+No flags needed -- just run the command and follow the prompts. Ideal for first-time setup on any machine.
+
+**Already have a key file?** Skip the wizard with `--key`:
+
+```bash
+gpc auth setup-gcp --key /path/to/service-account.json
+```
+
+This validates the JSON, authenticates, and saves to config in one step.
 
 Once the wizard completes, or if you already have a key file:
 
 ```bash
 gpc auth login --service-account path/to/key.json
 ```
-
-**v0.9.46+:** `gpc auth login` now verifies the token works (makes a test API call) before confirming success. If verification fails, it reports the error immediately instead of silently storing bad credentials.
 
 Or via environment variable (preferred in CI):
 ```bash
@@ -106,13 +112,6 @@ gpc apps list
 
 ### 2) Configure defaults
 
-#### Project scaffolding (recommended for new projects):
-```bash
-gpc init --app com.example.app
-```
-
-For new projects, `gpc init --app com.example.app` scaffolds `.gpcrc.json`, `.preflightrc.json`, metadata directory, and CI templates in one command.
-
 #### Interactive setup wizard:
 ```bash
 gpc config init
@@ -143,9 +142,6 @@ Guided wizard that:
 | `GPC_NO_COLOR` | Disable color output |
 | `GPC_NO_INTERACTIVE` | Disable interactive prompts |
 | `GPC_SKIP_KEYCHAIN` | Skip OS keychain, use file storage |
-| `GPC_UPLOAD_TIMEOUT` | Upload timeout in ms |
-| `GPC_UPLOAD_CHUNK_SIZE` | Resumable upload chunk size in bytes |
-| `GPC_DEBUG` | Enable verbose debug output (`GPC_DEBUG=1`) |
 
 Read:
 - `references/configuration.md`
@@ -159,11 +155,7 @@ gpc auth profiles              # List profiles
 gpc auth switch production     # Switch active profile
 gpc auth whoami                # Show current identity
 gpc auth status                # Show auth state details
-gpc auth logout                # Log out of active profile
-gpc auth logout --profile ci   # Log out of a specific profile
 ```
-
-All auth commands support `--json` output (e.g., `gpc auth status --json`, `gpc auth whoami --json`).
 
 Use `--profile` flag to override per-command:
 ```bash
@@ -176,28 +168,44 @@ gpc apps list --profile staging
 gpc doctor
 ```
 
-Checks:
+Checks (20 total):
 - Node.js version (≥ 20)
-- GPC version check (warns if outdated)
 - Configuration loaded
-- Config unknown keys validation (warns on unrecognized keys in `.gpcrc.json`)
 - Default app set and valid Android package name format
-- App access verification (confirms the configured app is accessible via the API)
 - Authentication valid
-- Conflicting credentials detection (warns if multiple auth methods are active)
-- Service account key age (warns if key is older than 90 days)
-- Token cache health (verifies cached tokens are valid and not corrupt)
 - API connectivity (googleapis.com + playdeveloperreporting.googleapis.com)
-- HTTPS connectivity probe (verifies TLS handshake to Google endpoints)
-- DNS latency (warns if DNS resolution is slow)
 - Proxy configuration (if set)
-- Disk space check (warns if disk space is critically low)
-- CI environment detection (detects CI platform and adjusts checks accordingly)
-- Developer ID format validation (must be a long numeric string)
+- GPC version (suggests update if outdated)
+- HTTPS probe
+- App access verification
+- Service account key age
+- Unknown config keys
+- Token cache health
+- Disk space
+- CI detection
+- Developer verification status
+
+Use `gpc doctor --fix` to auto-remediate fixable issues (version, auth, config keys).
 
 JSON output is supported: `gpc doctor --json` or `gpc doctor --output json`.
 
-> **New in v0.9.47:** Developer ID format validation added. If `developerId` is set in config, doctor verifies it looks like a valid numeric developer ID.
+### 5a) Check developer verification
+
+```bash
+gpc verify              # Status, deadlines, resources
+gpc verify --open       # Open verification page in browser
+```
+
+Google's Android developer verification enforcement begins September 2026 for BR, ID, SG, TH. `gpc doctor` includes this as check #20.
+
+### 5b) Browse documentation from CLI
+
+```bash
+gpc docs                          # Open docs site
+gpc docs releases                 # Open releases command reference
+gpc docs developer-verification   # Open verification guide
+gpc docs --list                   # List all 58 topics
+```
 
 ### 5) Network configuration (if needed)
 
@@ -210,7 +218,7 @@ export GPC_CA_CERT=/path/to/ca-bundle.crt
 
 Retry configuration:
 ```bash
-export GPC_MAX_RETRIES=5
+export GPC_MAX_RETRIES=3
 export GPC_TIMEOUT=30000
 export GPC_BASE_DELAY=1000
 export GPC_MAX_DELAY=60000

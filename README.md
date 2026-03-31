@@ -27,7 +27,7 @@ npx skills add yasserstudio/gpc-skills
 | **gpc-troubleshooting** | Exit codes, error catalog (40+ codes), debug mode, common fixes |
 | **gpc-sdk-usage** | @gpc-cli/api and @gpc-cli/auth as standalone TypeScript SDK, 6-bucket rate limiter |
 | **gpc-multi-app** | Multiple apps, profiles, batch operations, monorepo patterns |
-| **gpc-security** | Credential storage, key rotation, audit logging, incident response |
+| **gpc-security** | Credential storage, key rotation, audit logging, supply chain protection (12 layers), incident response |
 | **gpc-preflight** | Offline AAB compliance scanner (9 scanners), `.preflightrc.json` config |
 | **gpc-train** | Automated staged rollout pipeline with crash/ANR gates and time gates |
 
@@ -194,7 +194,7 @@ gpc-<skill>/
 
 ## Compatibility
 
-- GPC v0.9.47+ (`npm install -g @gpc-cli/cli`)
+- GPC v0.9.50+ (`npm install -g @gpc-cli/cli`)
 - Node.js 20+ (or standalone binary)
 - Google Play Developer API access (service account)
 

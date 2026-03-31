@@ -1,7 +1,7 @@
 ---
 name: gpc-preflight
-description: "Use when scanning an AAB for Google Play policy compliance before submission. Trigger when the user mentions preflight, compliance check, policy scan, pre-submission check, or wants to verify their AAB meets Google Play requirements. Also trigger for questions about restricted permissions, target SDK requirements, 64-bit compliance, hardcoded secrets detection, or Data Safety form reminders."
-compatibility: "GPC v0.9.39+. No API calls — entirely offline."
+description: "Use when scanning an AAB or APK for Google Play policy compliance before submission. Trigger when the user mentions preflight, compliance check, policy scan, pre-submission check, or wants to verify their AAB/APK meets Google Play requirements. Also trigger for questions about restricted permissions, target SDK requirements, 64-bit compliance, hardcoded secrets detection, or Data Safety form reminders."
+compatibility: "GPC v0.9.39+ (APK support added in v0.9.47). No API calls -- entirely offline."
 metadata:
   version: 1.0.0
 ---
@@ -12,7 +12,7 @@ metadata:
 
 Use this skill when the task involves:
 
-- Scanning an AAB file before uploading to Google Play
+- Scanning an AAB or APK file before uploading to Google Play
 - Checking target SDK version compliance
 - Auditing permissions against Google Play policies
 - Verifying 64-bit native library support
@@ -24,8 +24,9 @@ Use this skill when the task involves:
 ## Quick reference
 
 ```bash
-# Full scan
+# Full scan (AAB or APK)
 gpc preflight app.aab
+gpc preflight app.apk
 
 # With metadata and source scanning
 gpc preflight app.aab --metadata fastlane/metadata/android --source app/src
@@ -90,11 +91,14 @@ gpc preflight app.aab --fail-on error --json
 
 ### Running a full preflight scan
 
-1. Build your AAB: `./gradlew bundleRelease`
+1. Build your AAB or APK: `./gradlew bundleRelease` (or `assembleRelease` for APK)
 2. Run: `gpc preflight app/build/outputs/bundle/release/app-release.aab`
+   Or for APK: `gpc preflight app/build/outputs/apk/release/app-release.apk`
 3. Fix any critical/error findings
 4. Add a `.preflightrc.json` to allow approved permissions or disable false positives
 5. Re-run until clean
+
+Note: After the scan, GPC shows a reminder about Android developer verification requirements (September 2026 enforcement for BR, ID, SG, TH). Run `gpc verify` for details.
 
 ### Adding to CI
 
@@ -116,19 +120,3 @@ gpc preflight app.aab --fail-on error --json
 - `gpc-ci-integration` — CI/CD patterns including preflight gates
 - `gpc-troubleshooting` — exit code 6 handling
 - `gpc-security` — credential handling and key rotation
-
-## Known limitations
-
-### Manifest parsing on large AABs
-
-Some large or complex AABs have binary manifests that the protobuf decoder cannot fully parse. When this happens, GPC does **not** crash — instead it:
-
-1. Emits a **warning** finding: "Manifest could not be fully parsed"
-2. **Skips** manifest-dependent scanners (manifest, permissions, policy, privacy)
-3. **Runs** all other scanners normally (native-libs, size, secrets, billing)
-
-To run manifest checks separately, use the metadata scanner:
-
-```bash
-gpc preflight --metadata fastlane/metadata/android
-```

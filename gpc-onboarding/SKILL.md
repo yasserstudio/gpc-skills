@@ -1,7 +1,7 @@
 ---
 name: gpc-onboarding
 description: "Use when a user is setting up GPC for the first time or going through initial configuration. Trigger when the user mentions gpc quickstart, first-time setup, initial configuration, onboarding, getting started, service account creation, doctor --fix, auth setup-gcp — even if they don't say 'onboarding.' Also trigger when someone is brand new to GPC and needs guided setup."
-compatibility: "GPC v0.9.38+. For existing config issues, see gpc-setup. For troubleshooting, see gpc-troubleshooting."
+compatibility: "GPC v0.9.35+. For existing config issues, see gpc-setup. For troubleshooting, see gpc-troubleshooting."
 metadata:
   version: 0.10.0
 ---
@@ -46,8 +46,6 @@ Ready. Here's what you can do next:
 
 `gpc quickstart` is the recommended entry point for all new users. It detects existing config, validates credentials, confirms the package name, and runs a full doctor check — all in one flow.
 
-**Note (v0.9.38+):** The quickstart spawn fix means `gpc quickstart` now works correctly on Homebrew and standalone binary installs. Previously, the internal `gpc doctor` spawn could fail on non-npm installs.
-
 ### `gpc auth login` (interactive wizard)
 
 When run without flags in a TTY, `gpc auth login` prompts interactively:
@@ -69,7 +67,15 @@ Step-by-step service account creation guidance for users who do not yet have a G
 - Guides downloading the JSON key file
 - Verifies the result with `gpc auth status`
 
-Use this when the user is starting from zero — no GCP project, no key file.
+Use this when the user is starting from zero -- no GCP project, no key file.
+
+**Shortcut if you already have the key:**
+
+```bash
+gpc auth setup-gcp --key /path/to/service-account.json
+```
+
+Validates the JSON, authenticates, and saves to config in one step.
 
 ### `gpc doctor --fix`
 
@@ -80,9 +86,7 @@ gpc doctor          # show current health
 gpc doctor --fix    # auto-fix what can be fixed
 ```
 
-Each failing check displays a suggestion. `--fix` applies those suggestions automatically where possible. Auto-fixable issues include corrupt or stale token cache (cleared and refreshed automatically), missing config keys, and outdated GPC versions. Issues that require manual steps (e.g., Play Console API access grants, service account key rotation) are shown with instructions but cannot be auto-fixed.
-
-**v0.9.46+:** `gpc doctor` now runs 16 checks (up from 6), including GPC version check, HTTPS connectivity probe, app access verification, service account key age warning (>90 days), conflicting credentials detection, config unknown keys validation, token cache health, disk space check, CI environment detection, and DNS latency.
+Each failing check displays a suggestion. `--fix` applies those suggestions automatically where possible. Issues that require manual steps (e.g., Play Console API access grants) are shown with instructions but cannot be auto-fixed.
 
 ## Procedure
 
@@ -102,18 +106,7 @@ gpc quickstart
 
 Follow the prompts. The wizard is idempotent — re-run it at any point.
 
-### 2) Scaffold project files with `gpc init`
-
-After quickstart completes, scaffold project config, metadata, and CI templates:
-
-```bash
-# Scaffold project files (config, metadata, CI templates)
-gpc init --app com.example.app --ci-template github
-```
-
-This creates `.gpcrc.json`, `.preflightrc.json`, a metadata directory, and CI workflow files in one command.
-
-### 3) If credentials are not yet set up
+### 2) If credentials are not yet set up
 
 Option A — you already have a service account JSON key:
 ```bash
@@ -125,7 +118,7 @@ Option B — you need to create a GCP project and service account from scratch:
 gpc auth setup-gcp
 ```
 
-### 4) Fix remaining doctor issues
+### 3) Fix remaining doctor issues
 
 ```bash
 gpc doctor --fix
@@ -133,7 +126,7 @@ gpc doctor --fix
 
 Review any checks that still fail and follow the inline suggestions.
 
-### 5) Verify
+### 4) Verify
 
 ```bash
 gpc status
@@ -145,10 +138,12 @@ A successful status output confirms GPC is fully configured and connected.
 
 Once onboarded, common next commands:
 
-- `gpc status` — app health snapshot
-- `gpc releases list` — view release tracks
-- `gpc vitals overview` — crash/ANR dashboard
-- `gpc reviews list` — recent user reviews
+- `gpc status` -- app health snapshot
+- `gpc releases list` -- view release tracks
+- `gpc vitals overview` -- crash/ANR dashboard
+- `gpc reviews list` -- recent user reviews
+- `gpc verify` -- check Android developer verification status
+- `gpc docs --list` -- browse all 58 documentation topics from CLI
 
 ## Failure modes
 

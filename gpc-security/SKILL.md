@@ -1,9 +1,9 @@
 ---
 name: gpc-security
 description: "Use when dealing with GPC credential security, secret management, audit logging, or access control. Make sure to use this skill whenever the user mentions credentials, service account key, secret rotation, key rotation, credential storage, audit log, audit trail, security best practices, .gpcrc.json security, secrets in CI, GPC_SERVICE_ACCOUNT safety, keychain, token cache, credential leak, key compromise, secure deployment — even if they don't explicitly say 'security.' Also trigger when someone asks about where GPC stores credentials, how to rotate service account keys, how to audit who did what with GPC, how to securely pass credentials in CI/CD, or how to handle a compromised service account key. For auth setup, see gpc-setup. For CI configuration, see gpc-ci-integration."
-compatibility: "GPC v0.9.9+. Covers credential storage, audit logging, and security patterns across all packages."
+compatibility: "GPC v0.9+. Covers credential storage, audit logging, and security patterns across all packages."
 metadata:
-  version: 1.0.0
+  version: 0.12.0
 ---
 
 # gpc-security
@@ -115,14 +115,14 @@ cat ~/.config/gpc/audit.log | jq 'select(.app == "com.example.app")'
 cat ~/.config/gpc/audit.log | jq 'select(.success == false)'
 
 # Filter by date range
-cat ~/.config/gpc/audit.log | jq 'select(.timestamp >= "2026-03-01")'
+cat ~/.config/gpc/audit.log | jq 'select(.timestamp >= "2025-03-01")'
 ```
 
 #### Audit entry structure
 
 ```json
 {
-  "timestamp": "2026-03-09T14:30:00.000Z",
+  "timestamp": "2025-03-09T14:30:00.000Z",
   "command": "releases upload",
   "app": "com.example.app",
   "args": { "track": "beta", "file": "app-release.aab" },
@@ -236,6 +236,50 @@ git log --all --full-history -p -- '*.json' | grep -l '"private_key"'
 | Service account email unknown | Key not inspected | `gpc auth status --json \| jq '.email'` |
 | CI shows credential in logs | Key passed as argument | Use environment variables, never CLI args |
 | Keychain prompt every command | macOS keychain access not granted | Click "Always Allow" on the prompt |
+
+### 8. Supply chain protection
+
+GPC uses 12 layers of defense against dependency supply chain attacks:
+
+| Layer | What it does |
+|-------|-------------|
+| `min-release-age=7` in `.npmrc` | Blocks packages published less than 7 days ago |
+| `pnpm-lock.yaml` | Exact version pinning, no unexpected upgrades |
+| Socket.dev CI scan | `socket ci` on every PR, blocks on critical alerts |
+| Socket.dev GitHub App | Inline PR comments on risky dependency changes |
+| `pnpm audit` in CI | Gates PRs on high-severity CVEs (production deps) |
+| GitHub Actions SHA pins | All 14 action refs pinned to commit hashes, not mutable tags |
+| SBOM (CycloneDX) | Bill of materials generated and archived on every npm release |
+| CODEOWNERS | Security-sensitive paths require explicit review |
+| Dependabot | Weekly update PRs (direct dependencies only, actions grouped) |
+| Socket CLI wrapper | Scans every local `npm install` and `npx` |
+| CodeQL | Static analysis on every push |
+| GitHub secret scanning | Blocks pushes containing 200+ secret patterns |
+
+GPC only has 4 runtime dependencies: `google-auth-library`, `commander`, `protobufjs`, `yauzl`. All API calls use Node.js built-in `fetch`.
+
+Configuration: `socket.yml` at repo root controls Socket.dev alert rules. `.npmrc` controls `min-release-age`. `.github/CODEOWNERS` controls review requirements.
+
+### 9. Developer verification
+
+Google's Android developer verification enforcement begins September 2026 (BR, ID, SG, TH):
+
+```bash
+gpc verify              # Status, deadlines, resources
+gpc verify --open       # Open verification page in browser
+gpc verify --json       # Machine-readable output
+```
+
+`gpc doctor` includes a verification check. `gpc status` shows a footer reminder. `gpc preflight` shows a post-scan reminder.
+
+## Verification
+
+- `gpc auth status` shows the expected service account email
+- `gpc doctor` passes all checks
+- `.gpcrc.json` contains no secrets or key paths
+- Audit log at `~/.config/gpc/audit.log` is being written
+- CI secrets are encrypted and not visible in logs
+- Old keys are deleted after rotation
 
 ## Related skills
 

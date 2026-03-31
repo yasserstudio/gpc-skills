@@ -1,6 +1,6 @@
 ---
 name: gpc-release-flow
-description: "Use when uploading, releasing, promoting, or managing rollouts on Google Play. Make sure to use this skill whenever the user mentions gpc releases, upload AAB, upload APK, staged rollout, promote to production, halt rollout, gpc publish, release notes, track management, internal testing, beta release, production rollout, version code, rollout percentage, draft release, --status draft, or wants to ship an Android app to any Play Store track. Also trigger when someone asks about the Google Play edit lifecycle, release validation, how to do a phased rollout, or how to create a draft release for Play Console review — even if they don't mention GPC by name. For metadata and listings, see gpc-metadata-sync. For CI/CD integration, see gpc-ci-integration."
+description: "Use when uploading, releasing, promoting, or managing rollouts on Google Play. Make sure to use this skill whenever the user mentions gpc releases, upload AAB, upload APK, staged rollout, promote to production, halt rollout, gpc publish, release notes, track management, internal testing, beta release, production rollout, version code, rollout percentage, or wants to ship an Android app to any Play Store track. Also trigger when someone asks about the Google Play edit lifecycle, release validation, or how to do a phased rollout — even if they don't mention GPC by name. For metadata and listings, see gpc-metadata-sync. For CI/CD integration, see gpc-ci-integration."
 compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill)."
 metadata:
   version: 1.1.0
@@ -24,7 +24,7 @@ Use this skill when the task involves:
 ## Inputs required
 
 - Path to AAB/APK file
-- Target track (internal, qa, alpha, beta, production, or custom; form factor tracks: `wear:`, `automotive:`, `tv:`, `android_xr:`, `google_play_games_pc:`)
+- Target track (internal, alpha, beta, production, or custom)
 - Rollout percentage (for staged rollouts)
 - Release notes (inline or from file)
 - Whether `--dry-run` is desired (preview without executing)
@@ -33,14 +33,19 @@ Use this skill when the task involves:
 
 ### 0) Pre-flight validation
 
-Before uploading, validate the bundle:
+Before uploading, run the preflight compliance scanner and validate the bundle:
 
 ```bash
+# Policy compliance scan (offline -- checks manifest, permissions, 64-bit, secrets)
+gpc preflight app-release.aab --fail-on error
+gpc preflight app-release.apk --fail-on error  # APK also supported
+
+# File format and track validation
 gpc validate app-release.aab
 gpc validate app-release.aab --track beta  # Validate for specific track
 ```
 
-This checks file format, version code conflicts, and track compatibility.
+`gpc preflight` checks the AAB/APK against Google Play policies (target SDK, permissions, native libs, etc.). `gpc validate` checks file format, version code conflicts, and track compatibility.
 
 ### 1) Upload and release
 
@@ -67,21 +72,19 @@ For more control, use individual commands:
 # Upload AAB (creates edit, uploads, assigns to track)
 gpc releases upload app-release.aab --track internal
 
-# Upload APK (auto-detected by extension, uses edits.apks.upload)
+# Upload APK (auto-detected, uses correct endpoint)
 gpc releases upload app-release.apk --track internal
 
 # Upload with staged rollout
 gpc releases upload app-release.aab --track production --rollout 10
 
-# Upload as draft (review in Play Console before going live)
+# Upload as draft (not visible to users until explicitly released)
 gpc releases upload app-release.aab --track production --status draft
 
 # Set release notes
 gpc releases notes set --track beta --lang en-US --notes "Bug fixes"
 gpc releases notes set --track beta --file release-notes/  # From directory
 ```
-
-> **New in v0.9.47:** APK files are auto-detected and uploaded via the correct `edits.apks.upload` endpoint. Use `--status draft` to create draft releases for manual review in the Play Console before going live.
 
 Read:
 - `references/upload-lifecycle.md`
@@ -111,47 +114,8 @@ gpc releases promote --from internal --to beta
 # Promote from beta to production with staged rollout
 gpc releases promote --from beta --to production --rollout 5
 
-# Copy release notes from another track when promoting
-gpc releases promote --from internal --to production --copy-notes-from internal
-
-# Promote as draft (review in Play Console before going live)
-gpc releases promote --from internal --to beta --status draft
-```
-
-> **Note:** Since v0.9.39, `gpc releases promote` auto-retries once on 409 EDIT_CONFLICT (another edit is open).
-
-### 3b) Preview before publishing
-
-```bash
-# Read-only preview of release state across all tracks
-gpc diff
-
-# Compare two specific tracks
-gpc diff --from internal --to production
-
-# Compare local metadata vs remote
-gpc diff --metadata fastlane/metadata
-```
-
-### 3c) Release lifecycle visibility
-
-```bash
-# List releases on a track with lifecycle states (DRAFT, IN_REVIEW, PUBLISHED, etc.)
-gpc releases list --track production
-gpc releases list --track beta --json
-```
-
-> **New in v0.9.46:** The `releases.list` endpoint provides release lifecycle states without opening an edit session. Use it to check whether a release is still in review, has been published, or is in draft — useful for CI pipelines that need to gate on review completion.
-
-### 3d) Release stats and history
-
-```bash
-# Release count per track with status breakdown
-gpc releases count
-
-# Show release history from GitHub
-gpc changelog
-gpc changelog --tag v0.9.47
+# Promote as draft
+gpc releases promote --from beta --to production --status draft
 ```
 
 ### 4) Manage staged rollouts
@@ -211,22 +175,27 @@ Disable with `--no-interactive` or `GPC_NO_INTERACTIVE=1`.
 
 ## Failure modes / debugging
 
-| Error Code | Symptom | Fix |
-|------------|---------|-----|
-| `API_DUPLICATE_VERSION_CODE` | Version code already uploaded | Increment `versionCode` in build.gradle. Check current: `gpc releases status` |
-| `API_VERSION_CODE_TOO_LOW` | Version code lower than current | Google Play requires increasing version codes per track |
-| `API_PACKAGE_NAME_MISMATCH` | AAB package doesn't match target app | Verify `applicationId` in build.gradle. Check: `gpc config show` |
-| `API_BUNDLE_TOO_LARGE` | File exceeds size limit | AAB max: 2 GB, APK max: 1 GB. Check: `gpc preflight <file>` |
-| `API_INVALID_BUNDLE` | Corrupted or malformed file | Ensure properly signed. Validate: `gpc preflight <file>`. Rebuild: `./gradlew bundleRelease` |
-| `API_EDIT_CONFLICT` | Another edit session open | GPC auto-retries once. Wait and retry, or discard stale edit in Console |
-| `API_ROLLOUT_ALREADY_COMPLETED` | Release at 100% | Deploy a new version: `gpc releases upload --track <track>` |
-| `API_RELEASE_NOTES_TOO_LONG` | Notes exceed 500 chars | Shorten per language. Preview: `gpc releases notes get` |
+| Symptom | Likely Cause | Fix |
+|---------|-------------|-----|
+| `Version code already used` | Same version code exists on this track | Increment `versionCode` in build |
 | `APK_NOT_SIGNED` | Missing or invalid signing | Use Play App Signing or check keystore |
+| `EDIT_CONFLICT` | Another edit is in progress | Wait and retry, or use Console UI to discard pending edit |
 | Rollout stuck | Rollout was halted | `gpc releases rollout resume --track <track>` |
+| Wrong track | Promoted to wrong track | Create new release on correct track |
 
 Read:
 - `references/troubleshooting.md`
 - `references/pre-release-pipeline.md` — end-to-end: validate → upload → vitals gate → promote → staged rollout
+
+### 8) Real-Time Developer Notifications (RTDN)
+
+Monitor subscription and purchase events in real time:
+
+```bash
+gpc rtdn status              # Check Pub/Sub topic configuration
+gpc rtdn decode <payload>    # Decode base64 notification payload
+gpc rtdn test                # Guidance for testing RTDN setup
+```
 
 ## Related skills
 
@@ -234,3 +203,4 @@ Read:
 - **gpc-metadata-sync**: Store listings and screenshots
 - **gpc-vitals-monitoring**: Post-release crash monitoring
 - **gpc-ci-integration**: Automated releases in CI/CD
+- **gpc-monetization**: Subscriptions, IAP, RTDN notifications

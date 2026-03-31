@@ -1,9 +1,9 @@
 ---
 name: gpc-ci-integration
 description: "Use when integrating GPC into CI/CD pipelines. Make sure to use this skill whenever the user mentions GitHub Actions, GitLab CI, Bitbucket Pipelines, CircleCI, CI/CD, automated release, pipeline, GPC_SERVICE_ACCOUNT, JSON output, exit codes, gpc in CI, automate Play Store deployment, release workflow, deploy to Play Store from CI, automated rollout, step summary, or wants to set up any kind of automated Google Play deployment pipeline. Also trigger when someone asks about running GPC in a headless environment, parsing GPC output in scripts, using GPC exit codes for conditional logic, or configuring retries and timeouts for CI — even if they don't mention a specific CI platform. For local setup, see gpc-setup. For release commands, see gpc-release-flow."
-compatibility: "GPC v0.9.9+. Works with any CI platform that supports Node.js 20+ or standalone binary."
+compatibility: "GPC v0.9+. Works with any CI platform that supports Node.js 20+ or standalone binary."
 metadata:
-  version: 1.0.0
+  version: 1.1.0
 ---
 
 # GPC CI Integration
@@ -100,6 +100,9 @@ jobs:
       - name: Install GPC
         run: npm install -g @gpc-cli/cli
 
+      - name: Preflight compliance check
+        run: gpc preflight app-release.aab --fail-on error --json
+
       - name: Upload release
         run: |
           gpc releases upload app-release.aab \
@@ -185,6 +188,9 @@ For minimal CI images without Node.js:
 
 GPC auto-outputs JSON in CI (non-TTY). Parse with `jq`:
 
+> **JUnit output caveat:** `--output junit` is available but testcase `name` attributes use generic identifiers (`item-1`, `item-2`) for some commands (`tracks list`, `releases status`). Prefer `--output json | jq` for reliable CI parsing. Use `--output junit` only if your test reporter specifically requires JUnit XML format.
+
+
 ```bash
 # Get version code from upload result
 VERSION=$(gpc releases upload app.aab --track beta | jq -r '.data.versionCode')
@@ -253,9 +259,48 @@ gpc releases status --output markdown >> $GITHUB_STEP_SUMMARY
 gpc vitals overview --output markdown >> $GITHUB_STEP_SUMMARY
 ```
 
-### 11) Retry and timeout configuration
+### 11) Supply chain security in CI
 
-GPC automatically retries HTTP 408 (Request Timeout), 429 (Rate Limited), and 5xx (Server Error) responses with exponential backoff.
+GPC's own CI uses 12 protection layers. When integrating GPC into your pipeline, follow these practices:
+
+```yaml
+# Pin GPC version (don't rely on @latest in production)
+- run: npm install -g @gpc-cli/cli@0.9.50
+
+# Or use the standalone binary (no npm supply chain risk)
+- run: curl -fsSL https://raw.githubusercontent.com/yasserstudio/gpc/main/scripts/install.sh | bash
+
+# Pin GitHub Actions to commit SHAs
+- uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+```
+
+For Socket.dev scanning on your own repo, add `socket ci` to your workflow:
+
+```yaml
+- name: Socket Security Scan
+  run: |
+    npm install -g socket@latest
+    socket ci --repo your-repo
+  env:
+    SOCKET_SECURITY_API_TOKEN: ${{ secrets.SOCKET_SECURITY_API_TOKEN }}
+```
+
+### 12) APK uploads
+
+GPC auto-detects the file format and uses the correct API endpoint:
+
+```yaml
+# AAB upload (recommended)
+- run: gpc releases upload app-release.aab --track internal
+
+# APK upload (auto-detected)
+- run: gpc releases upload app-release.apk --track internal
+
+# Draft release (not visible to users until explicitly released)
+- run: gpc releases upload app-release.aab --track production --status draft
+```
+
+### 13) Retry and timeout configuration
 
 ```yaml
 env:
@@ -264,8 +309,6 @@ env:
   GPC_BASE_DELAY: '2000'
   GPC_MAX_DELAY: '120000'
   GPC_RATE_LIMIT: '50'
-  GPC_UPLOAD_TIMEOUT: "300000"    # 5 min timeout for large AABs
-  GPC_UPLOAD_CHUNK_SIZE: "8388608"  # 8 MB chunks (default)
 ```
 
 Use `--retry-log` to debug transient failures:
@@ -286,7 +329,7 @@ gpc releases upload app.aab --track beta --retry-log retries.log
 |---------|-------------|-----|
 | `AUTH_INVALID` in CI | Secret not set or wrong format | Verify `PLAY_SERVICE_ACCOUNT` secret contains valid JSON |
 | `Permission denied` | Service account lacks Play Console access | Grant access in Play Console → Settings → API access |
-| Timeout on upload | Large AAB + slow CI network | Increase `GPC_TIMEOUT` or `GPC_UPLOAD_TIMEOUT` |
+| Timeout on upload | Large AAB + slow CI network | Increase `GPC_TIMEOUT` |
 | Rate limited | Too many API calls | Increase `GPC_BASE_DELAY`, reduce parallelism |
 | Exit code 6 | Vitals threshold breached | Review crash/ANR data, fix issues before promoting |
 | `EDIT_CONFLICT` | Parallel runs editing same app | Serialize release jobs or use job concurrency limits |
