@@ -3,7 +3,7 @@ name: gpc-vitals-monitoring
 description: "Use when monitoring Android app health metrics from Google Play. Make sure to use this skill whenever the user mentions gpc vitals, gpc status, crash rate, ANR rate, startup time, Android vitals, crash monitoring, threshold alerting, vitals gating, frame rate, battery usage, memory issues, error tracking, app quality, user reviews, review replies, Play Store reviews, star rating, negative reviews, review export, financial reports, stats reports, or wants to check app health, respond to reviews, or download Play Console reports. Also trigger when someone asks about gating deployments on crash data, monitoring app performance after a release, or tracking review sentiment — even if they don't mention GPC. For releases, see gpc-release-flow. For CI gating, see gpc-ci-integration."
 compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). Vitals data requires the app to have sufficient install volume."
 metadata:
-  version: 1.1.0
+  version: 1.2.0
 ---
 
 # GPC Vitals Monitoring
@@ -241,6 +241,9 @@ gpc reviews reply <review-id> --text "Thank you for your feedback"
 
 # Auto-paginate all reviews (API returns max 10 per page by default)
 gpc reviews list --all
+
+# Start from a specific index (for manual pagination)
+gpc reviews list --start-index 20
 
 # Export reviews
 gpc reviews export --format csv --output reviews.csv

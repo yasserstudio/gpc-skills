@@ -3,7 +3,7 @@ name: gpc-monetization
 description: "Use when managing in-app purchases, subscriptions, pricing, or Real-Time Developer Notifications in Google Play. Make sure to use this skill whenever the user mentions gpc subscriptions, gpc iap, gpc purchases, gpc pricing, gpc rtdn, in-app products, base plans, subscription offers, one-time products, consumable products, purchase verification, purchase acknowledgement, purchase token, subscription cancellation, subscription deferral, voided purchases, refunds, regional pricing, currency conversion, price migration, SKU management, monetization, revenue, billing, subscription analytics, churn, trial conversion, subscriber count, RTDN, Real-Time Developer Notifications, Pub/Sub notifications, subscription events, purchase events — even if they don't explicitly say 'monetization.' Also trigger when someone wants to create or update subscriptions, manage base plan lifecycle (activate/deactivate), set up introductory offers, verify server-side purchases, handle refunds, convert prices across regions, sync IAP products from files, migrate subscribers to new prices, view subscription analytics, decode Pub/Sub notification payloads, or check RTDN topic configuration. For release management, see gpc-release-flow. For CI automation, see gpc-ci-integration."
 compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). Subscriptions and IAP require products configured in Google Play Console."
 metadata:
-  version: 0.10.0
+  version: 0.11.0
 ---
 
 # gpc-monetization
@@ -66,6 +66,9 @@ gpc subscriptions create --file subscription.json --dry-run
 
 # Create
 gpc subscriptions create --file subscription.json
+
+# Specify a regions version (defaults to 2022/02)
+gpc subscriptions create --file subscription.json --regions-version "2022/02"
 ```
 
 `Read:` `references/subscription-schema.md` for the JSON structure and field reference.
@@ -78,9 +81,19 @@ gpc subscriptions update <product-id> --file updated.json --update-mask "listing
 
 # Preview changes
 gpc subscriptions update <product-id> --file updated.json --dry-run
+
+# Upsert: create the subscription if it does not already exist
+gpc subscriptions update <product-id> --file updated.json --allow-missing
+
+# Control propagation speed (default: LATENCY_SENSITIVE)
+gpc subscriptions update <product-id> --file updated.json --latency-tolerance LATENCY_TOLERANT
 ```
 
 The `--update-mask` flag controls which fields are updated. Omit it to replace the entire subscription.
+
+The `--allow-missing` flag enables upsert behavior: if the subscription does not exist, it will be created instead of returning an error.
+
+The `--latency-tolerance` flag controls how quickly changes propagate. Use `LATENCY_SENSITIVE` (default) for immediate propagation, or `LATENCY_TOLERANT` when you can accept a delay in exchange for higher throughput during bulk operations.
 
 #### D. Batch operations
 
@@ -138,6 +151,12 @@ gpc subscriptions offers create <product-id> <base-plan-id> --file offer.json
 # Update an offer
 gpc subscriptions offers update <product-id> <base-plan-id> <offer-id> --file offer.json
 
+# Upsert: create the offer if it does not already exist
+gpc subscriptions offers update <product-id> <base-plan-id> <offer-id> --file offer.json --allow-missing
+
+# Control propagation speed for bulk offer updates
+gpc subscriptions offers update <product-id> <base-plan-id> <offer-id> --file offer.json --latency-tolerance LATENCY_TOLERANT
+
 # Activate / deactivate an offer
 gpc subscriptions offers activate <product-id> <base-plan-id> <offer-id>
 gpc subscriptions offers deactivate <product-id> <base-plan-id> <offer-id>
@@ -154,8 +173,15 @@ One-time purchases — consumables, non-consumables, entitlements.
 
 ```bash
 gpc iap list
+
+# Paginated listing (useful for apps with many products)
+gpc iap list --page-size 50
+gpc iap list --page-size 50 --next-page <page-token>
+
 gpc iap get <sku>
 ```
+
+> **New in v0.9.51:** `gpc iap list` (aliased as `gpc one-time-products list`) now supports `--page-size` and `--next-page` for paginated results. The response includes a `nextPageToken` field when more results are available.
 
 #### B. Create and update
 
@@ -164,9 +190,18 @@ gpc iap get <sku>
 gpc iap create --file product.json --dry-run
 gpc iap create --file product.json
 
+# Specify a regions version on create (defaults to 2022/02)
+gpc iap create --file product.json --regions-version "2022/02"
+
 # Update
 gpc iap update <sku> --file updated.json --dry-run
 gpc iap update <sku> --file updated.json
+
+# Upsert: create the product if it does not already exist
+gpc iap update <sku> --file updated.json --allow-missing
+
+# Control propagation speed
+gpc iap update <sku> --file updated.json --latency-tolerance LATENCY_TOLERANT
 
 # Delete
 gpc iap delete <sku>

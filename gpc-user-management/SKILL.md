@@ -3,7 +3,7 @@ name: gpc-user-management
 description: "Use when managing Google Play developer account users, permissions, grants, or testers. Make sure to use this skill whenever the user mentions gpc users, gpc testers, gpc grants, developer account permissions, user roles, invite user, remove user, permission grants, per-app permissions, per-app grants, standalone grants, tester groups, beta testers, internal testers, alpha testers, Google Group testers, tester CSV import, team management, access control, user audit — even if they don't explicitly say 'user management.' Also trigger when someone wants to invite team members to their Play Console, update permissions for existing users, manage per-app grants independently from users, manage who can test their app, import testers from a CSV file, or audit who has access to their developer account. For authentication setup, see gpc-setup. For release track management, see gpc-release-flow."
 compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). User commands require developer account ID. Tester commands require an app with testing tracks configured."
 metadata:
-  version: 0.10.0
+  version: 0.11.0
 ---
 
 # gpc-user-management
@@ -140,8 +140,17 @@ gpc testers add tester1@gmail.com tester2@gmail.com --track internal
 # Add a Google Group
 gpc testers add testers-group@googlegroups.com --track beta
 
+# Add testers without auto-submitting changes for review
+gpc testers add tester1@gmail.com --track beta --changes-not-sent-for-review
+
+# Fail if the app is currently in review or rejected before modifying testers
+gpc testers add tester1@gmail.com --track beta --error-if-in-review
+
 # Remove testers
 gpc testers remove tester1@gmail.com --track internal
+
+# Remove testers without auto-submitting changes for review
+gpc testers remove tester1@gmail.com --track internal --changes-not-sent-for-review
 
 # Preview changes
 gpc testers add tester1@gmail.com --track beta --dry-run

@@ -1,9 +1,9 @@
 ---
 name: gpc-sdk-usage
 description: "Use when building applications that programmatically interact with the Google Play Developer API using GPC's TypeScript SDK packages. Make sure to use this skill whenever the user mentions @gpc-cli/api, @gpc-cli/auth, PlayApiClient, createApiClient, resolveAuth, Google Play API client, TypeScript SDK, programmatic access, API client, HTTP client, rate limiter, pagination, edit lifecycle in code, Node.js Google Play, server-side Play Store, backend integration — even if they don't explicitly say 'SDK.' Also trigger when someone wants to build a backend service, custom dashboard, automation script, or any TypeScript/JavaScript application that interacts with Google Play programmatically rather than through the CLI. For CLI usage, see other gpc-* skills. For building plugins, see gpc-plugin-development."
-compatibility: "GPC v0.9.9+. Requires Node.js 20+, TypeScript 5+. Packages: @gpc-cli/api, @gpc-cli/auth."
+compatibility: "GPC v0.9.9+ (new APIs require v0.9.51+). Requires Node.js 20+, TypeScript 5+. Packages: @gpc-cli/api, @gpc-cli/auth."
 metadata:
-  version: 1.0.0
+  version: 1.1.0
 ---
 
 # gpc-sdk-usage
@@ -67,7 +67,7 @@ const client = createApiClient({
 });
 ```
 
-The client provides typed access to all Google Play Developer API v3 endpoints.
+The client provides typed access to all 208 Google Play Developer API v3 endpoints.
 
 `Read:` `references/api-reference.md` for the complete client API with all namespaces and methods.
 
@@ -90,6 +90,12 @@ await client.edits.validate(APP, edit.id);
 
 // 4. Commit the edit (applies all changes)
 await client.edits.commit(APP, edit.id);
+
+// Optional: commit with options (v0.9.51+)
+await client.edits.commit(APP, edit.id, {
+  changesNotSentForReview: true,
+  changesInReviewBehavior: "HALT_REVIEW",
+});
 ```
 
 **Important:** Only one edit can be open at a time. Always commit or delete edits.
@@ -103,6 +109,11 @@ const edit = await client.edits.insert(APP);
 
 // Upload the bundle
 const bundle = await client.bundles.upload(APP, edit.id, "app-release.aab");
+
+// Upload with device tier config (v0.9.51+)
+const bundle2 = await client.bundles.upload(APP, edit.id, "app-release.aab", {
+  deviceTierConfigId: "my-tier-config",
+});
 
 // Set the track
 await client.tracks.update(APP, edit.id, "beta", {
@@ -128,6 +139,7 @@ await client.edits.commit(APP, edit.id);
 const reviews = await client.reviews.list(APP, {
   maxResults: 50,
   translationLanguage: "en",
+  startIndex: 0,  // pagination offset (v0.9.51+)
 });
 
 for (const review of reviews.reviews ?? []) {
@@ -146,6 +158,12 @@ const subs = await client.subscriptions.list(APP);
 // Get a specific subscription
 const sub = await client.subscriptions.get(APP, "premium_monthly");
 
+// Update with mutation options (v0.9.51+)
+await client.subscriptions.update(APP, "premium_monthly", data, "price", {
+  allowMissing: true,
+  latencyTolerance: "PRODUCT_UPDATE_LATENCY_TOLERANCE_LATENCY_TOLERANT",
+});
+
 // Activate a base plan
 await client.subscriptions.activateBasePlan(APP, "premium_monthly", "monthly");
 ```
@@ -159,6 +177,40 @@ const purchase = await client.purchases.getProduct(APP, "coins_100", purchaseTok
 if (purchase.purchaseState === 0 && purchase.acknowledgementState === 0) {
   await client.purchases.acknowledgeProduct(APP, "coins_100", purchaseToken);
 }
+```
+
+#### Upload deobfuscation files (v0.9.51+)
+
+```typescript
+// Upload ProGuard mapping
+await client.deobfuscation.upload(APP, edit.id, versionCode, "mapping.txt", "proguard");
+
+// Upload native debug symbols
+await client.deobfuscation.upload(APP, edit.id, versionCode, "symbols.zip", "nativeCode");
+```
+
+#### Manage expansion files (v0.9.51+)
+
+```typescript
+// Get expansion file info
+const obb = await client.expansionFiles.get(APP, edit.id, versionCode, "main");
+
+// Upload a new expansion file
+const uploaded = await client.expansionFiles.upload(APP, edit.id, versionCode, "main", "main.obb");
+
+// Patch expansion file references
+await client.expansionFiles.patch(APP, edit.id, versionCode, "main", {
+  referencesVersion: 10,
+});
+```
+
+#### List one-time products with pagination (v0.9.51+)
+
+```typescript
+const products = await client.oneTimeProducts.list(APP, {
+  pageSize: 25,
+  pageToken: nextToken,
+});
 ```
 
 ### 5. Pagination

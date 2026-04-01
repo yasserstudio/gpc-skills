@@ -32,6 +32,8 @@ All known GPC error codes with causes and fixes.
 | `API_INSUFFICIENT_PERMISSIONS` | 403 | Service account missing permissions | Grant required roles in Play Console → Settings → API access |
 | `API_BUNDLE_TOO_LARGE` | 400 | AAB or APK exceeds size limit | AAB max 2 GB, APK max 1 GB |
 | `API_INVALID_BUNDLE` | 400 | Corrupt or improperly signed bundle | Ensure properly signed AAB/APK |
+| `API_CHANGES_NOT_SENT_FOR_REVIEW` | 400/403 | App rejected update, requires review acknowledgment | Add `--changes-not-sent-for-review` flag |
+| `API_CHANGES_ALREADY_IN_REVIEW` | 400 | Changes already in review | Use `--error-if-in-review` to prevent silent cancellation |
 
 ## Network errors (exit code 5)
 
@@ -98,6 +100,78 @@ All known GPC error codes with causes and fixes.
 |------|---------|-----|
 | `PLUGIN_INVALID_PERMISSION` | Unknown permission | Check valid permission list |
 | `PLUGIN_NOT_APPROVED` | Not in approvedPlugins | Add to `approvedPlugins` in .gpcrc.json |
+
+## Review-state errors (exit code 4)
+
+### `API_CHANGES_NOT_SENT_FOR_REVIEW`
+
+**HTTP:** 400 or 403
+
+**Cause:** The app has been flagged by Google Play and any update must explicitly acknowledge that changes are not sent for review. This commonly happens when a previous submission was rejected or when the app is in a policy compliance state that requires the flag.
+
+**Fix:** Add the `--changes-not-sent-for-review` flag to your release or upload command.
+
+```bash
+# Upload with the required flag
+gpc releases upload app.aab --track production --changes-not-sent-for-review
+
+# Promote with the required flag
+gpc releases promote --from beta --to production --changes-not-sent-for-review
+```
+
+**JSON error output:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "API_CHANGES_NOT_SENT_FOR_REVIEW",
+    "message": "This app requires the changesNotSentForReview flag to be set",
+    "suggestion": "Re-run the command with --changes-not-sent-for-review"
+  }
+}
+```
+
+**Notes:**
+- This flag tells the API that you acknowledge the changes will not be sent for review automatically.
+- Some apps enter this state after a policy violation or rejected review.
+- The flag is safe to include on every call if your workflow requires it.
+
+---
+
+### `API_CHANGES_ALREADY_IN_REVIEW`
+
+**HTTP:** 400
+
+**Cause:** The track already has changes that are currently being reviewed by Google Play. Committing a new edit would silently cancel the in-progress review and replace it with the new submission, which may not be what you intended.
+
+**Fix:** Use `--error-if-in-review` to make GPC fail early instead of silently replacing the in-review changes. If you do want to replace the in-review changes, omit the flag.
+
+```bash
+# Fail early if changes are already in review (recommended for CI)
+gpc releases upload app.aab --track production --error-if-in-review
+
+# If you intentionally want to replace the in-review release, omit the flag
+gpc releases upload app.aab --track production
+```
+
+**JSON error output:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "API_CHANGES_ALREADY_IN_REVIEW",
+    "message": "Track already has changes in review; committing would cancel the pending review",
+    "suggestion": "Use --error-if-in-review to prevent silent cancellation, or omit the flag to replace the in-review changes"
+  }
+}
+```
+
+**Notes:**
+- In CI pipelines, always use `--error-if-in-review` to avoid accidentally overwriting a release that is under review.
+- If you need to check the current review state before uploading, use `gpc releases list --track <track> --json` to inspect the release status.
+- Without this flag, GPC will proceed and the previous in-review submission will be silently cancelled by the Google Play API.
+
+---
 
 ## Environment variables for error recovery
 

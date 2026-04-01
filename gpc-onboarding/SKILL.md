@@ -3,7 +3,7 @@ name: gpc-onboarding
 description: "Use when a user is setting up GPC for the first time or going through initial configuration. Trigger when the user mentions gpc quickstart, first-time setup, initial configuration, onboarding, getting started, service account creation, doctor --fix, auth setup-gcp — even if they don't say 'onboarding.' Also trigger when someone is brand new to GPC and needs guided setup."
 compatibility: "GPC v0.9.35+. For existing config issues, see gpc-setup. For troubleshooting, see gpc-troubleshooting."
 metadata:
-  version: 0.10.0
+  version: 0.11.0
 ---
 
 # GPC Onboarding

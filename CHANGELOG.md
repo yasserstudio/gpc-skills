@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.9.0 -- 2026-04-01
+
+Synced with GPC v0.9.51. Rejected app support, native debug symbols, expansion files, monetization upsert, review pagination.
+
+### Updated Skills
+
+- **gpc-release-flow** (1.2.0) -- `--changes-not-sent-for-review` and `--error-if-in-review` flags on upload/promote/rollout, `--mapping-type nativeCode` for NDK debug symbols, `--device-tier-config` for device tier targeting, expansion files (OBB) upload procedure
+- **gpc-troubleshooting** (0.12.0) -- Two new error codes: `API_CHANGES_NOT_SENT_FOR_REVIEW`, `API_CHANGES_ALREADY_IN_REVIEW` with causes, fixes, and examples
+- **gpc-monetization** (0.11.0) -- `allowMissing` upsert on subscription/OTP/offer patch, `latencyTolerance` propagation control, configurable `regionsVersion` on create, one-time products list pagination
+- **gpc-sdk-usage** (1.1.0) -- 208 endpoints, `EditCommitOptions`, `MutationOptions`, `ProductUpdateLatencyTolerance`, `DeobfuscationFileType` types, `expansionFiles` namespace, updated method signatures
+- **gpc-ci-integration** (1.1.0) -- Rejected app handling in CI pipelines, `--error-if-in-review` safety pattern, `--mapping-type` and `--device-tier-config` in pipeline examples
+- **gpc-vitals-monitoring** (1.2.0) -- `--start-index` on `gpc reviews list`
+- **gpc-metadata-sync** (1.1.0) -- Commit flags on listings push for rejected apps
+- **gpc-user-management** (0.11.0) -- Commit flags on testers add/remove
+- **gpc-onboarding** (0.11.0) -- Version alignment
+- **README** -- Compatibility updated to GPC v0.9.51+
+
+---
+
 ## v1.8.0 -- 2026-03-31
 
 Synced with GPC v0.9.50. Security hardening, supply chain protection, developer verification, expanded docs.

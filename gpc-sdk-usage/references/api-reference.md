@@ -1,6 +1,6 @@
 # API Client Reference
 
-Complete reference for the PlayApiClient returned by `createApiClient()`.
+Complete reference for the PlayApiClient returned by `createApiClient()`. Covers all 208 endpoints.
 
 ## Client namespaces
 
@@ -10,7 +10,7 @@ Complete reference for the PlayApiClient returned by `createApiClient()`.
 client.edits.insert(packageName): Promise<AppEdit>
 client.edits.get(packageName, editId): Promise<AppEdit>
 client.edits.validate(packageName, editId): Promise<void>
-client.edits.commit(packageName, editId): Promise<void>
+client.edits.commit(packageName, editId, options?): Promise<void>  // options: EditCommitOptions
 client.edits.delete(packageName, editId): Promise<void>
 ```
 
@@ -26,7 +26,7 @@ client.details.patch(packageName, editId, partial): Promise<AppDetails>
 
 ```typescript
 client.bundles.list(packageName, editId): Promise<BundleList>
-client.bundles.upload(packageName, editId, filePath): Promise<Bundle>
+client.bundles.upload(packageName, editId, filePath, deviceTierConfigId?): Promise<Bundle>
 ```
 
 ### tracks — Release tracks
@@ -67,7 +67,7 @@ client.images.deleteAll(packageName, editId, language, imageType): Promise<void>
 ### reviews — User reviews (no edit needed)
 
 ```typescript
-client.reviews.list(packageName, options?): Promise<ReviewsResponse>
+client.reviews.list(packageName, options?): Promise<ReviewsResponse>  // options accepts startIndex
 client.reviews.get(packageName, reviewId, translationLanguage?): Promise<Review>
 client.reviews.reply(packageName, reviewId, replyText): Promise<ReviewReply>
 ```
@@ -78,7 +78,7 @@ client.reviews.reply(packageName, reviewId, replyText): Promise<ReviewReply>
 client.subscriptions.list(packageName, options?): Promise<SubscriptionList>
 client.subscriptions.get(packageName, productId): Promise<Subscription>
 client.subscriptions.create(packageName, data): Promise<Subscription>
-client.subscriptions.update(packageName, productId, data, updateMask?): Promise<Subscription>
+client.subscriptions.update(packageName, productId, data, updateMask?, mutationOptions?): Promise<Subscription>  // mutationOptions: MutationOptions
 client.subscriptions.delete(packageName, productId): Promise<void>
 client.subscriptions.batchGet(packageName, productIds): Promise<Subscription[]>
 client.subscriptions.batchUpdate(packageName, requests): Promise<SubscriptionsBatchUpdateResponse>
@@ -139,11 +139,58 @@ client.orders.refund(packageName, orderId, body?): Promise<void>
 client.monetization.convertRegionPrices(packageName, price): Promise<RegionPrices>
 ```
 
-### testers — Beta testers (requires edit)
+### deobfuscation -- Deobfuscation files (requires edit, v0.9.51+)
+
+```typescript
+client.deobfuscation.upload(packageName, editId, versionCode, filePath, fileType?): Promise<DeobfuscationFile>
+// fileType: DeobfuscationFileType ('proguard' | 'nativeCode')
+```
+
+### expansionFiles -- APK expansion files (requires edit, v0.9.51+)
+
+```typescript
+client.expansionFiles.get(packageName, editId, versionCode, expansionFileType): Promise<ExpansionFile>
+client.expansionFiles.update(packageName, editId, versionCode, expansionFileType, data): Promise<ExpansionFile>
+client.expansionFiles.patch(packageName, editId, versionCode, expansionFileType, partial): Promise<ExpansionFile>
+client.expansionFiles.upload(packageName, editId, versionCode, expansionFileType, filePath): Promise<ExpansionFile>
+```
+
+### oneTimeProducts -- One-time products (no edit needed, v0.9.51+)
+
+```typescript
+client.oneTimeProducts.list(packageName, options?): Promise<OneTimeProductList>
+// options accepts pageSize and pageToken for pagination
+```
+
+### testers -- Beta testers (requires edit)
 
 ```typescript
 client.testers.get(packageName, editId, track): Promise<Testers>
 client.testers.update(packageName, editId, track, testers): Promise<Testers>
+```
+
+## Types (v0.9.51+)
+
+```typescript
+// Options for edits.commit()
+type EditCommitOptions = {
+  changesNotSentForReview?: boolean;
+  changesInReviewBehavior?: "UNSPECIFIED" | "HALT_REVIEW";
+};
+
+// Options for subscriptions.update() and similar mutation endpoints
+type MutationOptions = {
+  allowMissing?: boolean;
+  latencyTolerance?: ProductUpdateLatencyTolerance;
+};
+
+type ProductUpdateLatencyTolerance =
+  | "PRODUCT_UPDATE_LATENCY_TOLERANCE_UNSPECIFIED"
+  | "PRODUCT_UPDATE_LATENCY_TOLERANCE_LATENCY_SENSITIVE"
+  | "PRODUCT_UPDATE_LATENCY_TOLERANCE_LATENCY_TOLERANT";
+
+// File type for deobfuscation uploads
+type DeobfuscationFileType = "proguard" | "nativeCode";
 ```
 
 ## Utilities

@@ -106,6 +106,31 @@ Use exit codes for conditional CI logic:
   run: echo "Vitals threshold breached — promotion blocked"
 ```
 
+## Rejected or In-Review Releases
+
+If a previous submission is still in review or was rejected, uploading a new version may fail with `EDIT_CONFLICT`.
+
+**Detect before uploading:**
+```yaml
+- name: Check for pending review
+  run: gpc releases status --error-if-in-review
+```
+
+The `--error-if-in-review` flag exits with code 4 if any release is in `inReview` or `rejected` status. Handle it before uploading:
+
+```yaml
+- name: Check for pending review
+  id: review-check
+  run: gpc releases status --error-if-in-review
+  continue-on-error: true
+
+- name: Upload release
+  if: steps.review-check.outcome == 'success'
+  run: gpc releases upload app.aab --track beta --changes-not-sent-for-review
+```
+
+If a release was rejected, resolve the issue in the Play Console before re-uploading from CI.
+
 ## Debugging with Verbose Output
 
 ```yaml

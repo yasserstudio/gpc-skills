@@ -168,6 +168,37 @@ Used with `gpc subscriptions base-plans migrate-prices`:
 }
 ```
 
+## Create and update parameters
+
+### `regionsVersion` (create endpoints)
+
+Controls the regional pricing version used when creating subscriptions or in-app products. Defaults to `2022/02`. Pass via `--regions-version` on create commands.
+
+```json
+{
+  "regionsVersion": {
+    "version": "2022/02"
+  }
+}
+```
+
+### `allowMissing` (update endpoints)
+
+When set to `true`, the update call behaves as an upsert: if the subscription, offer, or in-app product does not exist, it will be created instead of returning a `NOT_FOUND` error. Pass via `--allow-missing` on update commands.
+
+This is useful for CI/CD pipelines where you want to ensure a product exists without checking first.
+
+### `latencyTolerance` (update endpoints)
+
+Controls how quickly changes propagate after an update. Pass via `--latency-tolerance` on update commands.
+
+| Value | Behavior |
+|-------|----------|
+| `PRODUCT_UPDATE_LATENCY_TOLERANCE_LATENCY_SENSITIVE` | Changes propagate immediately (default) |
+| `PRODUCT_UPDATE_LATENCY_TOLERANCE_LATENCY_TOLERANT` | Changes may take longer to propagate but allows higher throughput for bulk operations |
+
+CLI shorthand values: `LATENCY_SENSITIVE` (default), `LATENCY_TOLERANT`.
+
 ## Update masks
 
 Common `--update-mask` values for `gpc subscriptions update`:

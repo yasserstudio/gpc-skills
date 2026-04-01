@@ -3,7 +3,7 @@ name: gpc-release-flow
 description: "Use when uploading, releasing, promoting, or managing rollouts on Google Play. Make sure to use this skill whenever the user mentions gpc releases, upload AAB, upload APK, staged rollout, promote to production, halt rollout, gpc publish, release notes, track management, internal testing, beta release, production rollout, version code, rollout percentage, or wants to ship an Android app to any Play Store track. Also trigger when someone asks about the Google Play edit lifecycle, release validation, or how to do a phased rollout — even if they don't mention GPC by name. For metadata and listings, see gpc-metadata-sync. For CI/CD integration, see gpc-ci-integration."
 compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill)."
 metadata:
-  version: 1.1.0
+  version: 1.2.0
 ---
 
 # GPC Release Flow
@@ -86,6 +86,42 @@ gpc releases notes set --track beta --lang en-US --notes "Bug fixes"
 gpc releases notes set --track beta --file release-notes/  # From directory
 ```
 
+> **New in v0.9.47:** APK files are auto-detected and uploaded via the correct `edits.apks.upload` endpoint. Use `--status draft` to create draft releases for manual review in the Play Console before going live.
+
+#### Additional upload flags (v0.9.51+)
+
+```bash
+# Upload native debug symbols (ProGuard mapping or native code symbols)
+gpc releases upload app.aab --track internal --mapping-type proguard  # default
+gpc releases upload app.aab --track internal --mapping-type nativeCode
+
+# Target a specific device tier configuration
+gpc releases upload app.aab --track production --device-tier-config 12345
+gpc releases upload app.aab --track production --device-tier-config LATEST
+
+# Skip sending changes for review (required for rejected apps)
+gpc releases upload app.aab --track production --changes-not-sent-for-review
+
+# Fail safely if there are changes already in review
+gpc releases upload app.aab --track production --error-if-in-review
+```
+
+| Flag | Values | Description |
+|------|--------|-------------|
+| `--mapping-type` | `proguard` (default), `nativeCode` | Specifies the type of debug symbols to upload alongside the bundle. Use `nativeCode` when shipping native (C/C++) libraries |
+| `--device-tier-config` | numeric ID or `LATEST` | Applies a device tier targeting configuration so different APKs are served to different device classes |
+| `--changes-not-sent-for-review` | boolean flag | Commits the edit without sending changes for review. Required when a previous submission was rejected and you are not yet ready for re-review |
+| `--error-if-in-review` | boolean flag | Causes the command to exit with a non-zero code if there are already changes in review, instead of silently overwriting them |
+
+### Rejected Apps
+
+When Google Play rejects a submission, your app enters a "changes in review" state. Subsequent uploads or promotions will fail unless you handle this explicitly:
+
+1. **If you want to push changes without triggering a new review** (e.g., updating metadata while fixing the rejection reason), use `--changes-not-sent-for-review`. This commits your edit but leaves the review state untouched.
+2. **If you want to guard against accidentally overwriting in-review changes** (e.g., a CI pipeline that should not clobber a pending review), use `--error-if-in-review`. The command will exit with code 4 (`API` error) if changes are currently in review.
+3. **If you are ready to re-submit for review**, omit both flags and upload normally. Google Play will replace the pending submission with your new one.
+
+These flags apply to `gpc releases upload`, `gpc publish`, `gpc releases promote`, and `gpc releases rollout` commands.
 Read:
 - `references/upload-lifecycle.md`
 
@@ -114,8 +150,57 @@ gpc releases promote --from internal --to beta
 # Promote from beta to production with staged rollout
 gpc releases promote --from beta --to production --rollout 5
 
-# Promote as draft
-gpc releases promote --from beta --to production --status draft
+# Copy release notes from another track when promoting
+gpc releases promote --from internal --to production --copy-notes-from internal
+
+# Promote as draft (review in Play Console before going live)
+gpc releases promote --from internal --to beta --status draft
+```
+
+> **Note:** Since v0.9.39, `gpc releases promote` auto-retries once on 409 EDIT_CONFLICT (another edit is open).
+
+Promote also supports the review-control flags (v0.9.51+):
+
+```bash
+# Promote without sending for review (rejected app workflow)
+gpc releases promote --from internal --to beta --changes-not-sent-for-review
+
+# Fail if changes are already in review
+gpc releases promote --from beta --to production --rollout 5 --error-if-in-review
+```
+
+### 3b) Preview before publishing
+
+```bash
+# Read-only preview of release state across all tracks
+gpc diff
+
+# Compare two specific tracks
+gpc diff --from internal --to production
+
+# Compare local metadata vs remote
+gpc diff --metadata fastlane/metadata
+```
+
+### 3c) Release lifecycle visibility
+
+```bash
+# List releases on a track with lifecycle states (DRAFT, IN_REVIEW, PUBLISHED, etc.)
+gpc releases list --track production
+gpc releases list --track beta --json
+```
+
+> **New in v0.9.46:** The `releases.list` endpoint provides release lifecycle states without opening an edit session. Use it to check whether a release is still in review, has been published, or is in draft -- useful for CI pipelines that need to gate on review completion.
+
+### 3d) Release stats and history
+
+```bash
+# Release count per track with status breakdown
+gpc releases count
+
+# Show release history from GitHub
+gpc changelog
+gpc changelog --tag v0.9.47
 ```
 
 ### 4) Manage staged rollouts
@@ -132,6 +217,16 @@ gpc releases rollout resume --track production
 
 # Complete rollout (100%)
 gpc releases rollout complete --track production
+```
+
+Rollout commands also support review-control flags (v0.9.51+):
+
+```bash
+# Increase rollout without triggering review (rejected app workflow)
+gpc releases rollout increase --track production --to 50 --changes-not-sent-for-review
+
+# Complete rollout, but fail if there are changes in review
+gpc releases rollout complete --track production --error-if-in-review
 ```
 
 Read:

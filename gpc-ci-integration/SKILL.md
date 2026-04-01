@@ -71,7 +71,9 @@ jobs:
           GPC_APP: com.example.app
         run: |
           npm install -g @gpc-cli/cli
-          gpc releases upload app/build/outputs/bundle/release/app-release.aab --track internal
+          gpc releases upload app/build/outputs/bundle/release/app-release.aab \
+            --track internal \
+            --changes-not-sent-for-review
 ```
 
 #### Full pipeline — upload, check vitals, promote:
@@ -107,7 +109,13 @@ jobs:
         run: |
           gpc releases upload app-release.aab \
             --track ${{ inputs.track }} \
-            --rollout ${{ inputs.rollout }}
+            --rollout ${{ inputs.rollout }} \
+            --changes-not-sent-for-review \
+            --mapping-type PROGUARD \
+            --device-tier-config default
+
+      - name: Error if in review
+        run: gpc releases status --error-if-in-review
 
       - name: Check vitals
         if: inputs.track == 'production'
@@ -134,7 +142,7 @@ release:
     GPC_APP: com.example.app
   script:
     - npm install -g @gpc-cli/cli
-    - gpc releases upload app-release.aab --track internal
+    - gpc releases upload app-release.aab --track internal --changes-not-sent-for-review
   only:
     - tags
 ```
@@ -150,7 +158,7 @@ pipelines:
           image: node:20
           script:
             - npm install -g @gpc-cli/cli
-            - gpc releases upload app-release.aab --track internal
+            - gpc releases upload app-release.aab --track internal --changes-not-sent-for-review
           deployment: production
 ```
 
@@ -167,7 +175,7 @@ jobs:
           name: Upload to Play Store
           command: |
             npm install -g @gpc-cli/cli
-            gpc releases upload app-release.aab --track internal
+            gpc releases upload app-release.aab --track internal --changes-not-sent-for-review
           environment:
             GPC_APP: com.example.app
 ```
@@ -227,7 +235,10 @@ fi
 
 ```yaml
 - name: Upload to beta
-  run: gpc publish app.aab --track beta
+  run: |
+    gpc publish app.aab --track beta \
+      --changes-not-sent-for-review \
+      --mapping-type PROGUARD
 
 - name: Wait for crash data
   run: sleep 3600  # Wait 1 hour for crash data
@@ -251,6 +262,27 @@ Test your CI pipeline without making real changes:
     gpc releases upload app.aab --track beta --dry-run
     gpc releases promote --from beta --to production --rollout 10 --dry-run
 ```
+
+### 9a) Handling rejected apps in CI
+
+When Google Play rejects an app update, `gpc releases status` reports the rejection reason. Use `--error-if-in-review` to detect and handle in-review or rejected states in your pipeline:
+
+```yaml
+- name: Check for rejection
+  id: review-check
+  run: gpc releases status --error-if-in-review
+  continue-on-error: true
+
+- name: Handle rejection
+  if: steps.review-check.outcome == 'failure'
+  run: |
+    echo "Release was rejected or is still in review."
+    echo "Check the Play Console for details."
+    gpc releases status --output json | jq '.data.releases[] | select(.status == "rejected")'
+    exit 1
+```
+
+The `--error-if-in-review` flag exits with code 4 if any release on the target track is in `inReview` or `rejected` status. Use this before uploading a new version to avoid `EDIT_CONFLICT` errors when a previous submission is still pending review.
 
 ### 10) Markdown output for GitHub step summaries
 
@@ -333,6 +365,8 @@ gpc releases upload app.aab --track beta --retry-log retries.log
 | Rate limited | Too many API calls | Increase `GPC_BASE_DELAY`, reduce parallelism |
 | Exit code 6 | Vitals threshold breached | Review crash/ANR data, fix issues before promoting |
 | `EDIT_CONFLICT` | Parallel runs editing same app | Serialize release jobs or use job concurrency limits |
+| `IN_REVIEW` or `REJECTED` | Previous submission pending or rejected | Use `--error-if-in-review` before uploading; resolve rejection in Play Console first |
+| Changes auto-submitted for review | Edit committed without opt-out flag | Add `--changes-not-sent-for-review` to upload/push commands |
 
 Read:
 - `references/troubleshooting.md`

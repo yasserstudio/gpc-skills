@@ -47,7 +47,8 @@ jobs:
           gpc publish \
             app/build/outputs/bundle/release/app-release.aab \
             --track internal \
-            --notes "Release ${GITHUB_REF_NAME}"
+            --notes "Release ${GITHUB_REF_NAME}" \
+            --changes-not-sent-for-review
 
       - name: Release summary
         if: always()
@@ -96,6 +97,7 @@ jobs:
           gpc releases upload app-release.aab \
             --track ${{ inputs.track }} \
             --rollout ${{ inputs.rollout }} \
+            --changes-not-sent-for-review \
             $FLAGS
 ```
 

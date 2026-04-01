@@ -46,7 +46,7 @@ No conversion needed — the format is identical.
 |-----------------|----------------|
 | `fastlane supply --track beta --aab app.aab` | `gpc releases upload app.aab --track beta` |
 | `fastlane supply --track production --rollout 0.1` | `gpc releases upload app.aab --track production --rollout 10` |
-| `fastlane supply --skip_upload_aab --metadata_path metadata/` | `gpc listings push --dir metadata/` |
+| `fastlane supply --skip_upload_aab --metadata_path metadata/` | `gpc listings push --dir metadata/ --changes-not-sent-for-review` |
 | `fastlane supply --skip_upload_aab --download_metadata` | `gpc listings pull --dir metadata/` |
 | `fastlane supply --track production --version_code 42` | `gpc releases promote --from beta --to production` |
 

@@ -29,7 +29,7 @@ upload-to-internal:
     - npm install -g @gpc-cli/cli
   script:
     - gpc validate app/build/outputs/bundle/release/app-release.aab
-    - gpc releases upload app/build/outputs/bundle/release/app-release.aab --track internal
+    - gpc releases upload app/build/outputs/bundle/release/app-release.aab --track internal --changes-not-sent-for-review
 ```
 
 ## Full pipeline with promotion
@@ -54,7 +54,7 @@ upload-beta:
   before_script:
     - npm install -g @gpc-cli/cli
   script:
-    - gpc releases upload app-release.aab --track beta
+    - gpc releases upload app-release.aab --track beta --changes-not-sent-for-review
     - echo "Uploaded to beta"
 
 check-vitals:

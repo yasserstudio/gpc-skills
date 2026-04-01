@@ -74,3 +74,13 @@ Use `--dry-run` to preview changes:
 ```bash
 gpc listings push --dir metadata/ --dry-run
 ```
+
+Use `--changes-not-sent-for-review` to prevent the edit from being auto-submitted for review:
+```bash
+gpc listings push --dir metadata/ --changes-not-sent-for-review
+```
+
+Use `--error-if-in-review` to abort if the app is currently in review or rejected:
+```bash
+gpc listings push --dir metadata/ --error-if-in-review
+```

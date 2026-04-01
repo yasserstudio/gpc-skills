@@ -23,7 +23,7 @@ pipelines:
           script:
             - npm install -g @gpc-cli/cli
             - gpc validate app-release.aab
-            - gpc releases upload app-release.aab --track internal
+            - gpc releases upload app-release.aab --track internal --changes-not-sent-for-review
           artifacts:
             - '*.log'
 ```
@@ -50,7 +50,7 @@ pipelines:
           name: Upload to beta
           script:
             - npm install -g @gpc-cli/cli
-            - gpc releases upload app-release.aab --track beta
+            - gpc releases upload app-release.aab --track beta --changes-not-sent-for-review
       - step:
           name: Check vitals
           trigger: manual

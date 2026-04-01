@@ -3,7 +3,7 @@ name: gpc-troubleshooting
 description: "Use when debugging GPC errors, failures, or unexpected behavior. Make sure to use this skill whenever the user mentions gpc error, gpc failing, exit code, AUTH_FAILED, API_FORBIDDEN, NETWORK_ERROR, CONFIG_MISSING, EDIT_CONFLICT, upload failed, permission denied, timeout, rate limit, gpc doctor failing, unexpected exit code, command not working, GPC crash, debug GPC, verbose output, --json error, threshold breach — even if they don't explicitly say 'troubleshoot.' Also trigger when someone encounters any GPC error they don't understand, when gpc doctor reports issues, when CI pipelines fail with GPC commands, or when they need to interpret exit codes. For auth-specific setup issues, see gpc-setup. For CI-specific issues, see gpc-ci-integration."
 compatibility: "GPC v0.9+. Covers all packages: @gpc-cli/cli, @gpc-cli/core, @gpc-cli/api, @gpc-cli/auth, @gpc-cli/config."
 metadata:
-  version: 0.11.0
+  version: 0.12.0
 ---
 
 # gpc-troubleshooting
@@ -97,6 +97,8 @@ export GPC_SERVICE_ACCOUNT=$(cat ~/path/to/key.json)
 | `API_PACKAGE_NAME_MISMATCH` | 400 | applicationId doesn't match target app | Verify applicationId matches target app |
 | `API_APP_NOT_FOUND` | 404 | App not in developer account | Verify package name and developer account |
 | `API_INSUFFICIENT_PERMISSIONS` | 403 | Service account missing permissions | Grant required roles in Play Console → Settings → API access |
+| `API_CHANGES_NOT_SENT_FOR_REVIEW` | 400/403 | App has rejected update, requires review flag | Add `--changes-not-sent-for-review` flag to the command |
+| `API_CHANGES_ALREADY_IN_REVIEW` | 400 | Changes already in review, new commit would silently cancel | Use `--error-if-in-review` to prevent silent cancellation |
 
 ```bash
 # Check if an edit is stuck

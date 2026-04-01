@@ -18,6 +18,12 @@ gpc testers add dev1@gmail.com dev2@gmail.com --track internal
 
 # Add to beta
 gpc testers add beta-user@gmail.com --track beta
+
+# Add without auto-submitting changes for review
+gpc testers add beta-user@gmail.com --track beta --changes-not-sent-for-review
+
+# Abort if the app is currently in review or rejected
+gpc testers add beta-user@gmail.com --track beta --error-if-in-review
 ```
 
 ## Using Google Groups
@@ -78,6 +84,9 @@ gpc testers remove old-tester@gmail.com --track beta
 
 # Remove multiple
 gpc testers remove user1@gmail.com user2@gmail.com --track internal
+
+# Remove without auto-submitting changes for review
+gpc testers remove old-tester@gmail.com --track beta --changes-not-sent-for-review
 ```
 
 ## Onboarding workflow
