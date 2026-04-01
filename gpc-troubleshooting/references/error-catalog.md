@@ -135,6 +135,8 @@ gpc releases promote --from beta --to production --changes-not-sent-for-review
 - This flag tells the API that you acknowledge the changes will not be sent for review automatically.
 - Some apps enter this state after a policy violation or rejected review.
 - The flag is safe to include on every call if your workflow requires it.
+- **Technical detail (v0.9.52+):** When this flag is set, GPC skips the `edits.validate` API call and goes straight to `edits.commit`. Google's validate endpoint does not accept the `changesNotSentForReview` parameter and returns "Unknown name" if you try. The commit endpoint handles validation internally.
+- **Requires GPC v0.9.52+.** Versions 0.9.51 and earlier had a bug where `edits.validate` blocked this flag from ever reaching `edits.commit`.
 
 ---
 

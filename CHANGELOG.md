@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.9.1 -- 2026-04-01
+
+Synced with GPC v0.9.52. Documents the validate-skip behavior for rejected apps.
+
+### Updated Skills
+
+- **gpc-release-flow** -- Added v0.9.52 note: `--changes-not-sent-for-review` skips `edits.validate` (validate rejects the flag). Expanded command list that supports the flag.
+- **gpc-troubleshooting** -- Added technical detail and version requirement note to `API_CHANGES_NOT_SENT_FOR_REVIEW` error catalog entry.
+
+---
+
 ## v1.9.0 -- 2026-04-01
 
 Synced with GPC v0.9.51. Rejected app support, native debug symbols, expansion files, monetization upsert, review pagination.

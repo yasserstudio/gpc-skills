@@ -121,7 +121,9 @@ When Google Play rejects a submission, your app enters a "changes in review" sta
 2. **If you want to guard against accidentally overwriting in-review changes** (e.g., a CI pipeline that should not clobber a pending review), use `--error-if-in-review`. The command will exit with code 4 (`API` error) if changes are currently in review.
 3. **If you are ready to re-submit for review**, omit both flags and upload normally. Google Play will replace the pending submission with your new one.
 
-These flags apply to `gpc releases upload`, `gpc publish`, `gpc releases promote`, and `gpc releases rollout` commands.
+These flags apply to `gpc releases upload`, `gpc publish`, `gpc releases promote`, `gpc releases rollout`, `gpc listings push/update/delete`, `gpc listings images upload/delete`, `gpc testers add/remove/import`, `gpc tracks create/update`, and `gpc apps update`.
+
+> **Note (v0.9.52+):** When `--changes-not-sent-for-review` is set, GPC skips server-side edit validation (`edits.validate`) and goes straight to `edits.commit`. This is required because Google's validate endpoint does not accept the `changesNotSentForReview` parameter and rejects edits for apps with rejected updates. Your changes are still validated by the commit call itself.
 Read:
 - `references/upload-lifecycle.md`
 
