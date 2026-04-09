@@ -1,9 +1,9 @@
 ---
 name: gpc-sdk-usage
 description: "Use when building applications that programmatically interact with the Google Play Developer API using GPC's TypeScript SDK packages. Make sure to use this skill whenever the user mentions @gpc-cli/api, @gpc-cli/auth, PlayApiClient, createApiClient, resolveAuth, Google Play API client, TypeScript SDK, programmatic access, API client, HTTP client, rate limiter, pagination, edit lifecycle in code, Node.js Google Play, server-side Play Store, backend integration — even if they don't explicitly say 'SDK.' Also trigger when someone wants to build a backend service, custom dashboard, automation script, or any TypeScript/JavaScript application that interacts with Google Play programmatically rather than through the CLI. For CLI usage, see other gpc-* skills. For building plugins, see gpc-plugin-development."
-compatibility: "GPC v0.9.9+ (new APIs require v0.9.51+). Requires Node.js 20+, TypeScript 5+. Packages: @gpc-cli/api, @gpc-cli/auth."
+compatibility: "GPC v0.9.9+ (new APIs require v0.9.51+, typed acknowledge/revoke bodies require v0.9.55+). Requires Node.js 20+, TypeScript 5+. Packages: @gpc-cli/api, @gpc-cli/auth."
 metadata:
-  version: 1.1.0
+  version: 1.1.1
 ---
 
 # gpc-sdk-usage
@@ -67,7 +67,7 @@ const client = createApiClient({
 });
 ```
 
-The client provides typed access to all 208 Google Play Developer API v3 endpoints.
+The client provides typed access to all 215 Google Play Developer API v3 endpoints.
 
 `Read:` `references/api-reference.md` for the complete client API with all namespaces and methods.
 

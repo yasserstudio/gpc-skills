@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.9.2 -- 2026-04-09
+
+Synced with GPC v0.9.55. API freshness audit and multi-profile CLI fix.
+
+### Updated Skills
+
+- **gpc-sdk-usage** (1.1.1) -- `revokeSubscriptionV2(body?: RevokeSubscriptionV2Request)` and `acknowledgeSubscription(body?: AcknowledgeSubscriptionRequest)` now show typed request bodies. Removed stale `refundSubscriptionV2` reference (endpoint was deleted in v0.9.54).
+- **gpc-monetization** (0.11.1) -- Version bump for API type corrections in this domain (`offerPhase` object shape, `externalAccountId` on acknowledge, `itemBasedRefund` on revoke).
+- **gpc-multi-app** (1.0.1) -- Version bump. The `--profile` / `-p` global flag now actually switches profiles as this skill has always documented. Previously silently ignored in v0.9.54 and earlier.
+
+---
+
 ## v1.9.1 -- 2026-04-01
 
 Synced with GPC v0.9.52. Documents the validate-skip behavior for rejected apps.

@@ -1,6 +1,6 @@
 # API Client Reference
 
-Complete reference for the PlayApiClient returned by `createApiClient()`. Covers all 208 endpoints.
+Complete reference for the PlayApiClient returned by `createApiClient()`. Covers all 215 endpoints.
 
 ## Client namespaces
 
@@ -119,9 +119,8 @@ client.purchases.cancelSubscription(packageName, subscriptionId, token): Promise
 client.purchases.cancelSubscriptionV2(packageName, token, body?): Promise<void>
 client.purchases.deferSubscription(packageName, subscriptionId, token, body): Promise<DeferralInfo>
 client.purchases.deferSubscriptionV2(packageName, token, body): Promise<DeferralResponse>
-client.purchases.revokeSubscriptionV2(packageName, token): Promise<void>
-client.purchases.refundSubscriptionV2(packageName, token): Promise<void>
-client.purchases.acknowledgeSubscription(packageName, subscriptionId, token, body?): Promise<void>
+client.purchases.revokeSubscriptionV2(packageName, token, body?: RevokeSubscriptionV2Request): Promise<void>
+client.purchases.acknowledgeSubscription(packageName, subscriptionId, token, body?: AcknowledgeSubscriptionRequest): Promise<void>
 client.purchases.listVoided(packageName, options?): Promise<VoidedPurchaseList>
 ```
 
