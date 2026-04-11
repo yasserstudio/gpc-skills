@@ -10,7 +10,7 @@ These skills teach Claude Code how to use GPC for common Google Play workflows: 
 npx skills add yasserstudio/gpc-skills
 ```
 
-## Available Skills (16)
+## Available Skills (17)
 
 | Skill | Description |
 |-------|-------------|
@@ -30,6 +30,7 @@ npx skills add yasserstudio/gpc-skills
 | **gpc-security** | Credential storage, key rotation, audit logging, supply chain protection (12 layers), incident response |
 | **gpc-preflight** | Offline AAB/APK compliance scanner (9 scanners), `.preflightrc.json` config |
 | **gpc-train** | Automated staged rollout pipeline with crash/ANR gates and time gates |
+| **gpc-enterprise** | **New in v0.9.56.** Publish private apps to Managed Google Play via the Play Custom App Publishing API. First Android publishing CLI with this support. |
 
 ## Skill Structure
 
@@ -92,6 +93,12 @@ gpc-<skill>/
 | "Harden supply chain security" | `gpc-security` |
 | "Open docs from the terminal" | `gpc-setup` |
 | "Scan APK for policy violations" | `gpc-preflight` |
+| "Publish a private app to Managed Google Play" | `gpc-enterprise` |
+| "Create a custom app for enterprise customers" | `gpc-enterprise` |
+| "Upload an internal-only Android app for a specific organization" | `gpc-enterprise` |
+| "What's the Play Custom App Publishing API?" | `gpc-enterprise` |
+| "Why does `gpc enterprise publish` ask for confirmation?" | `gpc-enterprise` |
+| "Why can't I make my private app public?" | `gpc-enterprise` |
 
 ## Reference Files Index
 
@@ -198,16 +205,19 @@ gpc-<skill>/
 
 ## Compatibility
 
-- GPC v0.9.52+ (`npm install -g @gpc-cli/cli`)
+- GPC v0.9.52+ (`npm install -g @gpc-cli/cli`) for most skills
+- GPC v0.9.56+ required for `gpc-enterprise` (Play Custom App Publishing API support)
 - Node.js 20+ (or standalone binary)
 - Google Play Developer API access (service account)
+- For `gpc-enterprise`: an additional "create and publish private apps" permission granted to the service account in Play Console
 
 ## Related
 
 - [GPC Documentation](https://yasserstudio.github.io/gpc/)
 - [GPC Commands Reference](https://yasserstudio.github.io/gpc/commands/)
 - [GPC CI/CD Recipes](https://yasserstudio.github.io/gpc/ci-cd/)
+- [GPC Enterprise Publishing Guide](https://yasserstudio.github.io/gpc/guide/enterprise-publishing) (v0.9.56+)
 
-## License
+## Licensing
 
-MIT
+Free to use. Source code is on GitHub at [yasserstudio/gpc-skills](https://github.com/yasserstudio/gpc-skills).

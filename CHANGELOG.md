@@ -1,5 +1,33 @@
 # Changelog
 
+## v1.10.0 -- 2026-04-11
+
+Synced with GPC v0.9.56. **First Android publishing CLI with Managed Google Play support** — rewrote `gpc enterprise` against the Play Custom App Publishing API, shipped a new dedicated skill, and updated downstream skills to reference the new surface.
+
+### New Skills
+
+- **gpc-enterprise** (1.0.0) -- NEW SKILL. Covers `gpc enterprise publish <bundle>` / `gpc enterprise create` for publishing private apps to Managed Google Play via the Play Custom App Publishing API. Includes the permanent-private warning, the `--account` vs deprecated `--org` flag surface, the repeatable `--org-id`/`--org-name` flag matching, the required setup (enable API in Google Cloud + grant "create and publish private apps" permission in Play Console), a CI/CD GitHub Actions recipe, and the troubleshooting table for `ENTERPRISE_INVALID_ACCOUNT_ID`, `ENTERPRISE_BUNDLE_NOT_FOUND`, and `MISSING_REQUIRED_OPTION`. Also documents the "subsequent updates via regular commands" pattern (once a private app is created, it's a normal draft app in your developer account — use `gpc releases upload` against the returned `packageName` for future versions).
+
+### Updated Skills
+
+- **gpc-sdk-usage** (1.1.1 → 1.2.0) -- Adds a new "Create the Enterprise client" section covering `createEnterpriseClient`, `CustomApp` type, `HttpClient.uploadCustomApp<T>`, and `ResumableUploadOptions.initialMetadata`. Updates the endpoint count from 215 to 216 (Play Custom App API adds one). Documents the multipart resumable upload pattern where the initial session-initiation POST carries JSON metadata alongside the binary — reusable infrastructure for any Google API that wants both metadata and a binary in a single resumable session.
+- **gpc-release-flow** (1.2.0 → 1.2.1) -- Adds a "Not this skill" note pointing at `gpc-enterprise` for initial private-app creation. Clarifies that subsequent updates to private apps still go through `gpc-release-flow` (upload, promote, rollout) against the assigned `packageName`. Adds `gpc-enterprise` to the Related skills list.
+- **README** -- Added `gpc-enterprise` to the available skills table (total 16 → 17). Added 6 new entries in the Skill Selection Guide for enterprise queries. Updated the Compatibility section to flag that `gpc-enterprise` requires GPC v0.9.56+. Added a link to the Enterprise Publishing guide in the Related section. Fixed the License section to reflect "Free to use" framing per the main repo policy (not "MIT licensed" in marketing).
+
+### Marquee feature in GPC v0.9.56
+
+- `gpc enterprise publish <bundle>` — one-shot private app publishing to Managed Google Play
+- `gpc enterprise create --bundle <path>` — explicit-arg variant
+- `gpc doctor` probes the Play Custom App Publishing API and flags missing permissions or a disabled API
+- New docs guide: https://yasserstudio.github.io/gpc/guide/enterprise-publishing
+- Release: https://github.com/yasserstudio/gpc/releases/tag/v0.9.56
+
+### Why this matters
+
+**Fastlane `supply` does not support this API. `gradle-play-publisher` does not support this API.** GPC v0.9.56 is the first Android publishing CLI to wrap the Play Custom App Publishing API. This sync releases the corresponding agent skill so Claude Code can guide users through the private-app publishing flow end-to-end: initial setup, the permanent-private confirmation, the one-command publish, and the hand-off back to standard `gpc releases upload` for subsequent updates.
+
+---
+
 ## v1.9.2 -- 2026-04-09
 
 Synced with GPC v0.9.55. API freshness audit and multi-profile CLI fix.

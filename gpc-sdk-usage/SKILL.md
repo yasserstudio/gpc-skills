@@ -1,9 +1,9 @@
 ---
 name: gpc-sdk-usage
 description: "Use when building applications that programmatically interact with the Google Play Developer API using GPC's TypeScript SDK packages. Make sure to use this skill whenever the user mentions @gpc-cli/api, @gpc-cli/auth, PlayApiClient, createApiClient, resolveAuth, Google Play API client, TypeScript SDK, programmatic access, API client, HTTP client, rate limiter, pagination, edit lifecycle in code, Node.js Google Play, server-side Play Store, backend integration — even if they don't explicitly say 'SDK.' Also trigger when someone wants to build a backend service, custom dashboard, automation script, or any TypeScript/JavaScript application that interacts with Google Play programmatically rather than through the CLI. For CLI usage, see other gpc-* skills. For building plugins, see gpc-plugin-development."
-compatibility: "GPC v0.9.9+ (new APIs require v0.9.51+, typed acknowledge/revoke bodies require v0.9.55+). Requires Node.js 20+, TypeScript 5+. Packages: @gpc-cli/api, @gpc-cli/auth."
+compatibility: "GPC v0.9.9+ (new APIs require v0.9.51+, typed acknowledge/revoke bodies require v0.9.55+, Play Custom App Publishing API + `createEnterpriseClient` + `HttpClient.uploadCustomApp<T>` + `ResumableUploadOptions.initialMetadata` require v0.9.56+). Requires Node.js 20+, TypeScript 5+. Packages: @gpc-cli/api, @gpc-cli/auth."
 metadata:
-  version: 1.1.1
+  version: 1.2.0
 ---
 
 # gpc-sdk-usage
@@ -67,7 +67,39 @@ const client = createApiClient({
 });
 ```
 
-The client provides typed access to all 215 Google Play Developer API v3 endpoints.
+The client provides typed access to all 216 Google Play Developer API endpoints across the Android Publisher v3, Play Developer Reporting v1beta1, and (new in v0.9.56) Play Custom App Publishing v1 APIs.
+
+### 2a. Create the Enterprise client (v0.9.56+)
+
+For private app publishing via the Play Custom App Publishing API, use a separate factory:
+
+```typescript
+import { createEnterpriseClient, type CustomApp } from "@gpc-cli/api";
+
+const enterprise = createEnterpriseClient({ auth });
+
+const app: CustomApp = await enterprise.apps.create(
+  "1234567890",              // developer account ID (int64, from Play Console URL)
+  "./app.aab",                // bundle path
+  {
+    title: "My Private App",
+    languageCode: "en_US",
+    organizations: [{ organizationId: "customer-org-id" }],
+  },
+);
+
+console.log("Assigned package name:", app.packageName);
+// com.google.customapp.A1B2C3D4E5 (Google-assigned, you cannot influence)
+```
+
+**Notes:**
+
+- Private apps are permanently private. Once created, they cannot be made public.
+- After creation, subsequent operations (version uploads, tracks, listings) go through the regular `createApiClient()` using the returned `packageName`.
+- Requires the "create and publish private apps" permission on your service account in Play Console.
+- The underlying `HttpClient.uploadCustomApp<T>(path, filePath, metadata, contentType)` method handles a multipart resumable upload where the initial session-initiation POST carries the JSON metadata. See `ResumableUploadOptions.initialMetadata` for reusing this pattern with other Google APIs.
+
+See the `gpc-enterprise` skill for the CLI equivalent and full setup walkthrough.
 
 `Read:` `references/api-reference.md` for the complete client API with all namespaces and methods.
 

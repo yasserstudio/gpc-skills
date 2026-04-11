@@ -1,9 +1,9 @@
 ---
 name: gpc-release-flow
 description: "Use when uploading, releasing, promoting, or managing rollouts on Google Play. Make sure to use this skill whenever the user mentions gpc releases, upload AAB, upload APK, staged rollout, promote to production, halt rollout, gpc publish, release notes, track management, internal testing, beta release, production rollout, version code, rollout percentage, or wants to ship an Android app to any Play Store track. Also trigger when someone asks about the Google Play edit lifecycle, release validation, or how to do a phased rollout — even if they don't mention GPC by name. For metadata and listings, see gpc-metadata-sync. For CI/CD integration, see gpc-ci-integration."
-compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill)."
+compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). For private-app publishing to Managed Google Play, see gpc-enterprise (v0.9.56+)."
 metadata:
-  version: 1.2.0
+  version: 1.2.1
 ---
 
 # GPC Release Flow
@@ -20,6 +20,10 @@ Use this skill when the task involves:
 - Using `gpc publish` for end-to-end release workflow
 - Pre-submission validation with `gpc validate`
 - Checking release status across tracks
+- **Updating a private app** (created via `gpc enterprise publish` in v0.9.56+) — after the initial custom-app creation, all subsequent operations use the standard commands in this skill against the assigned `packageName`
+
+**Not this skill:**
+- Creating a new *private* app for Managed Google Play — use `gpc-enterprise` (v0.9.56+). After creation, come back here for version uploads and track management.
 
 ## Inputs required
 
@@ -301,3 +305,4 @@ gpc rtdn test                # Guidance for testing RTDN setup
 - **gpc-vitals-monitoring**: Post-release crash monitoring
 - **gpc-ci-integration**: Automated releases in CI/CD
 - **gpc-monetization**: Subscriptions, IAP, RTDN notifications
+- **gpc-enterprise**: Private app publishing to Managed Google Play via the Play Custom App Publishing API (v0.9.56+)
