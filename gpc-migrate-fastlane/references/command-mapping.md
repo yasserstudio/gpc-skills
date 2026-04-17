@@ -40,6 +40,14 @@ GPC provides granular rollout control that Fastlane doesn't support natively.
 | `supply --aab app.aab --track beta --release_notes "..." ` | `gpc releases upload app.aab --track beta --release-notes "en-US=..."` |
 | Changelogs in `metadata/android/en-US/changelogs/142.txt` | `gpc releases upload --release-notes-dir release-notes/` |
 
+**Release-notes automation (v0.9.62+):** Fastlane users manage per-locale `metadata/android/<lang>/changelogs/<version>.txt` files by hand. GPC v0.9.62+ can generate them from your git log:
+
+```bash
+gpc changelog generate --target play-store --locales auto --format json --app com.example.app
+```
+
+Pair with `--apply` (v0.9.64) to write translated notes directly into the draft release. AI translation lands in v0.9.63.
+
 ## App information
 
 | Fastlane | GPC |

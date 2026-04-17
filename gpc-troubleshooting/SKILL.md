@@ -3,7 +3,7 @@ name: gpc-troubleshooting
 description: "Use when debugging GPC errors, failures, or unexpected behavior. Make sure to use this skill whenever the user mentions gpc error, gpc failing, exit code, AUTH_FAILED, API_FORBIDDEN, NETWORK_ERROR, CONFIG_MISSING, EDIT_CONFLICT, upload failed, permission denied, timeout, rate limit, gpc doctor failing, unexpected exit code, command not working, GPC crash, debug GPC, verbose output, --json error, threshold breach — even if they don't explicitly say 'troubleshoot.' Also trigger when someone encounters any GPC error they don't understand, when gpc doctor reports issues, when CI pipelines fail with GPC commands, or when they need to interpret exit codes. For auth-specific setup issues, see gpc-setup. For CI-specific issues, see gpc-ci-integration."
 compatibility: "GPC v0.9+. Covers all packages: @gpc-cli/cli, @gpc-cli/core, @gpc-cli/api, @gpc-cli/auth, @gpc-cli/config."
 metadata:
-  version: 0.12.0
+  version: 0.13.0
 ---
 
 # gpc-troubleshooting
@@ -203,6 +203,17 @@ gpc vitals crashes --threshold 1.5 && gpc releases promote --from beta --to prod
 | `PLUGIN_INVALID_PERMISSION` | Third-party plugin declares unknown permission | Check valid permissions in plugin-sdk docs |
 | Plugin not loading | Not in config or not approved | Add to `plugins` and `approvedPlugins` in .gpcrc.json |
 | Plugin error in hook | Bug in plugin handler | Check plugin logs; `onError`/API hooks swallow errors |
+
+### Changelog generation errors (v0.9.61+)
+
+| Code                             | Meaning                                                      | Fix                                                          |
+|----------------------------------|--------------------------------------------------------------|--------------------------------------------------------------|
+| `CHANGELOG_NO_TAG`               | No `v*` git tag found, `--from` not passed                   | Create a tag (`git tag v0.0.1`) or pass `--from <ref>`       |
+| `CHANGELOG_BAD_REF`              | `--from` or `--to` ref doesn't exist                         | Run `git rev-parse --verify <ref>` to check                  |
+| `CHANGELOG_LOCALES_REQUIRED`     | `--target play-store` passed without `--locales` (v0.9.62+)  | Pass `--locales en-US,fr-FR` or `--locales auto`             |
+| `CHANGELOG_LOCALES_INVALID`      | One or more `--locales` are not valid BCP 47 (v0.9.62+)      | Use Play Store-supported codes like `en-US`, `fr-FR`, `de-DE` |
+| `CHANGELOG_LOCALES_AUTO_NO_APP`  | `--locales auto` without an authenticated client + app (v0.9.62+) | Pass `--app <package>` or set config.app, check credentials |
+| `CHANGELOG_LOCALES_EMPTY`        | `--locales auto` returned zero locales (v0.9.62+)            | Create at least one Play Store listing, or pass explicit `--locales` |
 
 ### 9. Debug mode
 

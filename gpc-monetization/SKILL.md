@@ -3,7 +3,7 @@ name: gpc-monetization
 description: "Use when managing in-app purchases, subscriptions, pricing, or Real-Time Developer Notifications in Google Play. Make sure to use this skill whenever the user mentions gpc subscriptions, gpc iap, gpc purchases, gpc pricing, gpc rtdn, in-app products, base plans, subscription offers, one-time products, consumable products, purchase verification, purchase acknowledgement, purchase token, subscription cancellation, subscription deferral, voided purchases, refunds, regional pricing, currency conversion, price migration, SKU management, monetization, revenue, billing, subscription analytics, churn, trial conversion, subscriber count, RTDN, Real-Time Developer Notifications, Pub/Sub notifications, subscription events, purchase events — even if they don't explicitly say 'monetization.' Also trigger when someone wants to create or update subscriptions, manage base plan lifecycle (activate/deactivate), set up introductory offers, verify server-side purchases, handle refunds, convert prices across regions, sync IAP products from files, migrate subscribers to new prices, view subscription analytics, decode Pub/Sub notification payloads, or check RTDN topic configuration. For release management, see gpc-release-flow. For CI automation, see gpc-ci-integration."
 compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). Subscriptions and IAP require products configured in Google Play Console."
 metadata:
-  version: 0.11.1
+  version: 0.12.0
 ---
 
 # gpc-monetization
@@ -230,6 +230,17 @@ gpc iap sync --dir products/
 ```
 
 Each JSON file in the directory represents one product. GPC compares local files against the Play Store and creates, updates, or deletes as needed.
+
+### Activating/deactivating OTP offers (v0.9.57+)
+
+One-time product offers support explicit activation/deactivation:
+
+```bash
+gpc otp offers activate --app com.example.app --product-id sku_id --offer-id offer_id
+gpc otp offers deactivate --app com.example.app --product-id sku_id --offer-id offer_id
+```
+
+Matches the subscription-offer lifecycle. Without this, OTP offers relied on state being set through batch update calls only.
 
 ### 5. Purchases — verification and lifecycle
 

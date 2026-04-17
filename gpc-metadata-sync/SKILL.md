@@ -3,7 +3,7 @@ name: gpc-metadata-sync
 description: "Use when managing Google Play store listings, metadata, screenshots, or images. Make sure to use this skill whenever the user mentions gpc listings, store listing, metadata sync, screenshots, Fastlane metadata, localization, app description, pull listings, push listings, feature graphic, Play Store images, app title, short description, full description, changelogs, or wants to update any text or visual content on their Play Store page. Also trigger when someone asks about migrating from Fastlane supply, syncing metadata to/from local files, managing multi-language listings, or bulk-updating store content — even if they don't mention GPC explicitly. For releases and uploads, see gpc-release-flow."
 compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill)."
 metadata:
-  version: 1.1.0
+  version: 1.2.0
 ---
 
 # GPC Metadata Sync
@@ -203,6 +203,8 @@ gpc listings pull --dir metadata/
 gpc listings push --dir metadata/ --dry-run  # Preview first
 gpc listings push --dir metadata/ --changes-not-sent-for-review  # Apply without auto-submitting for review
 ```
+
+**Tip:** For generating per-locale "What's new" release notes text (not the full listing fields), see `gpc changelog generate --target play-store` (v0.9.62+) — it takes your git log and emits per-locale output with the 500-char Play Store budget enforced.
 
 ### 6) Preview with dry-run
 

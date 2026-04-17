@@ -1,5 +1,48 @@
 # Changelog
 
+## v1.11.0 -- 2026-04-17
+
+Synced with GPC v0.9.57 → v0.9.62 (6 GPC releases since the v1.10.0 sync). Marquee additions: `gpc changelog generate` (v0.9.61) and its multilingual Play Store target (v0.9.62), plus shell-completion walker + dynamic TAB values, vitals `error-count`, LMK API correction, and OTP offer activate/deactivate.
+
+### Updated Skills
+
+- **gpc-release-flow** (1.2.1 → 1.3.0) -- Added the v0.9.61 `gpc changelog generate` commands with prompt-mode example (`--format prompt | pbcopy`) and the `gh release create -F -` one-liner. Added a "Two different release notes flows" tip clarifying the GitHub Release vs Play Store `recentChanges[]` distinction. Added a full "Multilingual Play Store release notes (v0.9.62+)" section covering `--target play-store --locales <csv|auto>`, the 500-char budget meter, the `[needs translation]` placeholder, and `--strict` overflow handling.
+
+- **gpc-ci-integration** (1.1.0 → 1.2.0) -- Added a v0.9.61 `Generate GitHub Release notes` step to the GitHub Actions workflow example (`gpc changelog generate | gh release create -F -`). Added a v0.9.62 "Gate Play Store release notes on character budget" step (`--target play-store --locales auto --strict`) for CI gates.
+
+- **gpc-sdk-usage** (1.2.0 → 1.3.0) -- Compatibility string extended with the v0.9.62 changelog exports (`generateChangelog`, `renderPlayStore`, `resolveLocales`, `buildLocaleBundle`, `PLAY_STORE_LIMIT`, `LocaleBundle`, `LocaleEntry`). Endpoint count bumped 216 → 217 (v0.9.57 API correctness pass). New "Changelog generation (v0.9.62+)" section with a typed TypeScript example covering both GitHub and Play Store targets. New "API correctness history (recent)" section documenting the v0.9.57 `apprecovery` URL + `dataSafety.update` verb fixes, the removed phantom `dataSafety.get`, the added OTP offer `activateOffer`/`deactivateOffer` methods, the new `getVitalsErrorCount` function, and the v0.9.58/v0.9.59 LMK resource-name correction arc.
+
+- **gpc-metadata-sync** (1.1.0 → 1.2.0) -- Added a multilingual tip in the Multi-language workflow section pointing users at `gpc changelog generate --target play-store` (v0.9.62+) for per-locale "What's new" generation.
+
+- **gpc-migrate-fastlane** (1.0.0 → 1.1.0, via `references/command-mapping.md`) -- Added "Release-notes automation (v0.9.62+)" block showing the GPC equivalent of Fastlane's per-locale `metadata/android/<lang>/changelogs/<version>.txt` pattern. Forward-refs to v0.9.63 (`--ai` translation) and v0.9.64 (`--apply` into draft release).
+
+- **gpc-vitals-monitoring** (1.2.0 → 1.3.0) -- New "Count of error occurrences (`gpc vitals error-count`, v0.9.57+)" section with a CI threshold example. Rewrote the `gpc vitals lmk` block to reflect the v0.9.59-corrected API shape (`lmkRateMetricSet` with `userPerceivedLmkRate` + weighted variants + `distinctUsers`); documented the v0.9.58/v0.9.59 hotfix arc so users know to use v0.9.59+ for LMK.
+
+- **gpc-monetization** (0.11.1 → 0.12.0) -- Added an OTP offers activate/deactivate section (v0.9.57+) mirroring the subscription-offer lifecycle.
+
+- **gpc-setup** (1.1.0 → 1.2.0) -- New "Shell completion" section covering the v0.9.58+ walker-based scripts (auto-discover plugin commands, surface `.choices()` candidates) and the v0.9.60+ dynamic TAB values for `--profile`, `--app`/`--apps`, `--track` (backed by the hidden `gpc __complete` subcommand reading config + status cache, under 150ms cold).
+
+- **gpc-troubleshooting** (0.12.0 → 0.13.0) -- Added "Changelog generation errors (v0.9.61+)" table covering `CHANGELOG_NO_TAG`, `CHANGELOG_BAD_REF`, `CHANGELOG_LOCALES_REQUIRED`, `CHANGELOG_LOCALES_INVALID`, `CHANGELOG_LOCALES_AUTO_NO_APP`, `CHANGELOG_LOCALES_EMPTY`.
+
+- **gpc-onboarding** (0.11.0 → 0.12.0) -- Added a tab-completion callout at the end of the "After successful setup" flow pointing at the v0.9.58+ walker-based scripts with v0.9.60+ dynamic values.
+
+- **README** -- Added new Compatibility bullets for v0.9.58+ (full completion coverage), v0.9.61+ (`gpc changelog generate`), and v0.9.62+ (multilingual release notes). Added the [Multilingual Release Notes guide](https://yasserstudio.github.io/gpc/guide/multilingual-release-notes) to the Related links.
+
+### Marquee features in GPC v0.9.57 → v0.9.62
+
+- **v0.9.62 — Multilingual Changelog: Play Store target.** `gpc changelog generate --target play-store --locales <csv|auto>` emits per-locale "What's new" text with 500-char Unicode code-point budget enforcement. `--locales auto` reads your live listing via the listings API. `--format prompt` emits a translation-ready LLM prompt. `--strict` exits 1 on overflow (collects all overflows first). Release: https://github.com/yasserstudio/gpc/releases/tag/v0.9.62
+- **v0.9.61 — Smarter Changelog Generation.** New `gpc changelog generate` subcommand clusters git commits via Union-Find on file-path overlap + Jaccard keyword similarity + time proximity, lints subjects against project voice, emits canonical GitHub Release markdown / JSON / paste-ready LLM prompt. `--strict` for CI voice enforcement. Release: https://github.com/yasserstudio/gpc/releases/tag/v0.9.61
+- **v0.9.60 — Dynamic Tab Completion.** Hidden `gpc __complete <ctx>` subcommand feeds live `profiles` / `packages` / `tracks-for-app` / `releases-for-track` from config + status cache into bash/zsh/fish at TAB time. Zsh upgraded to real `_arguments` integration.
+- **v0.9.58 — Shell Completion Walker.** Introspection-based command tree replaces hand-maintained completion; plugin commands auto-complete. Constrained flags with `.choices()` surface their candidate list at TAB time.
+- **v0.9.59 — LMK Hotfix.** v0.9.58 shipped the wrong `VitalsMetricSet` resource name; v0.9.59 is the corrected build (`lmkRateMetricSet` with `userPerceivedLmkRate` + weighted variants).
+- **v0.9.57 — API Correctness.** `apprecovery.cancel/deploy` URL plural fix; `dataSafety.update` verb corrected to POST; phantom `dataSafety.get` removed; OTP offer `activateOffer`/`deactivateOffer` added; new `gpc vitals error-count` command; type completeness audit.
+
+### Why this matters
+
+The v0.9.61 → v0.9.62 changelog-generation series is the single most user-visible change in this sync. Fastlane's `supply` and gradle-play-publisher don't generate release notes from git, and they don't solve per-locale Play Store "What's new" budget enforcement. GPC v0.9.62 is the first publishing CLI to solve this end-to-end. Skills `gpc-release-flow`, `gpc-ci-integration`, and `gpc-migrate-fastlane` surface this new surface so Claude Code can guide users through the commit → markdown and commit → per-locale flows. v0.9.63 will add `--ai` (Vercel AI SDK translation) and v0.9.64 closes the loop with `--apply` into draft releases.
+
+---
+
 ## v1.10.0 -- 2026-04-11
 
 Synced with GPC v0.9.56. **First Android publishing CLI with Managed Google Play support** — rewrote `gpc enterprise` against the Play Custom App Publishing API, shipped a new dedicated skill, and updated downstream skills to reference the new surface.

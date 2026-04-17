@@ -3,7 +3,7 @@ name: gpc-setup
 description: "Use when setting up GPC (Google Play Console CLI): authentication with service accounts, OAuth, or Application Default Credentials; configuration files (.gpcrc.json, env vars, XDG paths); auth profiles; running gpc doctor; troubleshooting auth errors. Make sure to use this skill whenever the user mentions gpc auth, service account setup, gpc config, gpc doctor, GPC_SERVICE_ACCOUNT, gpc auth login, Google Play API credentials, Play Console authentication, or wants to install/configure GPC — even if they don't explicitly say 'setup.' Also trigger when someone is troubleshooting auth failures, token expiration, keychain issues, or proxy/network configuration for GPC."
 compatibility: "GPC v0.9+. Requires Node.js 20+, pnpm 9+ (for development). npm for installation."
 metadata:
-  version: 1.1.0
+  version: 1.2.0
 ---
 
 # GPC Setup
@@ -223,6 +223,32 @@ export GPC_TIMEOUT=30000
 export GPC_BASE_DELAY=1000
 export GPC_MAX_DELAY=60000
 ```
+
+## Shell completion (v0.9.58+ walker, v0.9.60+ dynamic values)
+
+GPC ships shell completion for bash, zsh, fish, and PowerShell. The completion tree is introspection-based (v0.9.58+) -- new commands and plugin-registered commands auto-complete without generator edits. Flags declared with `.choices()` surface their candidate list at TAB time.
+
+```bash
+# One-time setup (macOS/Linux)
+gpc completion bash >> ~/.bash_completion      # or source in ~/.bashrc
+gpc completion zsh  >> ~/.zshrc
+gpc completion fish > ~/.config/fish/completions/gpc.fish
+
+# Homebrew auto-installs completion files -- no eval step needed
+brew install yasserstudio/tap/gpc
+```
+
+### Dynamic values (v0.9.60+)
+
+The completion scripts fill in live values for several flags at TAB time, backed by a hidden `gpc __complete <ctx>` subcommand. No API call -- reads your config and `~/.cache/gpc/status-*.json` cache, returns in under 150ms cold.
+
+| Flag            | Source                                                        |
+|-----------------|---------------------------------------------------------------|
+| `--profile`     | Profile names from `~/.config/gpc/config.json`                |
+| `--app` / `--apps` | Package names from config + status cache                   |
+| `--track`       | Track names for the current app (from status cache)           |
+
+If your package/track completions are stale, run any command that touches `gpc status` (or `gpc status` directly) to refresh the cache.
 
 ## Verification
 

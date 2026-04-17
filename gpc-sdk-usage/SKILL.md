@@ -1,9 +1,9 @@
 ---
 name: gpc-sdk-usage
 description: "Use when building applications that programmatically interact with the Google Play Developer API using GPC's TypeScript SDK packages. Make sure to use this skill whenever the user mentions @gpc-cli/api, @gpc-cli/auth, PlayApiClient, createApiClient, resolveAuth, Google Play API client, TypeScript SDK, programmatic access, API client, HTTP client, rate limiter, pagination, edit lifecycle in code, Node.js Google Play, server-side Play Store, backend integration — even if they don't explicitly say 'SDK.' Also trigger when someone wants to build a backend service, custom dashboard, automation script, or any TypeScript/JavaScript application that interacts with Google Play programmatically rather than through the CLI. For CLI usage, see other gpc-* skills. For building plugins, see gpc-plugin-development."
-compatibility: "GPC v0.9.9+ (new APIs require v0.9.51+, typed acknowledge/revoke bodies require v0.9.55+, Play Custom App Publishing API + `createEnterpriseClient` + `HttpClient.uploadCustomApp<T>` + `ResumableUploadOptions.initialMetadata` require v0.9.56+). Requires Node.js 20+, TypeScript 5+. Packages: @gpc-cli/api, @gpc-cli/auth."
+compatibility: "GPC v0.9.9+ (new APIs require v0.9.51+, typed acknowledge/revoke bodies require v0.9.55+, Play Custom App Publishing API + `createEnterpriseClient` + `HttpClient.uploadCustomApp<T>` + `ResumableUploadOptions.initialMetadata` require v0.9.56+, changelog generation exports (`generateChangelog`, `renderPlayStore`, `resolveLocales`, `buildLocaleBundle`, `PLAY_STORE_LIMIT`, `LocaleBundle`, `LocaleEntry`) require v0.9.62+). Requires Node.js 20+, TypeScript 5+. Packages: @gpc-cli/api, @gpc-cli/auth."
 metadata:
-  version: 1.2.0
+  version: 1.3.0
 ---
 
 # gpc-sdk-usage
@@ -67,7 +67,7 @@ const client = createApiClient({
 });
 ```
 
-The client provides typed access to all 216 Google Play Developer API endpoints across the Android Publisher v3, Play Developer Reporting v1beta1, and (new in v0.9.56) Play Custom App Publishing v1 APIs.
+The client provides typed access to all 217 Google Play Developer API endpoints across the Android Publisher v3, Play Developer Reporting v1beta1, and (new in v0.9.56) Play Custom App Publishing v1 APIs.
 
 ### 2a. Create the Enterprise client (v0.9.56+)
 
@@ -317,6 +317,45 @@ try {
   }
 }
 ```
+
+### Changelog generation (v0.9.62+)
+
+The changelog pipeline from `gpc changelog generate` is exposed as standalone `@gpc-cli/core` exports — useful for CI tooling that wants the clustered/linted data structure directly.
+
+```typescript
+import {
+  generateChangelog,
+  resolveLocales,
+  renderPlayStore,
+  PLAY_STORE_LIMIT,     // 500
+  type LocaleBundle,
+  type GeneratedChangelog,
+} from "@gpc-cli/core";
+
+const generated: GeneratedChangelog = await generateChangelog({
+  from: "v0.9.61",
+  to: "HEAD",
+});
+
+// GitHub target: three renderers exposed as RENDERERS["md" | "json" | "prompt"]
+// Play Store target: resolveLocales + renderPlayStore
+const locales = await resolveLocales("en-US,fr-FR,de-DE");
+const { output, bundle } = renderPlayStore(generated, {
+  locales,
+  format: "json",
+});
+
+for (const entry of bundle.locales) {
+  console.log(`${entry.language}: ${entry.chars}/${entry.limit} (${entry.status})`);
+}
+```
+
+For `--locales auto`, pass `{ client, packageName }` as the second arg to `resolveLocales` — it calls `client.listings.list` to infer the locale set from your live Play Store listing. v0.9.63 adds `--ai` translation via the Vercel AI SDK; v0.9.64 adds `--apply` to write translated notes into a draft release.
+
+### API correctness history (recent)
+
+- **v0.9.57:** `apprecovery.cancel`/`deploy` URLs now use plural `/appRecoveries/`. `dataSafety.update` is `POST`, not `PUT`. Phantom `dataSafety.get` was removed. `onetimeproducts.offers.activateOffer` / `deactivateOffer` added. New `getVitalsErrorCount` function.
+- **v0.9.58 / v0.9.59:** Vitals LMK metric set is `lmkRateMetricSet` with metrics `userPerceivedLmkRate`, `userPerceivedLmkRate7dUserWeighted`, `userPerceivedLmkRate28dUserWeighted`, `distinctUsers`. (v0.9.58 shipped the wrong resource name; v0.9.59 is the corrected build.)
 
 ## Verification
 

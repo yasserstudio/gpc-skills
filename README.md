@@ -207,6 +207,9 @@ gpc-<skill>/
 
 - GPC v0.9.52+ (`npm install -g @gpc-cli/cli`) for most skills
 - GPC v0.9.56+ required for `gpc-enterprise` (Play Custom App Publishing API support)
+- GPC v0.9.58+ recommended for full shell-completion coverage (walker-based, auto-discovers plugin commands)
+- GPC v0.9.61+ required for `gpc changelog generate` (referenced by `gpc-release-flow`, `gpc-ci-integration`, `gpc-sdk-usage`)
+- GPC v0.9.62+ required for multilingual Play Store release notes (`--target play-store --locales <csv|auto>`; referenced by `gpc-release-flow`, `gpc-metadata-sync`, `gpc-migrate-fastlane`, `gpc-sdk-usage`, `gpc-ci-integration`)
 - Node.js 20+ (or standalone binary)
 - Google Play Developer API access (service account)
 - For `gpc-enterprise`: an additional "create and publish private apps" permission granted to the service account in Play Console
@@ -217,6 +220,7 @@ gpc-<skill>/
 - [GPC Commands Reference](https://yasserstudio.github.io/gpc/commands/)
 - [GPC CI/CD Recipes](https://yasserstudio.github.io/gpc/ci-cd/)
 - [GPC Enterprise Publishing Guide](https://yasserstudio.github.io/gpc/guide/enterprise-publishing) (v0.9.56+)
+- [GPC Multilingual Release Notes Guide](https://yasserstudio.github.io/gpc/guide/multilingual-release-notes) (v0.9.62+)
 
 ## Licensing
 

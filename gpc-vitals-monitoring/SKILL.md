@@ -3,7 +3,7 @@ name: gpc-vitals-monitoring
 description: "Use when monitoring Android app health metrics from Google Play. Make sure to use this skill whenever the user mentions gpc vitals, gpc status, crash rate, ANR rate, startup time, Android vitals, crash monitoring, threshold alerting, vitals gating, frame rate, battery usage, memory issues, error tracking, app quality, user reviews, review replies, Play Store reviews, star rating, negative reviews, review export, financial reports, stats reports, or wants to check app health, respond to reviews, or download Play Console reports. Also trigger when someone asks about gating deployments on crash data, monitoring app performance after a release, or tracking review sentiment — even if they don't mention GPC. For releases, see gpc-release-flow. For CI gating, see gpc-ci-integration."
 compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). Vitals data requires the app to have sufficient install volume."
 metadata:
-  version: 1.2.0
+  version: 1.3.0
 ---
 
 # GPC Vitals Monitoring
@@ -119,9 +119,28 @@ gpc vitals lmk
 
 `gpc vitals wakeup` shows the wakeup rate from low-memory kills (LMK events). Supports the same flags as other vitals subcommands: `--days <n>`, `--threshold <value>`, `--json`.
 
-`gpc vitals lmk` shows low memory killer statistics. Columns: `stuckBgWakelockRate`, `stuckBgWakelockRate7dUserWeighted`, `stuckBgWakelockRate28dUserWeighted`, `distinctUsers`. Supports the same flags as other vitals subcommands: `--days <n>`, `--threshold <value>`, `--json`.
+### Low-Memory-Killer rate (`gpc vitals lmk`, v0.9.58+, corrected in v0.9.59)
 
-**Note:** Vitals lmk/memory data accuracy was improved in v0.9.41 (Bug H: metric field names corrected from `stuckBackground` to `stuckBg`).
+Background: v0.9.58 shipped a misnamed resource (`lowMemoryKillerRateMetricSet`) that 404'd. **v0.9.59 is the working build** — the real Google resource is `lmkRateMetricSet` with metrics `userPerceivedLmkRate`, `userPerceivedLmkRate7dUserWeighted`, `userPerceivedLmkRate28dUserWeighted`, and `distinctUsers`. Use v0.9.59+ for LMK queries.
+
+```bash
+gpc vitals lmk --app com.example.app --since 7d
+```
+
+Supports the same flags as other vitals subcommands: `--days <n>`, `--threshold <value>`, `--json`.
+
+**Note:** Vitals memory data accuracy was improved in v0.9.41 (Bug H: metric field names corrected from `stuckBackground` to `stuckBg`).
+
+### Count of error occurrences (`gpc vitals error-count`, v0.9.57+)
+
+`gpc vitals error-count` returns a time-windowed count of error-issue occurrences from the Play Developer Reporting API. Use for CI gates when you want an absolute count rather than a rate.
+
+```bash
+gpc vitals error-count --app com.example.app --since 7d
+gpc vitals error-count --app com.example.app --since 7d --threshold 100
+```
+
+Exits 6 if the count exceeds --threshold (same CI convention as other vitals commands).
 
 ### 4a) Compare vitals across versions
 
