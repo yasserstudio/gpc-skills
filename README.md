@@ -10,7 +10,7 @@ These skills teach Claude Code how to use GPC for common Google Play workflows: 
 npx skills add yasserstudio/gpc-skills
 ```
 
-## Available Skills (17)
+## Available Skills (18)
 
 | Skill | Description |
 |-------|-------------|
@@ -31,6 +31,7 @@ npx skills add yasserstudio/gpc-skills
 | **gpc-preflight** | Offline AAB/APK compliance scanner (9 scanners), `.preflightrc.json` config |
 | **gpc-train** | Automated staged rollout pipeline with crash/ANR gates and time gates |
 | **gpc-enterprise** | **New in v0.9.56.** Publish private apps to Managed Google Play via the Play Custom App Publishing API. First Android publishing CLI with this support. |
+| **gpc-android-cli-interop** | **New in v1.12.0.** Handoff router between [Google's official Android CLI](https://android-developers.googleblog.com/2026/04/build-android-apps-3x-faster-using-any-agent.html) (build/dev) and GPC (publishing). Triggers after `android run` / `android build` to route into the right GPC skill. |
 
 ## Skill Structure
 
@@ -99,6 +100,10 @@ gpc-<skill>/
 | "What's the Play Custom App Publishing API?" | `gpc-enterprise` |
 | "Why does `gpc enterprise publish` ask for confirmation?" | `gpc-enterprise` |
 | "Why can't I make my private app public?" | `gpc-enterprise` |
+| "I just finished `android run`, what's next?" | `gpc-android-cli-interop` |
+| "My AAB is built, ship it to Play Store" | `gpc-android-cli-interop` |
+| "Scaffold a Compose app and ship it to internal" | `gpc-android-cli-interop` (then hands off to `gpc-release-flow`) |
+| "How do Google's Android CLI and GPC work together?" | `gpc-android-cli-interop` |
 
 ## Reference Files Index
 
@@ -210,6 +215,7 @@ gpc-<skill>/
 - GPC v0.9.58+ recommended for full shell-completion coverage (walker-based, auto-discovers plugin commands)
 - GPC v0.9.61+ required for `gpc changelog generate` (referenced by `gpc-release-flow`, `gpc-ci-integration`, `gpc-sdk-usage`)
 - GPC v0.9.62+ required for multilingual Play Store release notes (`--target play-store --locales <csv|auto>`; referenced by `gpc-release-flow`, `gpc-metadata-sync`, `gpc-migrate-fastlane`, `gpc-sdk-usage`, `gpc-ci-integration`)
+- `gpc-android-cli-interop` (v1.12.0+) pairs with Google's [official Android CLI](https://android-developers.googleblog.com/2026/04/build-android-apps-3x-faster-using-any-agent.html) (released 2026-04-16). Install Google's CLI separately; the interop skill assumes both tools are installed and declares the handoff between them.
 - Node.js 20+ (or standalone binary)
 - Google Play Developer API access (service account)
 - For `gpc-enterprise`: an additional "create and publish private apps" permission granted to the service account in Play Console
@@ -221,6 +227,7 @@ gpc-<skill>/
 - [GPC CI/CD Recipes](https://yasserstudio.github.io/gpc/ci-cd/)
 - [GPC Enterprise Publishing Guide](https://yasserstudio.github.io/gpc/guide/enterprise-publishing) (v0.9.56+)
 - [GPC Multilingual Release Notes Guide](https://yasserstudio.github.io/gpc/guide/multilingual-release-notes) (v0.9.62+)
+- [Android CLI Interop Guide](https://yasserstudio.github.io/gpc/guide/android-cli-interop) (v1.12.0+; paired with Google's Android CLI)
 
 ## Licensing
 

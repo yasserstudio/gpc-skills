@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.12.0 -- 2026-04-17
+
+New interop skill bridging Google's official [Android CLI](https://android-developers.googleblog.com/2026/04/build-android-apps-3x-faster-using-any-agent.html) (released 2026-04-16; build/dev scope) with GPC (publishing scope).
+
+### New Skills
+
+- **gpc-android-cli-interop** (1.0.0) -- Handoff router between Google's Android CLI and GPC. Triggers when an agent has just finished `android create` / `android run` / `android build`, or when a prompt bridges the build-and-device half of Android development with the Play Store publishing half. The skill is intentionally thin: it confirms the handoff point (AAB/APK on disk), runs `gpc doctor` and `gpc preflight`, then delegates to the right GPC skill (`gpc-release-flow`, `gpc-vitals-monitoring`, `gpc-metadata-sync`, etc.) for the actual procedure. Trigger phrases include "my AAB is ready", "just finished scaffolding", "scaffold a Compose app and ship it to internal", "what's next after android run".
+
+### Updated
+
+- **README** -- Skill count bumped 17 → 18. New row for `gpc-android-cli-interop` in the Available Skills table. New rows in the Skill Selection Guide covering the interop triggers. New Compatibility bullet noting v1.12.0+ pairs with Google's Android CLI. New Related link pointing at the [Android CLI Interop guide](https://yasserstudio.github.io/gpc/guide/android-cli-interop) in the GPC docs (published same day as v1.12.0 in commit `674deb5`).
+
+### Why this matters
+
+Google's announcement standardizes `SKILL.md` as the agent-readable format for Android tooling. gpc-skills has shipped this pattern since v0.9.56, so no architecture change was needed. `gpc-android-cli-interop` is the explicit handoff layer that lets an agent route a prompt like "scaffold and ship this Compose app" across both skill packs without the user having to know which tool owns which stage. The prior versions of gpc-skills already cover every Play Store operation this requires — the new skill is a 1-file router that makes the handoff legible at prompt-routing time.
+
 ## v1.11.0 -- 2026-04-17
 
 Synced with GPC v0.9.57 → v0.9.62 (6 GPC releases since the v1.10.0 sync). Marquee additions: `gpc changelog generate` (v0.9.61) and its multilingual Play Store target (v0.9.62), plus shell-completion walker + dynamic TAB values, vitals `error-count`, LMK API correction, and OTP offer activate/deactivate.
