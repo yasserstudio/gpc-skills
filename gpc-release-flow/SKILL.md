@@ -3,7 +3,7 @@ name: gpc-release-flow
 description: "Use when uploading, releasing, promoting, or managing rollouts on Google Play. Make sure to use this skill whenever the user mentions gpc releases, upload AAB, upload APK, staged rollout, promote to production, halt rollout, gpc publish, release notes, track management, internal testing, beta release, production rollout, version code, rollout percentage, or wants to ship an Android app to any Play Store track. Also trigger when someone asks about the Google Play edit lifecycle, release validation, or how to do a phased rollout — even if they don't mention GPC by name. For metadata and listings, see gpc-metadata-sync. For CI/CD integration, see gpc-ci-integration."
 compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). For private-app publishing to Managed Google Play, see gpc-enterprise (v0.9.56+)."
 metadata:
-  version: 1.3.0
+  version: 1.3.1
 ---
 
 # GPC Release Flow
@@ -225,20 +225,27 @@ gpc changelog generate --strict                     # fail CI on linter warnings
 For per-locale Play Store "What's new" text, pass `--target play-store` with `--locales`:
 
 ```bash
-# Explicit locales (offline, no API call)
+# Translate via your own LLM key (BYO, v0.9.63+)
+gpc changelog generate --target play-store --locales auto --ai
+
+# Explicit locales, no AI — placeholder text for non-source locales
 gpc changelog generate --target play-store --locales en-US,fr-FR,de-DE
 
 # Auto-detect from your live Play listing (one API round-trip)
 gpc changelog generate --target play-store --locales auto --app com.example.app
+
+# Preview the prompt without spending tokens
+gpc --dry-run changelog generate --target play-store --locales auto --ai
 ```
 
 **Key behaviors:**
 - en-US source is the same bullet list as the github target, truncated to 500 Unicode code points if over
-- Non-source locales get a `[needs translation]` placeholder
-- `--format prompt` emits an LLM translation prompt — paste into Claude/ChatGPT today; `--ai` ships in v0.9.63
-- `--strict` exits 1 if any locale overflows 500 chars (overflows are collected, not fail-fast)
+- With `--ai` (v0.9.63+): non-source locales are translated via the user's own LLM key. Auto-detects priority env order: `AI_GATEWAY_API_KEY` → `ANTHROPIC_API_KEY` → `OPENAI_API_KEY` → `GOOGLE_GENERATIVE_AI_API_KEY`. Non-reasoning model defaults (`claude-sonnet-4-6`, `gpt-4o-mini`, `gemini-2.5-flash`). Override with `--provider` / `--model`.
+- Without `--ai`: non-source locales get a `[needs translation]` placeholder. Use `--format prompt` to emit a translation-ready LLM prompt for the offline / no-key workflow.
+- `--strict` exits 1 if any locale overflows 500 chars OR (with `--ai`) any locale fails to translate
+- Lazy-loaded: running without `--ai` imports none of the AI SDK deps. Cold-start budget preserved.
 
-See `apps/docs/guide/multilingual-release-notes.md` for the full walkthrough.
+See `apps/docs/guide/multilingual-release-notes.md` for the full walkthrough, including the Vercel AI Gateway path (cost-per-run in USD reported back).
 
 ### 4) Manage staged rollouts
 

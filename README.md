@@ -215,6 +215,7 @@ gpc-<skill>/
 - GPC v0.9.58+ recommended for full shell-completion coverage (walker-based, auto-discovers plugin commands)
 - GPC v0.9.61+ required for `gpc changelog generate` (referenced by `gpc-release-flow`, `gpc-ci-integration`, `gpc-sdk-usage`)
 - GPC v0.9.62+ required for multilingual Play Store release notes (`--target play-store --locales <csv|auto>`; referenced by `gpc-release-flow`, `gpc-metadata-sync`, `gpc-migrate-fastlane`, `gpc-sdk-usage`, `gpc-ci-integration`)
+- GPC v0.9.63+ required for AI-assisted translation (`--ai` flag, BYO key for Anthropic / OpenAI / Google / Vercel AI Gateway; referenced by `gpc-release-flow`, `gpc-metadata-sync`, `gpc-ci-integration`)
 - `gpc-android-cli-interop` (v1.12.0+) pairs with Google's [official Android CLI](https://android-developers.googleblog.com/2026/04/build-android-apps-3x-faster-using-any-agent.html) (released 2026-04-16). Install Google's CLI separately; the interop skill assumes both tools are installed and declares the handoff between them.
 - Node.js 20+ (or standalone binary)
 - Google Play Developer API access (service account)

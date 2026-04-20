@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.13.0 -- 2026-04-20
+
+Synced with GPC v0.9.63 (AI-assisted Play Store translation). Marquee addition: `gpc changelog generate --target play-store --locales auto --ai` translates non-source locales via the user's own LLM key, with Gateway-primary routing when `AI_GATEWAY_API_KEY` is present (cost-per-run in USD reported back).
+
+### Updated Skills
+
+- **gpc-release-flow** (1.3.0 → 1.3.1) -- Multilingual Play Store release notes section expanded with the v0.9.63 `--ai` flag as the primary translation path. Added env priority (`AI_GATEWAY_API_KEY` → `ANTHROPIC_API_KEY` → `OPENAI_API_KEY` → `GOOGLE_GENERATIVE_AI_API_KEY`) and non-reasoning model defaults. Added `--dry-run` preview workflow. Called out the lazy-loading invariant so agents know the feature is opt-in with no cold-start cost. Existing `--format prompt` workflow retained as the offline / no-key alternative.
+
+- **gpc-metadata-sync** (1.2.0 → 1.2.1) -- Tip that points at `gpc changelog generate --target play-store` now mentions `--ai` (v0.9.63+) and the four env keys the resolver auto-detects.
+
+- **gpc-ci-integration** (1.2.0 → 1.2.1) -- New "Translate release notes on every tag" section with a GitHub Actions YAML example wiring `ANTHROPIC_API_KEY` (or equivalents) through `--ai --strict --format json`. Highlights the new `ai` block in the JSON output (provider / model / tokens / runId / costUsd) for log aggregation.
+
+### Why this matters
+
+v0.9.63 turns the `[needs translation]` placeholder that v0.9.62 shipped into real translated text. The series (v0.9.61 GitHub Release notes → v0.9.62 per-locale Play Store budget → v0.9.63 AI translation → v0.9.64 `--apply`) is now three of four shipped. Skills stayed accurate through v0.9.63's additive changes — no existing command behavior changed, only new flags surfaced. Patch-bump skills rather than minor because the updates are documentation-only.
+
 ## v1.12.0 -- 2026-04-17
 
 New interop skill bridging Google's official [Android CLI](https://android-developers.googleblog.com/2026/04/build-android-apps-3x-faster-using-any-agent.html) (released 2026-04-16; build/dev scope) with GPC (publishing scope).
