@@ -3,7 +3,7 @@ name: gpc-onboarding
 description: "Use when a user is setting up GPC for the first time or going through initial configuration. Trigger when the user mentions gpc quickstart, first-time setup, initial configuration, onboarding, getting started, service account creation, doctor --fix, auth setup-gcp — even if they don't say 'onboarding.' Also trigger when someone is brand new to GPC and needs guided setup."
 compatibility: "GPC v0.9.35+. For existing config issues, see gpc-setup. For troubleshooting, see gpc-troubleshooting."
 metadata:
-  version: 0.12.0
+  version: 0.13.0
 ---
 
 # GPC Onboarding
@@ -143,7 +143,10 @@ Once onboarded, common next commands:
 - `gpc vitals overview` -- crash/ANR dashboard
 - `gpc reviews list` -- recent user reviews
 - `gpc verify` -- check Android developer verification status
-- `gpc docs --list` -- browse all 58 documentation topics from CLI
+- `gpc docs list` -- browse all 99 embedded documentation topics from CLI (v0.9.64+)
+- `gpc docs show <topic>` -- read any guide offline in the terminal
+- `gpc docs search <query>` -- full-text search across all docs
+- `gpc docs init` -- write GPC.md quick-reference for AI agents
 
 **Enable tab completion** (v0.9.58+): `brew install yasserstudio/tap/gpc` installs completion files automatically. For npm installs, run `gpc completion bash >> ~/.bash_completion` (or zsh/fish equivalent). Since v0.9.60 the scripts surface live profile/app/track values at TAB time.
 

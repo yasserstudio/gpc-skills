@@ -104,6 +104,11 @@ gpc-<skill>/
 | "My AAB is built, ship it to Play Store" | `gpc-android-cli-interop` |
 | "Scaffold a Compose app and ship it to internal" | `gpc-android-cli-interop` (then hands off to `gpc-release-flow`) |
 | "How do Google's Android CLI and GPC work together?" | `gpc-android-cli-interop` |
+| "Auto-translate release notes to all locales" | `gpc-release-flow` |
+| "Write release notes into a Play Store draft" | `gpc-release-flow` |
+| "Read docs offline in the terminal" | `gpc-setup` |
+| "Search GPC docs from CLI" | `gpc-setup` |
+| "Generate a GPC.md for AI agents" | `gpc-setup` |
 
 ## Reference Files Index
 
@@ -216,6 +221,7 @@ gpc-<skill>/
 - GPC v0.9.61+ required for `gpc changelog generate` (referenced by `gpc-release-flow`, `gpc-ci-integration`, `gpc-sdk-usage`)
 - GPC v0.9.62+ required for multilingual Play Store release notes (`--target play-store --locales <csv|auto>`; referenced by `gpc-release-flow`, `gpc-metadata-sync`, `gpc-migrate-fastlane`, `gpc-sdk-usage`, `gpc-ci-integration`)
 - GPC v0.9.63+ required for AI-assisted translation (`--ai` flag, BYO key for Anthropic / OpenAI / Google / Vercel AI Gateway; referenced by `gpc-release-flow`, `gpc-metadata-sync`, `gpc-ci-integration`)
+- GPC v0.9.64+ required for `--apply` (write translated notes into draft release), bundle upload race fix (Fibonacci-backoff poll after AAB upload), and embedded offline docs (`gpc docs list/show/search/init/web` with 99 pages)
 - `gpc-android-cli-interop` (v1.12.0+) pairs with Google's [official Android CLI](https://android-developers.googleblog.com/2026/04/build-android-apps-3x-faster-using-any-agent.html) (released 2026-04-16). Install Google's CLI separately; the interop skill assumes both tools are installed and declares the handoff between them.
 - Node.js 20+ (or standalone binary)
 - Google Play Developer API access (service account)
@@ -229,6 +235,7 @@ gpc-<skill>/
 - [GPC Enterprise Publishing Guide](https://yasserstudio.github.io/gpc/guide/enterprise-publishing) (v0.9.56+)
 - [GPC Multilingual Release Notes Guide](https://yasserstudio.github.io/gpc/guide/multilingual-release-notes) (v0.9.62+)
 - [Android CLI Interop Guide](https://yasserstudio.github.io/gpc/guide/android-cli-interop) (v1.12.0+; paired with Google's Android CLI)
+- [Embedded Docs Command Reference](https://yasserstudio.github.io/gpc/commands/docs) (v0.9.64+)
 
 ## Licensing
 

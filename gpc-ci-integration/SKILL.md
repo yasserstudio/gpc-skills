@@ -3,7 +3,7 @@ name: gpc-ci-integration
 description: "Use when integrating GPC into CI/CD pipelines. Make sure to use this skill whenever the user mentions GitHub Actions, GitLab CI, Bitbucket Pipelines, CircleCI, CI/CD, automated release, pipeline, GPC_SERVICE_ACCOUNT, JSON output, exit codes, gpc in CI, automate Play Store deployment, release workflow, deploy to Play Store from CI, automated rollout, step summary, or wants to set up any kind of automated Google Play deployment pipeline. Also trigger when someone asks about running GPC in a headless environment, parsing GPC output in scripts, using GPC exit codes for conditional logic, or configuring retries and timeouts for CI — even if they don't mention a specific CI platform. For local setup, see gpc-setup. For release commands, see gpc-release-flow."
 compatibility: "GPC v0.9+. Works with any CI platform that supports Node.js 20+ or standalone binary."
 metadata:
-  version: 1.2.1
+  version: 1.3.0
 ---
 
 # GPC CI Integration
@@ -287,6 +287,23 @@ fi
         # --strict exits 1 if any locale fails to translate or overflows 500 chars.
         # --format json emits the `ai` block (provider, model, tokensIn, tokensOut,
         # plus runId + costUsd on the Gateway path) for log aggregation.
+```
+
+### Write translated notes into a Play Store draft (v0.9.64+)
+
+```yaml
+      - name: Write translated release notes into Play Store draft
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          gpc changelog generate --target play-store \
+            --locales auto \
+            --ai \
+            --apply \
+            --track production
+        # --apply writes the result into the latest draft release on the track.
+        # Requires a draft release to exist on the target track.
+        # Exits with RELEASE_NO_DRAFT (code 1) if no draft found.
 ```
 
 ### 9) Dry-run for testing pipelines

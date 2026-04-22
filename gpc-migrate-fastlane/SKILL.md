@@ -3,7 +3,7 @@ name: gpc-migrate-fastlane
 description: "Use when migrating from Fastlane supply to GPC for Google Play operations. Make sure to use this skill whenever the user mentions Fastlane, fastlane supply, Fastfile, Appfile, Gemfile, migrate from Fastlane, replace Fastlane, Fastlane to GPC, supply command, Fastlane metadata, Fastlane screenshots, ruby-based deployment, bundle exec fastlane — even if they don't explicitly say 'migrate.' Also trigger when someone has an existing Fastlane setup and wants to use GPC alongside or instead of it, when they're comparing Fastlane and GPC, or when they ask about compatibility between the two tools. For general metadata management, see gpc-metadata-sync. For CI/CD setup, see gpc-ci-integration."
 compatibility: "GPC v0.9.9+. Works alongside existing Fastlane installations. Same service account keys and metadata directory structure are compatible."
 metadata:
-  version: 1.1.0
+  version: 1.2.0
 ---
 
 # gpc-migrate-fastlane

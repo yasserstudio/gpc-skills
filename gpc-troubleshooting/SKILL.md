@@ -3,7 +3,7 @@ name: gpc-troubleshooting
 description: "Use when debugging GPC errors, failures, or unexpected behavior. Make sure to use this skill whenever the user mentions gpc error, gpc failing, exit code, AUTH_FAILED, API_FORBIDDEN, NETWORK_ERROR, CONFIG_MISSING, EDIT_CONFLICT, upload failed, permission denied, timeout, rate limit, gpc doctor failing, unexpected exit code, command not working, GPC crash, debug GPC, verbose output, --json error, threshold breach — even if they don't explicitly say 'troubleshoot.' Also trigger when someone encounters any GPC error they don't understand, when gpc doctor reports issues, when CI pipelines fail with GPC commands, or when they need to interpret exit codes. For auth-specific setup issues, see gpc-setup. For CI-specific issues, see gpc-ci-integration."
 compatibility: "GPC v0.9+. Covers all packages: @gpc-cli/cli, @gpc-cli/core, @gpc-cli/api, @gpc-cli/auth, @gpc-cli/config."
 metadata:
-  version: 0.13.0
+  version: 0.14.0
 ---
 
 # gpc-troubleshooting
@@ -214,6 +214,8 @@ gpc vitals crashes --threshold 1.5 && gpc releases promote --from beta --to prod
 | `CHANGELOG_LOCALES_INVALID`      | One or more `--locales` are not valid BCP 47 (v0.9.62+)      | Use Play Store-supported codes like `en-US`, `fr-FR`, `de-DE` |
 | `CHANGELOG_LOCALES_AUTO_NO_APP`  | `--locales auto` without an authenticated client + app (v0.9.62+) | Pass `--app <package>` or set config.app, check credentials |
 | `CHANGELOG_LOCALES_EMPTY`        | `--locales auto` returned zero locales (v0.9.62+)            | Create at least one Play Store listing, or pass explicit `--locales` |
+| `RELEASE_NO_DRAFT`               | `--apply` found no draft release on the target track (v0.9.64+) | Create a draft release first (`gpc releases upload --status draft`) |
+| `BUNDLE_PROCESSING_TIMEOUT`      | AAB upload completed but bundle not processed within ~31s (v0.9.64+) | Retry the upload; if persistent, check bundle size and Google's server status |
 
 ### 9. Debug mode
 

@@ -1,9 +1,9 @@
 ---
 name: gpc-sdk-usage
 description: "Use when building applications that programmatically interact with the Google Play Developer API using GPC's TypeScript SDK packages. Make sure to use this skill whenever the user mentions @gpc-cli/api, @gpc-cli/auth, PlayApiClient, createApiClient, resolveAuth, Google Play API client, TypeScript SDK, programmatic access, API client, HTTP client, rate limiter, pagination, edit lifecycle in code, Node.js Google Play, server-side Play Store, backend integration — even if they don't explicitly say 'SDK.' Also trigger when someone wants to build a backend service, custom dashboard, automation script, or any TypeScript/JavaScript application that interacts with Google Play programmatically rather than through the CLI. For CLI usage, see other gpc-* skills. For building plugins, see gpc-plugin-development."
-compatibility: "GPC v0.9.9+ (new APIs require v0.9.51+, typed acknowledge/revoke bodies require v0.9.55+, Play Custom App Publishing API + `createEnterpriseClient` + `HttpClient.uploadCustomApp<T>` + `ResumableUploadOptions.initialMetadata` require v0.9.56+, changelog generation exports (`generateChangelog`, `renderPlayStore`, `resolveLocales`, `buildLocaleBundle`, `PLAY_STORE_LIMIT`, `LocaleBundle`, `LocaleEntry`) require v0.9.62+). Requires Node.js 20+, TypeScript 5+. Packages: @gpc-cli/api, @gpc-cli/auth."
+compatibility: "GPC v0.9.9+ (new APIs require v0.9.51+, typed acknowledge/revoke bodies require v0.9.55+, Play Custom App Publishing API + `createEnterpriseClient` + `HttpClient.uploadCustomApp<T>` + `ResumableUploadOptions.initialMetadata` require v0.9.56+, changelog generation exports (`generateChangelog`, `renderPlayStore`, `resolveLocales`, `buildLocaleBundle`, `PLAY_STORE_LIMIT`, `LocaleBundle`, `LocaleEntry`) require v0.9.62+, apply + bundle processing exports (`applyReleaseNotes`, `waitForBundleProcessing`, `validateBundleForApply`, `bundleToReleaseNotes`) require v0.9.64+). Requires Node.js 20+, TypeScript 5+. Packages: @gpc-cli/api, @gpc-cli/auth."
 metadata:
-  version: 1.3.0
+  version: 1.4.0
 ---
 
 # gpc-sdk-usage
@@ -350,7 +350,33 @@ for (const entry of bundle.locales) {
 }
 ```
 
-For `--locales auto`, pass `{ client, packageName }` as the second arg to `resolveLocales` — it calls `client.listings.list` to infer the locale set from your live Play Store listing. v0.9.63 adds `--ai` translation via the Vercel AI SDK; v0.9.64 adds `--apply` to write translated notes into a draft release.
+For `--locales auto`, pass `{ client, packageName }` as the second arg to `resolveLocales` — it calls `client.listings.list` to infer the locale set from your live Play Store listing.
+
+### Apply release notes to a draft (v0.9.64+)
+
+```typescript
+import {
+  applyReleaseNotes,
+  validateBundleForApply,
+  bundleToReleaseNotes,
+  waitForBundleProcessing,
+} from "@gpc-cli/core";
+
+// Convert a LocaleBundle to the API shape
+const releaseNotes = bundleToReleaseNotes(bundle);
+
+// Validate (returns blocked locale errors, if any)
+const errors = validateBundleForApply(bundle);
+if (errors.length > 0) throw new Error(errors.join(", "));
+
+// Write into the latest draft on a track
+await applyReleaseNotes(client, "com.example.app", "production", releaseNotes);
+
+// waitForBundleProcessing: polls bundles.list after AAB upload
+// with Fibonacci backoff (2s, 3s, 5s, 8s, 13s) until the
+// uploaded versionCode appears. Fixes large-AAB race condition.
+await waitForBundleProcessing(client, "com.example.app", editId, versionCode);
+```
 
 ### API correctness history (recent)
 

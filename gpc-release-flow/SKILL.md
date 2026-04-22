@@ -3,7 +3,7 @@ name: gpc-release-flow
 description: "Use when uploading, releasing, promoting, or managing rollouts on Google Play. Make sure to use this skill whenever the user mentions gpc releases, upload AAB, upload APK, staged rollout, promote to production, halt rollout, gpc publish, release notes, track management, internal testing, beta release, production rollout, version code, rollout percentage, or wants to ship an Android app to any Play Store track. Also trigger when someone asks about the Google Play edit lifecycle, release validation, or how to do a phased rollout — even if they don't mention GPC by name. For metadata and listings, see gpc-metadata-sync. For CI/CD integration, see gpc-ci-integration."
 compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). For private-app publishing to Managed Google Play, see gpc-enterprise (v0.9.56+)."
 metadata:
-  version: 1.3.1
+  version: 1.4.0
 ---
 
 # GPC Release Flow
@@ -216,7 +216,7 @@ gpc changelog generate --strict                     # fail CI on linter warnings
 ```
 
 ::: tip Two different release notes flows
-- **Play Store** `recentChanges[]` (per-locale, 500-char): `gpc publish --notes-from-git --since vX` and `gpc releases create --notes-from-git --since vX`
+- **Play Store** `recentChanges[]` (per-locale, 500-char): `gpc changelog generate --target play-store --locales auto --ai --apply` (v0.9.64+, end-to-end) or `gpc publish --notes-from-git --since vX`
 - **GitHub Release** notes (canonical markdown template, smart clustering, LLM-prompt mode): `gpc changelog generate` (v0.9.61+)
 :::
 
@@ -244,6 +244,29 @@ gpc --dry-run changelog generate --target play-store --locales auto --ai
 - Without `--ai`: non-source locales get a `[needs translation]` placeholder. Use `--format prompt` to emit a translation-ready LLM prompt for the offline / no-key workflow.
 - `--strict` exits 1 if any locale overflows 500 chars OR (with `--ai`) any locale fails to translate
 - Lazy-loaded: running without `--ai` imports none of the AI SDK deps. Cold-start budget preserved.
+
+### Writing translated notes into a draft release (v0.9.64+)
+
+Once your release notes are generated (with or without `--ai`), write them directly into the latest draft on a Play Store track:
+
+```bash
+# Full pipeline: generate + translate + apply
+gpc changelog generate --target play-store --locales auto --ai --apply
+
+# Apply to a specific track (default: production)
+gpc changelog generate --target play-store --locales auto --ai --apply --track beta
+
+# Preview what would be written (no API call)
+gpc changelog generate --target play-store --locales auto --ai --apply --dry-run
+```
+
+**Key behaviors:**
+- `--apply` requires `--target play-store` (not compatible with `--format prompt`)
+- Writes into the **latest draft** release on the track. If no draft exists, exits with `RELEASE_NO_DRAFT` (exit code 1) and suggests creating one first
+- Uses `withRetryOnConflict` for 409 edit conflicts
+- `--dry-run` shows the notes that would be written without touching the API
+
+> **Bundle upload race fix (v0.9.64+):** After uploading a large AAB (65MB+), GPC now polls `bundles.list` with Fibonacci backoff (2s, 3s, 5s, 8s, 13s) before calling `edits.validate`. This fixes intermittent `INVALID_ARGUMENT: Some of the Android App Bundle uploads are not completed yet` errors that affected all AAB upload paths.
 
 See `apps/docs/guide/multilingual-release-notes.md` for the full walkthrough, including the Vercel AI Gateway path (cost-per-run in USD reported back).
 

@@ -3,7 +3,7 @@ name: gpc-setup
 description: "Use when setting up GPC (Google Play Console CLI): authentication with service accounts, OAuth, or Application Default Credentials; configuration files (.gpcrc.json, env vars, XDG paths); auth profiles; running gpc doctor; troubleshooting auth errors. Make sure to use this skill whenever the user mentions gpc auth, service account setup, gpc config, gpc doctor, GPC_SERVICE_ACCOUNT, gpc auth login, Google Play API credentials, Play Console authentication, or wants to install/configure GPC — even if they don't explicitly say 'setup.' Also trigger when someone is troubleshooting auth failures, token expiration, keychain issues, or proxy/network configuration for GPC."
 compatibility: "GPC v0.9+. Requires Node.js 20+, pnpm 9+ (for development). npm for installation."
 metadata:
-  version: 1.2.0
+  version: 1.3.0
 ---
 
 # GPC Setup
@@ -198,14 +198,20 @@ gpc verify --open       # Open verification page in browser
 
 Google's Android developer verification enforcement begins September 2026 for BR, ID, SG, TH. `gpc doctor` includes this as check #20.
 
-### 5b) Browse documentation from CLI
+### 5b) Browse documentation from CLI (v0.9.64+ embedded docs)
+
+Since v0.9.64, GPC ships 99 documentation pages embedded in the binary. No network required.
 
 ```bash
-gpc docs                          # Open docs site
-gpc docs releases                 # Open releases command reference
-gpc docs developer-verification   # Open verification guide
-gpc docs --list                   # List all 58 topics
+gpc docs list                     # List all 99 embedded topics
+gpc docs show authentication      # Render a guide in the terminal (ANSI-formatted)
+gpc docs show auth                # Fuzzy slug matching
+gpc docs search "staged rollout"  # Full-text search across all pages
+gpc docs init                     # Write GPC.md quick-reference into repo (for AI agents)
+gpc docs web                      # Open docs site in browser (previous default behavior)
 ```
+
+`gpc docs show` pipes through `$PAGER` for long pages. `gpc docs list --json` and `gpc docs search --json` for machine-readable output.
 
 ### 5) Network configuration (if needed)
 

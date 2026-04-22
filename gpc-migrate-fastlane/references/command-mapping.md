@@ -46,7 +46,7 @@ GPC provides granular rollout control that Fastlane doesn't support natively.
 gpc changelog generate --target play-store --locales auto --format json --app com.example.app
 ```
 
-Pair with `--apply` (v0.9.64) to write translated notes directly into the draft release. AI translation lands in v0.9.63.
+Pair with `--ai` (v0.9.63+) for automatic LLM translation and `--apply` (v0.9.64+) to write translated notes directly into the draft release. End-to-end: `gpc changelog generate --target play-store --locales auto --ai --apply`.
 
 ## App information
 

@@ -1,5 +1,40 @@
 # Changelog
 
+## v1.14.0 -- 2026-04-22
+
+Synced with GPC v0.9.64. Closes the changelog-generation series (v0.9.61-v0.9.64): from git commits to translated Play Store release notes written into a draft release, one command.
+
+### Updated Skills
+
+- **gpc-release-flow** (1.3.1 → 1.4.0) -- Added full `--apply` + `--track` section (v0.9.64+) for writing translated notes directly into a Play Store draft release. Documented the bundle upload race fix (Fibonacci-backoff poll after AAB upload for 65MB+ bundles). Updated the "Two different release notes flows" tip to show the end-to-end `--ai --apply` pipeline.
+
+- **gpc-ci-integration** (1.2.1 → 1.3.0) -- Added "Write translated notes into a Play Store draft" CI step example showing `--ai --apply --track production`.
+
+- **gpc-sdk-usage** (1.3.0 → 1.4.0) -- Compatibility string extended with v0.9.64 exports: `applyReleaseNotes`, `waitForBundleProcessing`, `validateBundleForApply`, `bundleToReleaseNotes`. New "Apply release notes to a draft" code example.
+
+- **gpc-troubleshooting** (0.13.0 → 0.14.0) -- Added `RELEASE_NO_DRAFT` and `BUNDLE_PROCESSING_TIMEOUT` error codes (v0.9.64+).
+
+- **gpc-setup** (1.2.0 → 1.3.0) -- Rewrote "Browse documentation from CLI" section for the v0.9.64 embedded docs system: `gpc docs list` (99 pages), `gpc docs show <topic>` (fuzzy matching, ANSI rendering, `$PAGER`), `gpc docs search <query>`, `gpc docs init` (GPC.md for AI agents), `gpc docs web` (browser fallback).
+
+- **gpc-onboarding** (0.12.0 → 0.13.0) -- Updated post-setup commands: replaced `gpc docs --list` (58 topics) with the new v0.9.64 subcommands (`docs list`, `docs show`, `docs search`, `docs init`; 99 topics).
+
+- **gpc-migrate-fastlane** (1.1.0 → 1.2.0, via `references/command-mapping.md`) -- Updated forward-refs: `--ai` and `--apply` are now shipped (no longer future tense). Added end-to-end one-liner.
+
+- **README** -- Added v0.9.64+ compatibility bullet (`--apply`, bundle race fix, embedded docs). Added 5 new entries in the Skill Selection Guide. Added Embedded Docs Command Reference to Related links.
+
+### Marquee features in GPC v0.9.64
+
+- **`--apply` + `--track`:** `gpc changelog generate --target play-store --locales auto --ai --apply` does commit → translated Play Store notes → written into draft release, one command. Uses `withRetryOnConflict` for 409s. Exits `RELEASE_NO_DRAFT` if no draft exists.
+- **Bundle upload race fix:** After uploading a large AAB (65MB+), GPC polls `bundles.list` with Fibonacci backoff (2s, 3s, 5s, 8s, 13s) before `edits.validate`. Fixes `INVALID_ARGUMENT: Some of the Android App Bundle uploads are not completed yet`.
+- **Embedded docs:** 99 pages built at compile time into a JSON bundle. `gpc docs list/show/search/init/web`. Zero runtime deps. Works offline, in SSH, in CI.
+- Release: https://github.com/yasserstudio/gpc/releases/tag/v0.9.64
+
+### Why this matters
+
+The v0.9.61-v0.9.64 changelog-generation series is complete. GPC is the first Android publishing CLI to go from git commits to translated, budget-enforced Play Store release notes in one command. The embedded docs system means the full 99-page documentation is available offline, in SSH sessions, and in CI.
+
+---
+
 ## v1.13.0 -- 2026-04-20
 
 Synced with GPC v0.9.63 (AI-assisted Play Store translation). Marquee addition: `gpc changelog generate --target play-store --locales auto --ai` translates non-source locales via the user's own LLM key, with Gateway-primary routing when `AI_GATEWAY_API_KEY` is present (cost-per-run in USD reported back).
