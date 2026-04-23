@@ -1,9 +1,9 @@
 ---
 name: gpc-preflight
 description: "Use when scanning an AAB or APK for Google Play policy compliance before submission. Trigger when the user mentions preflight, compliance check, policy scan, pre-submission check, or wants to verify their AAB/APK meets Google Play requirements. Also trigger for questions about restricted permissions, target SDK requirements, 64-bit compliance, hardcoded secrets detection, or Data Safety form reminders."
-compatibility: "GPC v0.9.39+ (APK support added in v0.9.47). No API calls -- entirely offline."
+compatibility: "GPC v0.9.65+ for April 2026 policy rules. APK support added in v0.9.47. No API calls -- entirely offline."
 metadata:
-  version: 1.0.0
+  version: 1.1.0
 ---
 
 # GPC Preflight Scanner
@@ -45,8 +45,8 @@ gpc preflight app.aab --fail-on error --json
 
 | Scanner | Checks | Severity |
 |---------|--------|----------|
-| manifest | targetSdk >= 35, debuggable, testOnly, cleartext, missing exported, FGS types | critical/error |
-| permissions | 18 restricted permissions + Data Safety reminders | critical/error/info |
+| manifest | targetSdk >= 35, debuggable, testOnly, cleartext, missing exported, FGS types, geofencing foreground service (v0.9.65+) | critical/error/warning |
+| permissions | 18 restricted permissions, contacts broad-access, Health Connect granular (v0.9.65+), Data Safety reminders | critical/error/warning/info |
 | native-libs | 64-bit ARM compliance, ABI detection | critical/warning |
 | metadata | Listing character limits, screenshots, privacy policy URL | error/warning |
 | secrets | AWS keys, Google API keys, Stripe keys, private keys | critical/warning |
@@ -86,6 +86,9 @@ gpc preflight app.aab --fail-on error --json
 | foreground-service-type-missing | error | Service without foregroundServiceType (API 34+) |
 | secret-aws-key | critical | AWS access key in source |
 | secret-stripe-key | critical | Stripe secret key in source |
+| contacts-permission-broad | warning | READ_CONTACTS / WRITE_CONTACTS (v0.9.65+, April 2026 policy) |
+| geofencing-foreground-service | warning | Location FGS + ACCESS_BACKGROUND_LOCATION (v0.9.65+, April 2026 policy) |
+| health-connect-granular | warning/info | READ_ALL_HEALTH_DATA; warning on targetSdk >= 36, info otherwise (v0.9.65+, April 2026 policy) |
 
 ## Procedures
 
@@ -99,6 +102,16 @@ gpc preflight app.aab --fail-on error --json
 5. Re-run until clean
 
 Note: After the scan, GPC shows a reminder about Android developer verification requirements (September 2026 enforcement for BR, ID, SG, TH). Run `gpc verify` for details.
+
+### April 2026 policy rules (v0.9.65+)
+
+Three rules added for Google Play's April 15, 2026 policy batch. Compliance deadline: May 15, 2026.
+
+1. **Contacts broad access** (`contacts-permission-broad`): Flags READ_CONTACTS / WRITE_CONTACTS. Google now requires the Android Contact Picker instead of broad access. Emits a single finding even when both permissions are present. Suppress via `allowedPermissions` for dialer/messaging apps.
+
+2. **Geofencing foreground service** (`geofencing-foreground-service`): Fires when a service has `foregroundServiceType` containing "location" AND the app declares `ACCESS_BACKGROUND_LOCATION`. Google removed geofencing as an approved foreground service use case. For legitimate background location tracking (navigation, fitness), suppress via `"disabledRules": ["geofencing-foreground-service"]`.
+
+3. **Health Connect granular permissions** (`health-connect-granular`): Flags `READ_ALL_HEALTH_DATA`. Severity is `warning` when `targetSdk >= 36` (Android 16 requirement), `info` otherwise. Replace with granular permissions like `health.READ_STEPS`, `health.READ_HEART_RATE`, etc.
 
 ### Adding to CI
 

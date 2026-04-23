@@ -94,6 +94,9 @@ gpc-<skill>/
 | "Harden supply chain security" | `gpc-security` |
 | "Open docs from the terminal" | `gpc-setup` |
 | "Scan APK for policy violations" | `gpc-preflight` |
+| "Check May 2026 policy compliance" | `gpc-preflight` |
+| "Does my app need the Android Contact Picker?" | `gpc-preflight` |
+| "Is my geofencing foreground service still allowed?" | `gpc-preflight` |
 | "Publish a private app to Managed Google Play" | `gpc-enterprise` |
 | "Create a custom app for enterprise customers" | `gpc-enterprise` |
 | "Upload an internal-only Android app for a specific organization" | `gpc-enterprise` |
@@ -222,6 +225,7 @@ gpc-<skill>/
 - GPC v0.9.62+ required for multilingual Play Store release notes (`--target play-store --locales <csv|auto>`; referenced by `gpc-release-flow`, `gpc-metadata-sync`, `gpc-migrate-fastlane`, `gpc-sdk-usage`, `gpc-ci-integration`)
 - GPC v0.9.63+ required for AI-assisted translation (`--ai` flag, BYO key for Anthropic / OpenAI / Google / Vercel AI Gateway; referenced by `gpc-release-flow`, `gpc-metadata-sync`, `gpc-ci-integration`)
 - GPC v0.9.64+ required for `--apply` (write translated notes into draft release), bundle upload race fix (Fibonacci-backoff poll after AAB upload), and embedded offline docs (`gpc docs list/show/search/init/web` with 99 pages)
+- GPC v0.9.65+ required for April 2026 policy scanners: `contacts-permission-broad`, `geofencing-foreground-service`, `health-connect-granular` (compliance deadline: May 15, 2026)
 - `gpc-android-cli-interop` (v1.12.0+) pairs with Google's [official Android CLI](https://android-developers.googleblog.com/2026/04/build-android-apps-3x-faster-using-any-agent.html) (released 2026-04-16). Install Google's CLI separately; the interop skill assumes both tools are installed and declares the handoff between them.
 - Node.js 20+ (or standalone binary)
 - Google Play Developer API access (service account)

@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.15.0 -- 2026-04-23
+
+Synced with GPC v0.9.65. Three new preflight scanner rules for Google Play's April 2026 policy batch (compliance deadline: May 15, 2026).
+
+### Updated Skills
+
+- **gpc-preflight** (1.0.0 -> 1.1.0) -- Added "April 2026 policy rules" section documenting three new scanner rules: `contacts-permission-broad` (flags READ_CONTACTS/WRITE_CONTACTS, warning), `geofencing-foreground-service` (flags location FGS + ACCESS_BACKGROUND_LOCATION, warning), `health-connect-granular` (flags READ_ALL_HEALTH_DATA, warning on targetSdk >= 36, info otherwise). Updated scanner table to reflect new checks and severity ranges. Added all three rules to the Key rules table with version tags.
+
+- **README** -- Added GPC v0.9.65+ compatibility bullet for April 2026 policy scanners. Added "Check May 2026 policy compliance" entry to the Skill Selection Guide.
+
+### Marquee features in GPC v0.9.65
+
+- **Contacts broad access:** `contacts-permission-broad` flags READ_CONTACTS/WRITE_CONTACTS. Google requires the Android Contact Picker instead. Single finding for both permissions.
+- **Geofencing foreground service:** `geofencing-foreground-service` fires on location FGS + ACCESS_BACKGROUND_LOCATION. Geofencing removed as approved FGS use case.
+- **Health Connect granular:** `health-connect-granular` flags READ_ALL_HEALTH_DATA. Warning on targetSdk >= 36, info otherwise. Android 16 requires per-data-type permissions.
+- Release: https://github.com/yasserstudio/gpc/releases/tag/v0.9.65
+
+### Why this matters
+
+Google's April 2026 policy batch affects three common permission patterns. GPC is the first CLI to catch these offline before upload. The May 15 deadline is 22 days away. Skills stay accurate: only `gpc-preflight` needed updating since the new rules are scanner additions, not new commands.
+
+---
+
 ## v1.14.0 -- 2026-04-22
 
 Synced with GPC v0.9.64. Closes the changelog-generation series (v0.9.61-v0.9.64): from git commits to translated Play Store release notes written into a draft release, one command.
