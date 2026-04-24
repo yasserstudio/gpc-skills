@@ -175,6 +175,46 @@ gpc releases upload app.aab --track production
 
 ---
 
+## Signing errors (exit code 4 or 6)
+
+### `EDIT_CREATE_FAILED`
+
+**Cause:** Failed to create an edit session via the Play API. Usually a permissions issue with the service account.
+
+**Fix:** Ensure the service account has "Release manager" or "Admin" role in Play Console (Setup > API access). Check that the package name is correct.
+
+### `BUNDLES_LIST_FAILED`
+
+**Cause:** Failed to list bundles for the app within the edit session.
+
+**Fix:** Verify the app has at least one uploaded AAB. Check service account permissions.
+
+### `NO_BUNDLES`
+
+**Cause:** The bundles list returned empty. No AABs have been uploaded to this app.
+
+**Fix:** Upload at least one AAB: `gpc publish` or `gpc releases upload app.aab --track internal`.
+
+### `NO_SIGNING_CERT`
+
+**Cause:** The `generatedApks` endpoint returned no signing certificate fingerprint for the bundle version. This can happen if the service account lacks sufficient permissions or if Play App Signing is not enrolled.
+
+**Fix:** Enroll in Play App Signing in Play Console. Ensure the service account has access to view generated APKs.
+
+### `GENERATED_APKS_FAILED`
+
+**Cause:** HTTP error fetching generated APKs for a specific version code.
+
+**Fix:** Check that the version code exists and the service account has permissions.
+
+### Signing key mismatch (exit code 6)
+
+**Cause:** `gpc preflight signing` detected that the signing certificate changed between your two most recent bundle versions. This could indicate an unintended key rotation or a misconfigured upload.
+
+**Fix:** If the change was intentional (key upgrade), this is safe to ignore. If not, investigate which build produced the mismatched bundle.
+
+---
+
 ## Environment variables for error recovery
 
 | Variable | Default | Purpose |

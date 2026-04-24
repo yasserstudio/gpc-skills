@@ -1,5 +1,31 @@
 # Changelog
 
+## v1.16.0 -- 2026-04-24
+
+Synced with GPC v0.9.66. Developer verification tooling: signing key audit, verification readiness checklist, signing consistency checks.
+
+### Updated Skills
+
+- **gpc-setup** (1.3.0 -> 1.4.0) -- Expanded developer verification section with `gpc verify checklist` (interactive 7-step readiness walkthrough), `gpc doctor --verify` (API-side signing cert + local keystore comparison via keytool), and `gpc preflight signing` (cert consistency across releases). Updated enforcement date to September 30, 2026.
+
+- **gpc-preflight** (1.1.0 -> 1.2.0) -- Added "Signing key consistency" section documenting `gpc preflight signing` subcommand. This is NOT an offline scan: it calls the Play API to compare signing certificates across the two most recent bundle versions. Exit code 6 on mismatch. Updated description to include signing consistency triggers.
+
+- **gpc-security** (0.12.0 -> 0.13.0) -- Added "Signing key audit" section documenting `gpc doctor --verify` and `gpc preflight signing` as tools for verifying signing key correctness before Google's enforcement deadline.
+
+- **gpc-troubleshooting** (0.14.0 -> 0.15.0) -- Added 6 signing-related error codes to the error catalog: `EDIT_CREATE_FAILED`, `BUNDLES_LIST_FAILED`, `NO_BUNDLES`, `NO_SIGNING_CERT`, `GENERATED_APKS_FAILED`, and signing key mismatch (exit 6).
+
+- **README** -- Updated gpc-preflight description to include signing key consistency. Added 3 new entries to the Skill Selection Guide: verification checklist, signing key comparison, cert consistency.
+
+### Marquee features in GPC v0.9.66
+
+- **`gpc verify`**: enriched account-aware status with app info, bundle count, signing enrollment, and days until enforcement.
+- **`gpc verify checklist`**: interactive 7-step readiness walkthrough (4 auto-detected, 3 prompted). Markdown report output for CI artifacts.
+- **`gpc doctor --verify`**: signing key fingerprint comparison. Pulls API-side cert via `generatedApks`, optionally compares against local keystore via `keytool`.
+- **`gpc preflight signing`**: signing cert consistency across two most recent bundle versions. Exit code 6 on mismatch for CI gating.
+- Release: https://github.com/yasserstudio/gpc/releases/tag/v0.9.66
+
+---
+
 ## v1.15.0 -- 2026-04-23
 
 Synced with GPC v0.9.65. Three new preflight scanner rules for Google Play's April 2026 policy batch (compliance deadline: May 15, 2026).

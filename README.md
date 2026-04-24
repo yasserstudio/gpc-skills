@@ -28,7 +28,7 @@ npx skills add yasserstudio/gpc-skills
 | **gpc-sdk-usage** | @gpc-cli/api and @gpc-cli/auth as standalone TypeScript SDK, 6-bucket rate limiter |
 | **gpc-multi-app** | Multiple apps, profiles, batch operations, monorepo patterns |
 | **gpc-security** | Credential storage, key rotation, audit logging, supply chain protection (12 layers), incident response |
-| **gpc-preflight** | Offline AAB/APK compliance scanner (9 scanners), `.preflightrc.json` config |
+| **gpc-preflight** | Offline AAB/APK compliance scanner (9 scanners), signing key consistency, `.preflightrc.json` config |
 | **gpc-train** | Automated staged rollout pipeline with crash/ANR gates and time gates |
 | **gpc-enterprise** | **New in v0.9.56.** Publish private apps to Managed Google Play via the Play Custom App Publishing API. First Android publishing CLI with this support. |
 | **gpc-android-cli-interop** | **New in v1.12.0.** Handoff router between [Google's official Android CLI](https://android-developers.googleblog.com/2026/04/build-android-apps-3x-faster-using-any-agent.html) (build/dev) and GPC (publishing). Triggers after `android run` / `android build` to route into the right GPC skill. |
@@ -91,6 +91,9 @@ gpc-<skill>/
 | "Show what changed in the latest release" | `gpc-release-flow` |
 | "Configure rate limiting for API calls" | `gpc-sdk-usage` |
 | "Check Android developer verification status" | `gpc-setup` |
+| "Run developer verification checklist" | `gpc-setup` |
+| "Compare signing key against Google Play cert" | `gpc-setup` |
+| "Check signing cert consistency across releases" | `gpc-preflight` |
 | "Harden supply chain security" | `gpc-security` |
 | "Open docs from the terminal" | `gpc-setup` |
 | "Scan APK for policy violations" | `gpc-preflight` |

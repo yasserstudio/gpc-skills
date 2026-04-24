@@ -1,9 +1,9 @@
 ---
 name: gpc-preflight
-description: "Use when scanning an AAB or APK for Google Play policy compliance before submission. Trigger when the user mentions preflight, compliance check, policy scan, pre-submission check, or wants to verify their AAB/APK meets Google Play requirements. Also trigger for questions about restricted permissions, target SDK requirements, 64-bit compliance, hardcoded secrets detection, or Data Safety form reminders."
-compatibility: "GPC v0.9.65+ for April 2026 policy rules. APK support added in v0.9.47. No API calls -- entirely offline."
+description: "Use when scanning an AAB or APK for Google Play policy compliance before submission, or checking signing key consistency across releases. Trigger when the user mentions preflight, compliance check, policy scan, pre-submission check, signing key consistency, certificate mismatch, or wants to verify their AAB/APK meets Google Play requirements. Also trigger for questions about restricted permissions, target SDK requirements, 64-bit compliance, hardcoded secrets detection, or Data Safety form reminders."
+compatibility: "GPC v0.9.66+ for signing consistency. v0.9.65+ for April 2026 policy rules. APK support added in v0.9.47. AAB/APK scans are entirely offline; signing consistency requires auth."
 metadata:
-  version: 1.1.0
+  version: 1.2.0
 ---
 
 # GPC Preflight Scanner
@@ -101,7 +101,19 @@ gpc preflight app.aab --fail-on error --json
 4. Add a `.preflightrc.json` to allow approved permissions or disable false positives
 5. Re-run until clean
 
-Note: After the scan, GPC shows a reminder about Android developer verification requirements (September 2026 enforcement for BR, ID, SG, TH). Run `gpc verify` for details.
+Note: After the scan, GPC shows a reminder about Android developer verification requirements (September 30, 2026 enforcement for BR, ID, SG, TH). Run `gpc verify` for details.
+
+### Signing key consistency (v0.9.66+)
+
+```bash
+gpc preflight signing                    # Check cert consistency across two most recent bundles
+gpc preflight signing --json             # JSON output for CI
+gpc preflight signing --app com.example.app  # Override package name
+```
+
+Compares signing certificates across your two most recent bundle versions via the Play API (`generatedApks.list`). Requires auth (service account or OAuth). Exit code 6 on mismatch (same as other preflight threshold breaches). Exit code 4 on API errors.
+
+This is NOT an offline scan. It calls the Play API to create an edit, list bundles, fetch generated APKs for the top two version codes, compare `certificateSha256Fingerprint`, then delete the edit.
 
 ### April 2026 policy rules (v0.9.65+)
 

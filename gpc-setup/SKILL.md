@@ -3,7 +3,7 @@ name: gpc-setup
 description: "Use when setting up GPC (Google Play Console CLI): authentication with service accounts, OAuth, or Application Default Credentials; configuration files (.gpcrc.json, env vars, XDG paths); auth profiles; running gpc doctor; troubleshooting auth errors. Make sure to use this skill whenever the user mentions gpc auth, service account setup, gpc config, gpc doctor, GPC_SERVICE_ACCOUNT, gpc auth login, Google Play API credentials, Play Console authentication, or wants to install/configure GPC — even if they don't explicitly say 'setup.' Also trigger when someone is troubleshooting auth failures, token expiration, keychain issues, or proxy/network configuration for GPC."
 compatibility: "GPC v0.9+. Requires Node.js 20+, pnpm 9+ (for development). npm for installation."
 metadata:
-  version: 1.3.0
+  version: 1.4.0
 ---
 
 # GPC Setup
@@ -189,14 +189,25 @@ Use `gpc doctor --fix` to auto-remediate fixable issues (version, auth, config k
 
 JSON output is supported: `gpc doctor --json` or `gpc doctor --output json`.
 
-### 5a) Check developer verification
+### 5a) Check developer verification (v0.9.66+)
 
 ```bash
-gpc verify              # Status, deadlines, resources
+gpc verify              # Account-aware status with app info, signing enrollment, days until enforcement
 gpc verify --open       # Open verification page in browser
+gpc verify checklist    # Interactive 7-step readiness walkthrough (markdown report for CI)
 ```
 
-Google's Android developer verification enforcement begins September 2026 for BR, ID, SG, TH. `gpc doctor` includes this as check #20.
+Google's Android developer verification enforcement begins September 30, 2026 for BR, ID, SG, TH. `gpc doctor` includes this as check #20.
+
+#### Signing key verification
+
+```bash
+gpc doctor --verify                                       # API-side signing cert check
+gpc doctor --verify --keystore release.jks --store-pass x # Compare local keystore against API cert
+gpc preflight signing                                     # Cert consistency across two most recent bundles
+```
+
+`gpc doctor --verify` pulls your app's signing certificate from Google Play via `generatedApks` and optionally compares it against a local keystore (requires `keytool` from JDK). `gpc preflight signing` compares certs across your two most recent bundle versions and exits 6 on mismatch (CI-friendly).
 
 ### 5b) Browse documentation from CLI (v0.9.64+ embedded docs)
 
