@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.17.0 -- 2026-04-25
+
+Synced with GPC v0.9.67. Real-time rollout monitoring with `gpc watch`.
+
+### Updated Skills
+
+- **gpc-vitals-monitoring** (1.3.0 -> 1.4.0) -- Added comprehensive `gpc watch` section (section 4b): unified rollout monitoring with 6 vitals metrics, 3 breach actions (notify, halt, webhook), configurable thresholds, CI mode with NDJSON output, webhook payload documentation. Old `gpc vitals watch` section replaced with note pointing to `gpc watch`. Updated skill description triggers to include rollout monitoring, auto-halt, breach notification, and webhook alerting keywords. Added verification step for `gpc watch --rounds 1`.
+
+- **README** -- Updated gpc-vitals-monitoring description to lead with `gpc watch`. Added 3 new entries to the Skill Selection Guide: rollout monitoring, auto-halt on breach, Slack webhook on breach.
+
+### Marquee features in GPC v0.9.67
+
+- **`gpc watch`**: real-time rollout monitoring with 6 metrics (crashes, ANR, LMK, slow starts, slow render, error count), configurable thresholds, and 3 breach actions (OS notification, auto-halt rollout, webhook POST).
+- **Smarter `gpc doctor`**: stale cache warning (>7 days) and shell completion detection.
+- Webhook dispatch validates HTTP response status. Breach callbacks deduplicated via state tracking.
+- Release: https://github.com/yasserstudio/gpc/releases/tag/v0.9.67
+
+---
+
 ## v1.16.0 -- 2026-04-24
 
 Synced with GPC v0.9.66. Developer verification tooling: signing key audit, verification readiness checklist, signing consistency checks.

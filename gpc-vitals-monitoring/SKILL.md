@@ -1,9 +1,9 @@
 ---
 name: gpc-vitals-monitoring
-description: "Use when monitoring Android app health metrics from Google Play. Make sure to use this skill whenever the user mentions gpc vitals, gpc status, crash rate, ANR rate, startup time, Android vitals, crash monitoring, threshold alerting, vitals gating, frame rate, battery usage, memory issues, error tracking, app quality, user reviews, review replies, Play Store reviews, star rating, negative reviews, review export, financial reports, stats reports, or wants to check app health, respond to reviews, or download Play Console reports. Also trigger when someone asks about gating deployments on crash data, monitoring app performance after a release, or tracking review sentiment — even if they don't mention GPC. For releases, see gpc-release-flow. For CI gating, see gpc-ci-integration."
+description: "Use when monitoring Android app health metrics from Google Play. Make sure to use this skill whenever the user mentions gpc vitals, gpc watch, gpc status, crash rate, ANR rate, startup time, Android vitals, crash monitoring, threshold alerting, vitals gating, rollout monitoring, auto-halt, breach notification, webhook alerting, frame rate, battery usage, memory issues, error tracking, app quality, user reviews, review replies, Play Store reviews, star rating, negative reviews, review export, financial reports, stats reports, or wants to check app health, monitor a staged rollout, respond to reviews, or download Play Console reports. Also trigger when someone asks about gating deployments on crash data, monitoring app performance after a release, watching a rollout for regressions, or tracking review sentiment — even if they don't mention GPC. For releases, see gpc-release-flow. For CI gating, see gpc-ci-integration."
 compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). Vitals data requires the app to have sufficient install volume."
 metadata:
-  version: 1.3.0
+  version: 1.4.0
 ---
 
 # GPC Vitals Monitoring
@@ -12,6 +12,7 @@ metadata:
 
 Use this skill when the task involves:
 
+- Real-time rollout monitoring with `gpc watch` (multi-metric, auto-actions)
 - Monitoring crash rates, ANR rates, and other Android Vitals metrics
 - Setting up threshold-based alerting for CI/CD
 - Tracking app startup times, frame rates, battery, and memory
@@ -166,35 +167,64 @@ Compares: crash rate, ANR rate, startup time, rendering, battery, and memory. Us
 
 **Note:** `gpc vitals compare-versions` uses non-overlapping 7-day windows, both capped 2 days before today to account for API data lag.
 
-### 4b) Continuous monitoring with auto-halt
+### 4b) Real-time rollout monitoring (`gpc watch`, v0.9.67+)
 
-Background monitoring that polls vitals on an interval and automatically halts a rollout if any threshold is breached:
+`gpc watch` is the unified rollout monitoring command. It polls rollout status (near real-time) and vitals data (24-48h delayed) on an interval, checks thresholds, and takes action on breach.
 
 ```bash
-gpc vitals watch
+# Basic: monitor crashes + ANR on production, poll every 15 minutes
+gpc watch
 
-# With auto-halt on threshold breach
-gpc vitals watch --auto-halt-rollout
+# Watch a beta rollout with tighter thresholds
+gpc watch --track beta --crash-threshold 0.015 --anr-threshold 0.005
 
-# Custom poll interval (default: 300 seconds)
-gpc vitals watch --interval 60 --auto-halt-rollout
+# Auto-halt the rollout on any threshold breach
+gpc watch --on-breach halt
 
-# Scope to a specific track and threshold
-gpc vitals watch \
-  --track production \
-  --threshold crash_rate=2.0 \
-  --threshold anr_rate=0.47 \
-  --auto-halt-rollout
+# Notify + halt + send webhook on breach
+gpc watch --on-breach notify,halt,webhook \
+  --webhook-url https://hooks.slack.com/services/XXX
+
+# CI mode: 3 rounds, 5-minute interval, NDJSON output
+gpc watch --rounds 3 --interval 300 --json
+
+# Monitor all 6 metrics
+gpc watch --metrics crashes,anr,lmk,slowStarts,slowRender,errorCount
 ```
 
-Flags:
-- `--interval <seconds>` — poll interval (default: 300)
-- `--threshold <metric=value>` — breach threshold per metric; repeatable
-- `--auto-halt-rollout` — automatically calls `gpc releases rollout halt` when any threshold is breached
-- `--package <name>` — override package name
-- `--track <name>` — which track to monitor (default: production)
+**Six metrics:** `crashes`, `anr`, `lmk`, `slowStarts`, `slowRender`, `errorCount`.
 
-`gpc vitals watch` runs in the foreground only. Press Ctrl+C (SIGINT) to stop.
+**Three breach actions** (combinable with `--on-breach`):
+- `notify` — OS notification (macOS, Linux, Windows)
+- `halt` — halt the active rollout via Google Play API
+- `webhook` — POST breach event as JSON to `--webhook-url`
+
+**Thresholds** resolve in priority order: CLI flags > `.gpcrc.json` `vitals.thresholds.*` > defaults (crash 2%, ANR 1%, LMK 3%, slow start 5%, slow render 10%).
+
+**Auto-stop:** the watch loop stops when the rollout reaches 100%, a breach triggers halt, `--rounds` limit is hit, or Ctrl+C.
+
+**Exit codes:** 0 = clean, 6 = at least one threshold breached.
+
+**Webhook payload:**
+```json
+{
+  "type": "breach",
+  "round": 3,
+  "rollout": { "track": "production", "versionCode": "142", "userFraction": 0.1 },
+  "vitals": { "crashes": { "value": 0.025, "threshold": 0.02, "breached": true } },
+  "breaches": ["crashes"],
+  "halted": true
+}
+```
+
+Set the webhook URL in config to avoid passing it every time:
+```json
+{
+  "webhooks": { "watch": "https://hooks.slack.com/services/XXX" }
+}
+```
+
+> **Note:** `gpc vitals watch` (single-metric watcher) still works but `gpc watch` is the recommended command for rollout monitoring as of v0.9.67.
 
 ### 5) Error tracking and anomalies
 
@@ -337,6 +367,7 @@ Report types — financial: `earnings`, `estimated_sales`, `play_balance`. Stats
 ## Verification
 
 - `gpc status` shows all three sections (releases, vitals, reviews) without errors
+- `gpc watch --rounds 1` completes one polling round without errors
 - `gpc vitals overview` returns data (requires sufficient install volume)
 - Threshold commands return exit code 0 (OK) or 6 (breached)
 - `gpc reviews list` returns recent reviews

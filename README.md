@@ -18,7 +18,7 @@ npx skills add yasserstudio/gpc-skills
 | **gpc-onboarding** | First-run guided setup, `gpc quickstart`, `gpc init`, `gpc auth` wizard |
 | **gpc-release-flow** | Upload AAB/APK, create releases, draft releases, promote tracks, staged rollouts, `gpc publish`, `gpc diff` |
 | **gpc-metadata-sync** | Store listings, screenshots, images, Fastlane metadata compatibility, pull/push |
-| **gpc-vitals-monitoring** | Crash rates, ANR, startup, LMK, vitals thresholds, reviews (auto-paginate), reports |
+| **gpc-vitals-monitoring** | Real-time rollout monitoring (`gpc watch`), crash rates, ANR, startup, LMK, vitals thresholds, reviews, reports |
 | **gpc-ci-integration** | GitHub Actions, GitLab CI, Bitbucket, CircleCI, JSON output, exit codes |
 | **gpc-monetization** | Subscriptions, IAP, one-time products, RTDN notifications, voided purchases, pricing, regional conversion |
 | **gpc-user-management** | Developer account users, permissions, grants, testers, CSV import |
@@ -62,6 +62,9 @@ gpc-<skill>/
 | "Create a draft release for review" | `gpc-release-flow` |
 | "Promote beta to production" | `gpc-release-flow` |
 | "Sync store listings from local files" | `gpc-metadata-sync` |
+| "Monitor a staged rollout for regressions" | `gpc-vitals-monitoring` |
+| "Auto-halt rollout if crash rate spikes" | `gpc-vitals-monitoring` |
+| "Send Slack webhook on vitals breach" | `gpc-vitals-monitoring` |
 | "Check crash rate before promoting" | `gpc-vitals-monitoring` |
 | "Reply to negative reviews" | `gpc-vitals-monitoring` |
 | "Fetch all reviews with auto-pagination" | `gpc-vitals-monitoring` |
