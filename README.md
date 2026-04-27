@@ -14,10 +14,10 @@ npx skills add yasserstudio/gpc-skills
 
 | Skill | Description |
 |-------|-------------|
-| **gpc-setup** | Authentication (service account, OAuth, ADC), configuration, profiles, `gpc doctor` |
+| **gpc-setup** | Authentication (service account, OAuth, ADC), configuration, profiles, `gpc doctor`, `gpc setup` wizard |
 | **gpc-onboarding** | First-run guided setup, `gpc quickstart`, `gpc init`, `gpc auth` wizard |
-| **gpc-release-flow** | Upload AAB/APK, create releases, draft releases, promote tracks, staged rollouts, `gpc publish`, `gpc diff` |
-| **gpc-metadata-sync** | Store listings, screenshots, images, Fastlane metadata compatibility, pull/push |
+| **gpc-release-flow** | Upload AAB/APK, create releases, draft releases, promote tracks, staged rollouts, `gpc publish`, `gpc diff`, `gpc bundles list/find/wait` |
+| **gpc-metadata-sync** | Store listings, screenshots, images, image sync with dedup (`gpc listings images sync`), Fastlane metadata compatibility, pull/push |
 | **gpc-vitals-monitoring** | Real-time rollout monitoring (`gpc watch`), crash rates, ANR, startup, LMK, vitals thresholds, reviews, reports |
 | **gpc-ci-integration** | GitHub Actions, GitLab CI, Bitbucket, CircleCI, JSON output, exit codes |
 | **gpc-monetization** | Subscriptions, IAP, one-time products, RTDN notifications, voided purchases, pricing, regional conversion |
@@ -118,6 +118,19 @@ gpc-<skill>/
 | "Read docs offline in the terminal" | `gpc-setup` |
 | "Search GPC docs from CLI" | `gpc-setup` |
 | "Generate a GPC.md for AI agents" | `gpc-setup` |
+| "Set up GPC with a single wizard command" | `gpc-setup` |
+| "First-time setup with gpc setup" | `gpc-setup` |
+| "Set up GPC in CI with --auto flag" | `gpc-setup` |
+| "Upload CSV or TSV output from GPC to a spreadsheet" | `gpc-ci-integration` |
+| "Parse GPC output without jq" | `gpc-ci-integration` |
+| "Wait for bundle processing before promoting" | `gpc-release-flow` |
+| "List all uploaded bundles" | `gpc-release-flow` |
+| "Find a bundle by version code" | `gpc-release-flow` |
+| "Sync images from local directory to Play Store" | `gpc-metadata-sync` |
+| "Deduplicate screenshots before uploading" | `gpc-metadata-sync` |
+| "Delete removed screenshots from Play Store" | `gpc-metadata-sync` |
+| "Validate a release commit without publishing" | `gpc-release-flow` |
+| "App commit fails with changesNotSentForReview error" | `gpc-troubleshooting` |
 
 ## Reference Files Index
 

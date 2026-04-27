@@ -1,9 +1,9 @@
 ---
 name: gpc-release-flow
-description: "Use when uploading, releasing, promoting, or managing rollouts on Google Play. Make sure to use this skill whenever the user mentions gpc releases, upload AAB, upload APK, staged rollout, promote to production, halt rollout, gpc publish, release notes, track management, internal testing, beta release, production rollout, version code, rollout percentage, or wants to ship an Android app to any Play Store track. Also trigger when someone asks about the Google Play edit lifecycle, release validation, or how to do a phased rollout — even if they don't mention GPC by name. For metadata and listings, see gpc-metadata-sync. For CI/CD integration, see gpc-ci-integration."
+description: "Use when uploading, releasing, promoting, or managing rollouts on Google Play. Make sure to use this skill whenever the user mentions gpc releases, upload AAB, upload APK, staged rollout, promote to production, halt rollout, gpc publish, release notes, track management, internal testing, beta release, production rollout, version code, rollout percentage, gpc bundles, bundle list, bundle wait, wait for bundle processing, or wants to ship an Android app to any Play Store track. Also trigger when someone asks about the Google Play edit lifecycle, release validation, or how to do a phased rollout — even if they don't mention GPC by name. For metadata and listings, see gpc-metadata-sync. For CI/CD integration, see gpc-ci-integration."
 compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). For private-app publishing to Managed Google Play, see gpc-enterprise (v0.9.56+)."
 metadata:
-  version: 1.4.0
+  version: 1.5.0
 ---
 
 # GPC Release Flow
@@ -121,13 +121,21 @@ gpc releases upload app.aab --track production --error-if-in-review
 
 When Google Play rejects a submission, your app enters a "changes in review" state. Subsequent uploads or promotions will fail unless you handle this explicitly:
 
-1. **If you want to push changes without triggering a new review** (e.g., updating metadata while fixing the rejection reason), use `--changes-not-sent-for-review`. This commits your edit but leaves the review state untouched.
-2. **If you want to guard against accidentally overwriting in-review changes** (e.g., a CI pipeline that should not clobber a pending review), use `--error-if-in-review`. The command will exit with code 4 (`API` error) if changes are currently in review.
-3. **If you are ready to re-submit for review**, omit both flags and upload normally. Google Play will replace the pending submission with your new one.
+1. **Auto-rescue (v0.9.69+, default):** `gpc releases commit` automatically retries the commit with `changesNotSentForReview=true` when it receives a 403 for a rejected-update app. No flag required — this is the new default behavior. You will see a warning in the output indicating the auto-rescue was triggered.
+2. **If you want to push changes without triggering a new review** (e.g., updating metadata while fixing the rejection reason), use `--changes-not-sent-for-review` explicitly. This commits the edit but leaves the review state untouched.
+3. **If you want to guard against accidentally overwriting in-review changes** (e.g., a CI pipeline that should not clobber a pending review), use `--error-if-in-review`. The command will exit with code 4 (`API` error) if changes are currently in review.
+4. **If you are ready to re-submit for review**, omit both flags and upload normally. Google Play will replace the pending submission with your new one.
 
 These flags apply to `gpc releases upload`, `gpc publish`, `gpc releases promote`, `gpc releases rollout`, `gpc listings push/update/delete`, `gpc listings images upload/delete`, `gpc testers add/remove/import`, `gpc tracks create/update`, and `gpc apps update`.
 
 > **Note (v0.9.52+):** When `--changes-not-sent-for-review` is set, GPC skips server-side edit validation (`edits.validate`) and goes straight to `edits.commit`. This is required because Google's validate endpoint does not accept the `changesNotSentForReview` parameter and rejects edits for apps with rejected updates. Your changes are still validated by the commit call itself.
+
+> **Dry-run validation (v0.9.68+):** Use `--validate-only` on `gpc releases commit` to run `edits.validate` without committing. Exits 0 if the edit is valid, non-zero otherwise. Useful for pre-commit CI checks without publishing.
+
+```bash
+gpc releases commit --validate-only   # validate the open edit without committing
+```
+
 Read:
 - `references/upload-lifecycle.md`
 
@@ -305,6 +313,29 @@ Read:
 gpc tracks list                    # List all tracks
 gpc tracks get production          # Show track details + current releases
 ```
+
+### 5b) Bundle management (v0.9.69+)
+
+Standalone commands for inspecting and waiting on uploaded bundles — useful in CI pipelines that need to gate on processing completion before validation or promotion.
+
+```bash
+# List all uploaded bundles for an app
+gpc bundles list
+
+# Filter to a specific version code
+gpc bundles find --version-code 142
+
+# Wait for a bundle to finish processing (CI use case)
+gpc bundles wait --version-code 142
+```
+
+`gpc bundles wait` polls until the bundle transitions from `PROCESSING` to `ACTIVE` (or another terminal state) and exits 0 on success or 1 on timeout/error. Use it as a gate step after upload before calling `edits.commit` or `gpc releases promote`.
+
+| Command | Description |
+|---------|-------------|
+| `gpc bundles list` | List all bundles with version code, state, and upload timestamp |
+| `gpc bundles find --version-code <n>` | Find a specific bundle by version code |
+| `gpc bundles wait --version-code <n>` | Poll until bundle is fully processed (CI gate) |
 
 ### 6) Preview with dry-run
 

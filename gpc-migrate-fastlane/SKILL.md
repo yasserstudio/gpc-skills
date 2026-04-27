@@ -3,7 +3,7 @@ name: gpc-migrate-fastlane
 description: "Use when migrating from Fastlane supply to GPC for Google Play operations. Make sure to use this skill whenever the user mentions Fastlane, fastlane supply, Fastfile, Appfile, Gemfile, migrate from Fastlane, replace Fastlane, Fastlane to GPC, supply command, Fastlane metadata, Fastlane screenshots, ruby-based deployment, bundle exec fastlane — even if they don't explicitly say 'migrate.' Also trigger when someone has an existing Fastlane setup and wants to use GPC alongside or instead of it, when they're comparing Fastlane and GPC, or when they ask about compatibility between the two tools. For general metadata management, see gpc-metadata-sync. For CI/CD setup, see gpc-ci-integration."
 compatibility: "GPC v0.9.9+. Works alongside existing Fastlane installations. Same service account keys and metadata directory structure are compatible."
 metadata:
-  version: 1.2.0
+  version: 1.3.0
 ---
 
 # gpc-migrate-fastlane
@@ -92,10 +92,14 @@ gpc listings pull --dir metadata/
 # GPC:
 gpc listings push --dir metadata/
 
-# Upload screenshots
+# Upload screenshots (one-shot)
 # Fastlane: fastlane supply --skip_upload_aab --skip_upload_metadata
 # GPC:
 gpc listings images upload --lang en-US --type phoneScreenshots *.png
+
+# Sync screenshots from a directory (v0.9.69+ — equivalent to Fastlane's sync_image_upload)
+# SHA-256 content hashing: only uploads new/changed files; --delete removes extras remotely.
+gpc listings images sync --lang en-US --type phoneScreenshots --dir ./screenshots/en-US/ --delete
 ```
 
 ### 5. Test with dry-run
@@ -165,6 +169,7 @@ rm Gemfile Gemfile.lock
 | Screenshots missing after push | GPC listings push doesn't push images | Use `gpc listings images upload` separately |
 | CI slower than Fastlane | Ruby/Bundler vs Node.js startup | Use `npx @gpc-cli/cli` or pre-install globally; both are fast |
 | `EDIT_CONFLICT` error | Fastlane and GPC both have open edits | Don't run both tools simultaneously on the same app |
+| `changesNotSentForReview` 403 on commit | App has a rejected update — was Fastlane supply's #1 failure point | v0.9.69+: `gpc releases commit` auto-rescues this by retrying with the correct flag. No manual intervention needed. |
 
 ## Related skills
 

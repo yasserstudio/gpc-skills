@@ -1,5 +1,41 @@
 # Changelog
 
+## v1.18.0 -- 2026-04-27
+
+Synced with GPC v0.9.68 and v0.9.69.
+
+### Updated Skills
+
+- **gpc-setup** (1.4.0 -> 1.5.0) -- Added `gpc setup` wizard section (1b): interactive one-command onboarding covering auth, app selection, config write, shell completion install, and `gpc doctor` auto-run. Documents `--auto` mode for CI/headless environments. Updated skill description to trigger on "gpc setup", "gpc setup wizard", "one-command onboarding". Updated `GPC_OUTPUT` env var to include csv/tsv formats.
+
+- **gpc-metadata-sync** (1.2.1 -> 1.3.0) -- Added `gpc listings images sync` section (inside section 4): SHA-256 content-hash image dedup command with all options (`--dir`, `--lang`, `--type`, `--delete`, `--dry-run`), key behaviors table, and flag reference. Updated skill description to trigger on "image sync", "image dedup", "listings images sync".
+
+- **gpc-release-flow** (1.4.0 -> 1.5.0) -- Added `gpc bundles list/find/wait` section (5b) with command reference table and CI gate usage pattern. Updated Rejected Apps section to document v0.9.69 auto-rescue behavior (automatic `changesNotSentForReview` retry on 403). Added `--validate-only` dry-run flag documentation for `gpc releases commit`. Updated skill description to trigger on bundle-related keywords.
+
+- **gpc-ci-integration** (1.3.0 -> 1.4.0) -- Renamed section 6 to cover all output formats; added CSV/TSV output subsection with examples and guidance on when to prefer each format. Added "Wait for bundle processing" pattern using `gpc bundles wait` in multi-job pipelines. Updated skill description to trigger on CSV/TSV and bundle-wait keywords.
+
+- **gpc-troubleshooting** (0.15.0 -> 0.16.0) -- Updated `API_CHANGES_NOT_SENT_FOR_REVIEW` entry to note v0.9.69 auto-rescue behavior: `gpc releases commit` now retries automatically on 403 for rejected-update apps.
+
+- **gpc-migrate-fastlane** (1.2.0 -> 1.3.0) -- Added `gpc listings images sync` as the equivalent of Fastlane's `sync_image_upload` action. Added `changesNotSentForReview` auto-rescue to the failure modes table, noting this closes the #1 Fastlane supply pain point.
+
+- **README** -- Updated gpc-setup, gpc-release-flow, and gpc-metadata-sync skill descriptions. Added 18 new entries to the Skill Selection Guide covering setup wizard, CSV/TSV output, bundle commands, image sync, and auto-rescue.
+
+### Marquee features in GPC v0.9.68
+
+- **`gpc setup`**: one-command onboarding wizard. Authenticates, picks app, writes config, installs completions, runs doctor. `--auto` mode for CI.
+- **CSV/TSV output**: `--output csv` and `--output tsv` across all commands. No `jq` required for spreadsheet-friendly CI parsing.
+- **`--validate-only`** on `gpc releases commit`: dry-run edit validation without committing.
+- Release: https://github.com/yasserstudio/gpc/releases/tag/v0.9.68
+
+### Marquee features in GPC v0.9.69
+
+- **`gpc listings images sync`**: SHA-256 content-hash image dedup. Skips already-uploaded images, optionally deletes removed ones. `--dry-run` shows diff without touching the API.
+- **`gpc bundles list/find/wait`**: standalone bundle API commands. `wait` polls until processing finishes — CI gate between upload and promote.
+- **`changesNotSentForReview` auto-rescue**: `gpc releases commit` auto-retries on 403 for rejected-update apps. No manual flag required.
+- Release: https://github.com/yasserstudio/gpc/releases/tag/v0.9.69
+
+---
+
 ## v1.17.0 -- 2026-04-25
 
 Synced with GPC v0.9.67. Real-time rollout monitoring with `gpc watch`.

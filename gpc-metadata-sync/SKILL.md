@@ -1,9 +1,9 @@
 ---
 name: gpc-metadata-sync
-description: "Use when managing Google Play store listings, metadata, screenshots, or images. Make sure to use this skill whenever the user mentions gpc listings, store listing, metadata sync, screenshots, Fastlane metadata, localization, app description, pull listings, push listings, feature graphic, Play Store images, app title, short description, full description, changelogs, or wants to update any text or visual content on their Play Store page. Also trigger when someone asks about migrating from Fastlane supply, syncing metadata to/from local files, managing multi-language listings, or bulk-updating store content — even if they don't mention GPC explicitly. For releases and uploads, see gpc-release-flow."
+description: "Use when managing Google Play store listings, metadata, screenshots, or images. Make sure to use this skill whenever the user mentions gpc listings, store listing, metadata sync, screenshots, Fastlane metadata, localization, app description, pull listings, push listings, feature graphic, Play Store images, app title, short description, full description, changelogs, image sync, image dedup, listings images sync, or wants to update any text or visual content on their Play Store page. Also trigger when someone asks about migrating from Fastlane supply, syncing metadata to/from local files, managing multi-language listings, or bulk-updating store content — even if they don't mention GPC explicitly. For releases and uploads, see gpc-release-flow."
 compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill)."
 metadata:
-  version: 1.2.1
+  version: 1.3.0
 ---
 
 # GPC Metadata Sync
@@ -188,6 +188,38 @@ gpc listings images upload --lang en-US --type phoneScreenshots ./screens/*.png
 ```bash
 gpc listings images delete --lang en-US --type phoneScreenshots --id <image-id>
 ```
+
+#### Sync images from a local directory (v0.9.69+)
+
+`gpc listings images sync` uses SHA-256 content hashing to deduplicate images — it only uploads files that are not already on Play Store, and optionally deletes remote images that have no local counterpart.
+
+```bash
+# Sync all phone screenshots for en-US from a local directory
+gpc listings images sync --lang en-US --type phoneScreenshots --dir ./screens/
+
+# Sync all image types for a language
+gpc listings images sync --lang en-US --dir ./screenshots/en-US/
+
+# Delete remote images that no longer exist locally
+gpc listings images sync --lang en-US --type phoneScreenshots --dir ./screens/ --delete
+
+# Preview what would change without touching the API
+gpc listings images sync --lang en-US --type phoneScreenshots --dir ./screens/ --dry-run
+```
+
+**Key behaviors:**
+- SHA-256 hash of each local file is compared against the remote image hash. Already-matching images are skipped (no re-upload).
+- `--delete` removes remote images that have no matching local file. Without this flag, extra remote images are left in place.
+- `--dry-run` prints a diff table (`add / skip / delete`) without making any API calls.
+- Supports the same image types as `gpc listings images upload`: `phoneScreenshots`, `sevenInchScreenshots`, `tenInchScreenshots`, `tvScreenshots`, `wearScreenshots`, `icon`, `featureGraphic`, `tvBanner`, `promoGraphic`.
+
+| Flag | Description |
+|------|-------------|
+| `--dir` | Local directory containing image files to sync |
+| `--lang` | Language code (e.g., `en-US`, `ja-JP`) |
+| `--type` | Image type filter (omit to sync all types in the directory) |
+| `--delete` | Delete remote images with no local counterpart |
+| `--dry-run` | Preview changes without uploading or deleting |
 
 ### 5) Multi-language workflow
 

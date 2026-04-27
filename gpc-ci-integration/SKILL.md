@@ -1,9 +1,9 @@
 ---
 name: gpc-ci-integration
-description: "Use when integrating GPC into CI/CD pipelines. Make sure to use this skill whenever the user mentions GitHub Actions, GitLab CI, Bitbucket Pipelines, CircleCI, CI/CD, automated release, pipeline, GPC_SERVICE_ACCOUNT, JSON output, exit codes, gpc in CI, automate Play Store deployment, release workflow, deploy to Play Store from CI, automated rollout, step summary, or wants to set up any kind of automated Google Play deployment pipeline. Also trigger when someone asks about running GPC in a headless environment, parsing GPC output in scripts, using GPC exit codes for conditional logic, or configuring retries and timeouts for CI — even if they don't mention a specific CI platform. For local setup, see gpc-setup. For release commands, see gpc-release-flow."
+description: "Use when integrating GPC into CI/CD pipelines. Make sure to use this skill whenever the user mentions GitHub Actions, GitLab CI, Bitbucket Pipelines, CircleCI, CI/CD, automated release, pipeline, GPC_SERVICE_ACCOUNT, JSON output, CSV output, TSV output, exit codes, gpc in CI, automate Play Store deployment, release workflow, deploy to Play Store from CI, automated rollout, step summary, bundle wait, wait for bundle processing, or wants to set up any kind of automated Google Play deployment pipeline. Also trigger when someone asks about running GPC in a headless environment, parsing GPC output in scripts, using GPC exit codes for conditional logic, or configuring retries and timeouts for CI — even if they don't mention a specific CI platform. For local setup, see gpc-setup. For release commands, see gpc-release-flow."
 compatibility: "GPC v0.9+. Works with any CI platform that supports Node.js 20+ or standalone binary."
 metadata:
-  version: 1.3.0
+  version: 1.4.0
 ---
 
 # GPC CI Integration
@@ -198,11 +198,26 @@ For minimal CI images without Node.js:
   run: gpc releases upload app-release.aab --track internal
 ```
 
-### 6) JSON output for scripting
+### 6) Output formats for CI scripting
 
 GPC auto-outputs JSON in CI (non-TTY). Parse with `jq`:
 
 > **JUnit output caveat:** `--output junit` is available but testcase `name` attributes use generic identifiers (`item-1`, `item-2`) for some commands (`tracks list`, `releases status`). Prefer `--output json | jq` for reliable CI parsing. Use `--output junit` only if your test reporter specifically requires JUnit XML format.
+
+**CSV/TSV output (v0.9.68+):** All commands support `--output csv` and `--output tsv` for spreadsheet-friendly or tab-delimited parsing without requiring `jq`:
+
+```bash
+# Export release status as CSV (headers on first line)
+gpc releases status --output csv > releases.csv
+
+# TSV for awk / cut parsing in shell scripts
+gpc vitals crashes --output tsv | awk -F'\t' '{print $2}'
+
+# Force a specific format regardless of TTY detection
+GPC_OUTPUT=csv gpc apps list
+```
+
+Use CSV/TSV when piping into tools like `csvkit`, `mlr`, or spreadsheet imports. Use JSON when you need nested structure or when piping into `jq`.
 
 
 ```bash
@@ -257,6 +272,28 @@ fi
 - name: Promote to production
   run: gpc releases promote --from beta --to production --rollout 10
 ```
+
+### Wait for bundle processing before promoting (v0.9.69+)
+
+After uploading a large AAB, bundle processing on Google's side can take 30–120 seconds. Use `gpc bundles wait` as an explicit gate instead of relying on the built-in Fibonacci polling inside `gpc publish`:
+
+```yaml
+- name: Upload AAB
+  run: |
+    gpc releases upload app-release.aab \
+      --track internal \
+      --changes-not-sent-for-review
+
+- name: Wait for bundle processing
+  run: gpc bundles wait --version-code ${{ env.VERSION_CODE }}
+  # Exits 0 when ACTIVE, non-zero on timeout or error.
+  # Prevents INVALID_ARGUMENT errors when promoting before processing completes.
+
+- name: Promote to beta
+  run: gpc releases promote --from internal --to beta
+```
+
+This is especially useful in multi-job pipelines where upload and promote run in separate jobs.
 
 ### Gate Play Store release notes on character budget (v0.9.62+)
 
