@@ -3,7 +3,7 @@ name: gpc-migrate-fastlane
 description: "Use when migrating from Fastlane supply to GPC for Google Play operations. Make sure to use this skill whenever the user mentions Fastlane, fastlane supply, Fastfile, Appfile, Gemfile, migrate from Fastlane, replace Fastlane, Fastlane to GPC, supply command, Fastlane metadata, Fastlane screenshots, ruby-based deployment, bundle exec fastlane — even if they don't explicitly say 'migrate.' Also trigger when someone has an existing Fastlane setup and wants to use GPC alongside or instead of it, when they're comparing Fastlane and GPC, or when they ask about compatibility between the two tools. For general metadata management, see gpc-metadata-sync. For CI/CD setup, see gpc-ci-integration."
 compatibility: "GPC v0.9.9+. Works alongside existing Fastlane installations. Same service account keys and metadata directory structure are compatible."
 metadata:
-  version: 1.3.0
+  version: 1.4.0
 ---
 
 # gpc-migrate-fastlane
@@ -100,6 +100,22 @@ gpc listings images upload --lang en-US --type phoneScreenshots *.png
 # Sync screenshots from a directory (v0.9.69+ — equivalent to Fastlane's sync_image_upload)
 # SHA-256 content hashing: only uploads new/changed files; --delete removes extras remotely.
 gpc listings images sync --lang en-US --type phoneScreenshots --dir ./screenshots/en-US/ --delete
+
+# In-app update priority (v0.9.70+ — equivalent to Fastlane's in_app_update_priority)
+# Fastlane: supply(in_app_update_priority: 3)
+# GPC:
+gpc releases upload app.aab --track production --in-app-update-priority 3
+
+# Retain previous version codes (v0.9.70+)
+# Fastlane: supply(version_codes_to_retain: [40, 41])
+# GPC:
+gpc releases upload app.aab --track internal --retain-version-codes 40,41
+
+# Fastlane-style versioned changelogs (v0.9.70+)
+# If your changelogs/ directory uses the Fastlane layout:
+#   changelogs/en-US/42.txt, changelogs/en-US/default.txt, changelogs/ja-JP/default.txt
+# GPC auto-detects the structure. Reads {versionCode}.txt first, falls back to default.txt.
+gpc releases upload app.aab --track production --notes-dir changelogs/
 ```
 
 ### 5. Test with dry-run

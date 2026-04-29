@@ -1,9 +1,9 @@
 ---
 name: gpc-release-flow
-description: "Use when uploading, releasing, promoting, or managing rollouts on Google Play. Make sure to use this skill whenever the user mentions gpc releases, upload AAB, upload APK, staged rollout, promote to production, halt rollout, gpc publish, release notes, track management, internal testing, beta release, production rollout, version code, rollout percentage, gpc bundles, bundle list, bundle wait, wait for bundle processing, or wants to ship an Android app to any Play Store track. Also trigger when someone asks about the Google Play edit lifecycle, release validation, or how to do a phased rollout — even if they don't mention GPC by name. For metadata and listings, see gpc-metadata-sync. For CI/CD integration, see gpc-ci-integration."
+description: "Use when uploading, releasing, promoting, or managing rollouts on Google Play. Make sure to use this skill whenever the user mentions gpc releases, upload AAB, upload APK, staged rollout, promote to production, halt rollout, gpc publish, release notes, track management, internal testing, beta release, production rollout, version code, rollout percentage, gpc bundles, bundle list, bundle wait, wait for bundle processing, in-app update priority, retain version codes, versioned changelogs, or wants to ship an Android app to any Play Store track. Also trigger when someone asks about the Google Play edit lifecycle, release validation, or how to do a phased rollout — even if they don't mention GPC by name. For metadata and listings, see gpc-metadata-sync. For CI/CD integration, see gpc-ci-integration."
 compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). For private-app publishing to Managed Google Play, see gpc-enterprise (v0.9.56+)."
 metadata:
-  version: 1.5.0
+  version: 1.6.0
 ---
 
 # GPC Release Flow
@@ -117,6 +117,25 @@ gpc releases upload app.aab --track production --error-if-in-review
 | `--changes-not-sent-for-review` | boolean flag | Commits the edit without sending changes for review. Required when a previous submission was rejected and you are not yet ready for re-review |
 | `--error-if-in-review` | boolean flag | Causes the command to exit with a non-zero code if there are already changes in review, instead of silently overwriting them |
 
+#### Upload flags (v0.9.70+)
+
+```bash
+# Set in-app update priority (0 = default, 5 = highest urgency)
+gpc releases upload app.aab --track production --in-app-update-priority 5
+
+# Retain previous version codes alongside the new upload
+gpc releases upload app.aab --track internal --retain-version-codes 40,41
+
+# Fastlane-style versioned release notes (auto-detected)
+gpc releases upload app.aab --track production --notes-dir changelogs/
+```
+
+| Flag | Values | Description |
+|------|--------|-------------|
+| `--in-app-update-priority` | `0`-`5` | Controls how aggressively Android prompts users to update via the in-app updates API. 0 is the default (no special priority), 5 is the highest. Preserved on promote. |
+| `--retain-version-codes` | comma-separated codes | Keeps previous version codes active in the same track release alongside the new upload. Duplicates are automatically removed. |
+| `--notes-dir` (versioned) | directory path | When the directory contains locale subdirectories (e.g., `en-US/`, `ja-JP/`), GPC auto-detects Fastlane-style versioned notes: reads `{versionCode}.txt` first, falls back to `default.txt` per language. Flat directories (`{lang}.txt`) still work as before. |
+
 ### Rejected Apps
 
 When Google Play rejects a submission, your app enters a "changes in review" state. Subsequent uploads or promotions will fail unless you handle this explicitly:
@@ -172,6 +191,7 @@ gpc releases promote --from internal --to beta --status draft
 ```
 
 > **Note:** Since v0.9.39, `gpc releases promote` auto-retries once on 409 EDIT_CONFLICT (another edit is open).
+> **Note:** Since v0.9.70, promote preserves `inAppUpdatePriority` and `name` from the source release. Previously these fields were dropped during promotion.
 
 Promote also supports the review-control flags (v0.9.51+):
 

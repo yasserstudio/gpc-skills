@@ -1,5 +1,30 @@
 # Changelog
 
+## v1.19.0 -- 2026-04-29
+
+Synced with GPC v0.9.70.
+
+### Updated Skills
+
+- **gpc-release-flow** (1.5.0 -> 1.6.0) -- Added v0.9.70 upload flags section: `--in-app-update-priority <0-5>`, `--retain-version-codes <csv>`, and versioned `--notes-dir` (Fastlane-style `{lang}/{versionCode}.txt` with `default.txt` fallback). Added promote preservation note (priority and name now preserved from source release). Updated skill description with new trigger keywords.
+
+- **gpc-migrate-fastlane** (1.3.0 -> 1.4.0) -- Added v0.9.70 command mappings: `in_app_update_priority`, `version_codes_to_retain`, and Fastlane-style versioned changelogs with `default.txt` fallback.
+
+- **gpc-vitals-monitoring** (1.4.0 -> 1.5.0) -- Added freshness clamping documentation: GPC now queries the freshness endpoint per metric set and clamps date ranges automatically. No more 400 errors when Google's data lags 3-4 days behind.
+
+- **gpc-ci-integration** (1.4.0 -> 1.5.0) -- Updated Node.js version references from 20 to 22 (recommended) across all CI platform examples.
+
+### Marquee features in GPC v0.9.70
+
+- **`--in-app-update-priority <0-5>`**: controls how aggressively Android prompts users to update via the in-app updates API.
+- **`--retain-version-codes <csv>`**: keeps previous version codes active in the same track release alongside new uploads.
+- **Fastlane changelog fallback**: `--notes-dir` auto-detects versioned directories, reads `{versionCode}.txt` with `default.txt` fallback per language.
+- **Vitals freshness clamping**: queries Google's freshness endpoint and clamps date ranges automatically.
+- **Promote preservation**: `inAppUpdatePriority` and `name` preserved from source release on promote.
+- Release: https://github.com/yasserstudio/gpc/releases/tag/v0.9.70
+
+---
+
 ## v1.18.0 -- 2026-04-27
 
 Synced with GPC v0.9.68 and v0.9.69.

@@ -3,7 +3,7 @@ name: gpc-vitals-monitoring
 description: "Use when monitoring Android app health metrics from Google Play. Make sure to use this skill whenever the user mentions gpc vitals, gpc watch, gpc status, crash rate, ANR rate, startup time, Android vitals, crash monitoring, threshold alerting, vitals gating, rollout monitoring, auto-halt, breach notification, webhook alerting, frame rate, battery usage, memory issues, error tracking, app quality, user reviews, review replies, Play Store reviews, star rating, negative reviews, review export, financial reports, stats reports, or wants to check app health, monitor a staged rollout, respond to reviews, or download Play Console reports. Also trigger when someone asks about gating deployments on crash data, monitoring app performance after a release, watching a rollout for regressions, or tracking review sentiment — even if they don't mention GPC. For releases, see gpc-release-flow. For CI gating, see gpc-ci-integration."
 compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). Vitals data requires the app to have sufficient install volume."
 metadata:
-  version: 1.4.0
+  version: 1.5.0
 ---
 
 # GPC Vitals Monitoring
@@ -166,6 +166,8 @@ gpc vitals compare-versions 141 142 --format markdown
 Compares: crash rate, ANR rate, startup time, rendering, battery, and memory. Uses non-overlapping 7-day windows for each version. Regressions are highlighted in red in terminal output.
 
 **Note:** `gpc vitals compare-versions` uses non-overlapping 7-day windows, both capped 2 days before today to account for API data lag.
+
+**Freshness clamping (v0.9.70+):** Google's vitals data typically lags 3-4 days behind real-time. GPC now queries the freshness endpoint for each metric set before running any vitals query and automatically clamps the date range. This prevents `400 INVALID_ARGUMENT` errors that previously occurred when the requested date range exceeded Google's available data window. No configuration needed.
 
 ### 4b) Real-time rollout monitoring (`gpc watch`, v0.9.67+)
 

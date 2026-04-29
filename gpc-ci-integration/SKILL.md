@@ -1,9 +1,9 @@
 ---
 name: gpc-ci-integration
 description: "Use when integrating GPC into CI/CD pipelines. Make sure to use this skill whenever the user mentions GitHub Actions, GitLab CI, Bitbucket Pipelines, CircleCI, CI/CD, automated release, pipeline, GPC_SERVICE_ACCOUNT, JSON output, CSV output, TSV output, exit codes, gpc in CI, automate Play Store deployment, release workflow, deploy to Play Store from CI, automated rollout, step summary, bundle wait, wait for bundle processing, or wants to set up any kind of automated Google Play deployment pipeline. Also trigger when someone asks about running GPC in a headless environment, parsing GPC output in scripts, using GPC exit codes for conditional logic, or configuring retries and timeouts for CI — even if they don't mention a specific CI platform. For local setup, see gpc-setup. For release commands, see gpc-release-flow."
-compatibility: "GPC v0.9+. Works with any CI platform that supports Node.js 20+ or standalone binary."
+compatibility: "GPC v0.9+. Works with any CI platform that supports Node.js 22+ (recommended) or 20+, or standalone binary."
 metadata:
-  version: 1.4.0
+  version: 1.5.0
 ---
 
 # GPC CI Integration
@@ -141,7 +141,7 @@ Read:
 
 ```yaml
 release:
-  image: node:20
+  image: node:22
   stage: deploy
   variables:
     GPC_SERVICE_ACCOUNT: $PLAY_SERVICE_ACCOUNT
@@ -161,7 +161,7 @@ pipelines:
     'v*':
       - step:
           name: Upload to Play Store
-          image: node:20
+          image: node:22
           script:
             - npm install -g @gpc-cli/cli
             - gpc releases upload app-release.aab --track internal --changes-not-sent-for-review
@@ -174,7 +174,7 @@ pipelines:
 jobs:
   release:
     docker:
-      - image: cimg/node:20.0
+      - image: cimg/node:22.0
     steps:
       - checkout
       - run:
