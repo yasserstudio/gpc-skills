@@ -1,5 +1,22 @@
 # Changelog
 
+## v1.20.0 -- 2026-04-30
+
+Synced with GPC v0.9.71.
+
+### Updated Skills
+
+- **gpc-setup** (1.5.0 -> 1.6.0) -- Doctor checks list updated from 20 to 22: added API quota proximity (warns at >80% daily/per-minute usage) and plugin health (discovers, loads, reports each configured plugin).
+
+- **gpc-troubleshooting** (0.16.0 -> 0.17.0) -- Added doctor failure modes for quota warnings and plugin load failures.
+
+- **gpc-plugin-development** (1.0.0 -> 1.1.0) -- Added `gpc doctor` plugin health check as a debugging tool for broken plugin installs.
+
+### Marquee features in GPC v0.9.71
+
+- **`gpc doctor` quota proximity**: warns when daily or per-minute Google Play API usage exceeds 80%, so you catch rate limits before they hit.
+- **`gpc doctor` plugin health**: discovers, loads, and reports each configured plugin. Surfaces broken installs before they cause runtime failures.
+
 ## v1.19.0 -- 2026-04-29
 
 Synced with GPC v0.9.70.

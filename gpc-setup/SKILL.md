@@ -3,7 +3,7 @@ name: gpc-setup
 description: "Use when setting up GPC (Google Play Console CLI): authentication with service accounts, OAuth, or Application Default Credentials; configuration files (.gpcrc.json, env vars, XDG paths); auth profiles; running gpc doctor; troubleshooting auth errors. Make sure to use this skill whenever the user mentions gpc auth, service account setup, gpc config, gpc doctor, GPC_SERVICE_ACCOUNT, gpc auth login, Google Play API credentials, Play Console authentication, gpc setup, gpc setup wizard, one-command onboarding, or wants to install/configure GPC — even if they don't explicitly say 'setup.' Also trigger when someone is troubleshooting auth failures, token expiration, keychain issues, or proxy/network configuration for GPC."
 compatibility: "GPC v0.9+. Requires Node.js 20+, pnpm 9+ (for development). npm for installation."
 metadata:
-  version: 1.5.0
+  version: 1.6.0
 ---
 
 # GPC Setup
@@ -192,7 +192,7 @@ gpc apps list --profile staging
 gpc doctor
 ```
 
-Checks (20 total):
+Checks (22 total):
 - Node.js version (≥ 20)
 - Configuration loaded
 - Default app set and valid Android package name format
@@ -208,6 +208,8 @@ Checks (20 total):
 - Disk space
 - CI detection
 - Developer verification status
+- API quota proximity (warns at >80% daily or per-minute usage, v0.9.71+)
+- Plugin health (discovers, loads, reports each configured plugin, v0.9.71+)
 
 Use `gpc doctor --fix` to auto-remediate fixable issues (version, auth, config keys).
 
@@ -221,7 +223,7 @@ gpc verify --open       # Open verification page in browser
 gpc verify checklist    # Interactive 7-step readiness walkthrough (markdown report for CI)
 ```
 
-Google's Android developer verification enforcement begins September 30, 2026 for BR, ID, SG, TH. `gpc doctor` includes this as check #20.
+Google's Android developer verification enforcement begins September 30, 2026 for BR, ID, SG, TH. `gpc doctor` includes this as a verification-deadline check.
 
 #### Signing key verification
 
