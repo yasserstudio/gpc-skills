@@ -1,9 +1,9 @@
 ---
 name: gpc-sdk-usage
 description: "Use when building applications that programmatically interact with the Google Play Developer API using GPC's TypeScript SDK packages. Make sure to use this skill whenever the user mentions @gpc-cli/api, @gpc-cli/auth, PlayApiClient, createApiClient, resolveAuth, Google Play API client, TypeScript SDK, programmatic access, API client, HTTP client, rate limiter, pagination, edit lifecycle in code, Node.js Google Play, server-side Play Store, backend integration — even if they don't explicitly say 'SDK.' Also trigger when someone wants to build a backend service, custom dashboard, automation script, or any TypeScript/JavaScript application that interacts with Google Play programmatically rather than through the CLI. For CLI usage, see other gpc-* skills. For building plugins, see gpc-plugin-development."
-compatibility: "GPC v0.9.9+ (new APIs require v0.9.51+, typed acknowledge/revoke bodies require v0.9.55+, Play Custom App Publishing API + `createEnterpriseClient` + `HttpClient.uploadCustomApp<T>` + `ResumableUploadOptions.initialMetadata` require v0.9.56+, changelog generation exports (`generateChangelog`, `renderPlayStore`, `resolveLocales`, `buildLocaleBundle`, `PLAY_STORE_LIMIT`, `LocaleBundle`, `LocaleEntry`) require v0.9.62+, apply + bundle processing exports (`applyReleaseNotes`, `waitForBundleProcessing`, `validateBundleForApply`, `bundleToReleaseNotes`) require v0.9.64+). Requires Node.js 20+, TypeScript 5+. Packages: @gpc-cli/api, @gpc-cli/auth."
+compatibility: "GPC v0.9.9+ (new APIs require v0.9.51+, typed acknowledge/revoke bodies require v0.9.55+, Play Custom App Publishing API + `createEnterpriseClient` + `HttpClient.uploadCustomApp<T>` + `ResumableUploadOptions.initialMetadata` require v0.9.56+, changelog generation exports (`generateChangelog`, `renderPlayStore`, `resolveLocales`, `buildLocaleBundle`, `PLAY_STORE_LIMIT`, `LocaleBundle`, `LocaleEntry`) require v0.9.62+, apply + bundle processing exports (`applyReleaseNotes`, `waitForBundleProcessing`, `validateBundleForApply`, `bundleToReleaseNotes`) require v0.9.64+, `encodeURIComponent` via `p()` helper on all API path parameters + per-bucket promise-chain mutex rate limiter + `validateSessionUri()` SSRF guard + `redactPath()` error sanitization require v0.9.74+). Requires Node.js 20+, TypeScript 5+. Packages: @gpc-cli/api, @gpc-cli/auth."
 metadata:
-  version: 1.4.0
+  version: 1.5.0
 ---
 
 # gpc-sdk-usage
@@ -382,6 +382,57 @@ await waitForBundleProcessing(client, "com.example.app", editId, versionCode);
 
 - **v0.9.57:** `apprecovery.cancel`/`deploy` URLs now use plural `/appRecoveries/`. `dataSafety.update` is `POST`, not `PUT`. Phantom `dataSafety.get` was removed. `onetimeproducts.offers.activateOffer` / `deactivateOffer` added. New `getVitalsErrorCount` function.
 - **v0.9.58 / v0.9.59:** Vitals LMK metric set is `lmkRateMetricSet` with metrics `userPerceivedLmkRate`, `userPerceivedLmkRate7dUserWeighted`, `userPerceivedLmkRate28dUserWeighted`, `distinctUsers`. (v0.9.58 shipped the wrong resource name; v0.9.59 is the corrected build.)
+
+### Security and correctness internals (v0.9.74+)
+
+These changes affect all code written against the SDK. Understand them to avoid bugs and security issues when extending or wrapping the HTTP layer.
+
+#### URL parameter encoding via p() helper
+
+All API path parameters are now encoded with `encodeURIComponent` through a `p()` helper in `http.ts`. Any new API method you add to `@gpc-cli/api` must follow this pattern:
+
+```typescript
+// Pattern used in http.ts — apply to ALL path parameters
+const p = encodeURIComponent;
+
+// Example: purchases endpoint
+const url = `${base}/applications/${p(packageName)}/purchases/products/${p(productId)}/tokens/${p(token)}`;
+
+// Example: listings endpoint
+const url = `${base}/applications/${p(packageName)}/edits/${p(editId)}/listings/${p(language)}`;
+```
+
+Never interpolate raw path parameters — always wrap with `p()`. This prevents path traversal and injection when unusual characters appear in package names, purchase tokens, or language codes.
+
+#### Rate limiter — per-bucket promise-chain mutex (v0.9.74+)
+
+The rate limiter no longer uses interval-based scheduling. Each bucket maintains a per-bucket promise-chain mutex: a pending promise is chained so that concurrent callers queue sequentially within the same bucket. This eliminates token races under high concurrency.
+
+When using `createRateLimiter()` with a custom bucket configuration, this behavior is automatic — no API change. But if you are building a wrapper that calls the internal rate limiter directly, avoid re-entrant `acquire()` calls within the same async tick for the same bucket.
+
+#### SSRF validation on resumable upload session URIs
+
+`validateSessionUri()` in `http.ts` guards all resumable upload session URIs before a PUT is issued. It checks:
+
+- URI must be `https://`
+- Hostname must be `storage.googleapis.com` or `*.storage.googleapis.com`
+- No private IP ranges (`10.x`, `172.16-31.x`, `192.168.x`, `127.x`, `::1`, `fc00::/7`)
+
+If you call `HttpClient.uploadCustomApp<T>()` or any method that performs a resumable upload, the session URI returned by the initiation POST is automatically validated before use. You do not need to call `validateSessionUri()` manually in normal SDK usage.
+
+#### redactPath() — sensitive path segments in error messages
+
+`redactPath()` in `http.ts` strips sensitive path segments from all error messages. It applies a global regex that replaces `/tokens/<value>`, `/purchases/<value>`, and `/purchaseToken/<value>` with `/tokens/[REDACTED]` etc.
+
+This runs on ALL error paths — timeout errors, network errors, upload errors, and download errors. The full URL never appears unredacted in a thrown error message.
+
+If you build a custom logging layer on top of `PlayApiError`, do not log `error.url` directly if it contains purchase tokens — use `error.message` which has already been redacted. The raw URL is not exposed on the error object.
+
+```typescript
+// Safe: error.message is already redacted
+console.error(error.message);
+// "POST https://androidpublisher.googleapis.com/.../purchases/products/coins_100/tokens/[REDACTED] — 404 Not Found"
+```
 
 ## Verification
 

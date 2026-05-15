@@ -6,11 +6,16 @@
    - Go to repo → Settings → Secrets and variables → Actions
    - Add `PLAY_SERVICE_ACCOUNT` containing the service account JSON content
 
-2. **Reference in workflow:**
+2. **Reference in workflow — step-scoped only (v0.9.74+):**
    ```yaml
-   env:
-     GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
+   # Scope GPC_SERVICE_ACCOUNT to the specific upload step, not the job
+   - name: Upload release
+     env:
+       GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
+     run: gpc releases upload app-release.aab --track internal
    ```
+
+   Never set `GPC_SERVICE_ACCOUNT` at the `jobs.<job>.env` level — this exposes the secret to every step including third-party actions.
 
 ## Workflow Templates
 
@@ -21,12 +26,12 @@ name: Release to Play Store
 on:
   push:
     tags: ['v*']
+  workflow_dispatch: {}
 
 jobs:
   release:
     runs-on: ubuntu-latest
     env:
-      GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
       GPC_APP: com.example.app
     steps:
       - uses: actions/checkout@v4
@@ -40,9 +45,11 @@ jobs:
         run: ./gradlew bundleRelease
 
       - name: Install GPC
-        run: npm install -g @gpc-cli/cli
+        run: npm install -g @gpc-cli/cli --ignore-scripts
 
       - name: Upload to internal track
+        env:
+          GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
         run: |
           gpc publish \
             app/build/outputs/bundle/release/app-release.aab \
@@ -52,6 +59,8 @@ jobs:
 
       - name: Release summary
         if: always()
+        env:
+          GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
         run: gpc releases status --output markdown >> $GITHUB_STEP_SUMMARY
 ```
 
@@ -80,15 +89,16 @@ jobs:
   release:
     runs-on: ubuntu-latest
     env:
-      GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
       GPC_APP: com.example.app
     steps:
       - uses: actions/checkout@v4
 
       - name: Install GPC
-        run: npm install -g @gpc-cli/cli
+        run: npm install -g @gpc-cli/cli --ignore-scripts
 
       - name: Upload release
+        env:
+          GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
         run: |
           FLAGS=""
           if [ "${{ inputs.dry_run }}" = "true" ]; then
@@ -108,21 +118,25 @@ name: Vitals Monitor
 on:
   schedule:
     - cron: '0 9 * * 1-5'  # Weekdays at 9am UTC
+  workflow_dispatch: {}
 
 jobs:
   check:
     runs-on: ubuntu-latest
     env:
-      GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
       GPC_APP: com.example.app
     steps:
       - name: Install GPC
-        run: npm install -g @gpc-cli/cli
+        run: npm install -g @gpc-cli/cli --ignore-scripts
 
       - name: Vitals dashboard
+        env:
+          GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
         run: gpc vitals overview --output markdown >> $GITHUB_STEP_SUMMARY
 
       - name: Check thresholds
+        env:
+          GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
         run: |
           gpc vitals crashes --threshold 2.0
           gpc vitals anr --threshold 0.47

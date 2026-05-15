@@ -69,11 +69,21 @@ Fallback when no keychain is available: `~/.config/gpc/credentials.json` (file-b
 
 ## CI/CD credential patterns
 
-### GitHub Actions (recommended)
+### GitHub Actions (recommended — v0.9.74 pattern)
+
+Scope secrets to the step level, not the job level. This limits exposure to only the steps that need the credential.
 
 ```yaml
-env:
-  GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SA_KEY }}
+# Step-scoped (correct — v0.9.74)
+steps:
+  - name: Upload to Play Store
+    env:
+      GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SA_KEY }}
+    run: gpc releases upload --app com.example.app --file app.aab
+
+# Job-scoped (avoid — exposes secret to all steps including third-party actions)
+# env:
+#   GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SA_KEY }}
 ```
 
 Secrets are:
@@ -95,6 +105,12 @@ variables:
 2. Raw JSON: `{"type": "service_account", ...}`
 
 GPC auto-detects which format is provided.
+
+## Subprocess env isolation
+
+When GPC spawns subprocesses (e.g., `gpc install-skills` running `npx skills add`), it does not pass through `process.env`. Instead it builds an explicit `safeEnv` object containing only an allowlist of non-sensitive keys: `PATH`, `HOME`, `USER`, `SHELL`, `TMPDIR`, `LANG`, `LC_ALL`, `NODE_ENV`, `NODE_PATH`, `NODE_OPTIONS`, `NODE_EXTRA_CA_CERTS`, `npm_config_registry`, `npm_config_cache`, and proxy variables.
+
+`GPC_SERVICE_ACCOUNT`, `GOOGLE_APPLICATION_CREDENTIALS`, CI tokens, and any other secrets present in the parent process environment are never forwarded to subprocesses.
 
 ## Token lifecycle
 

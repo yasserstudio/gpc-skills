@@ -73,23 +73,29 @@ In `.gpcrc.json`:
 
 ## Permission validation flow
 
+The trust check runs **before** `import()` is called on any plugin specifier. This prevents untrusted top-level module code from executing during discovery.
+
 ```
-Plugin loads
+discoverPlugins() resolves specifier
   │
   ├─ Is @gpc-cli/* prefix?
-  │   └─ Yes → Auto-trusted, skip validation
+  │   └─ Yes → isPluginTrusted() = true → import() → Auto-trusted, skip permission validation
   │
   ├─ Is in approvedPlugins?
-  │   └─ No → Skip loading (silent)
+  │   └─ No → isPluginTrusted() = false → Skip (silent, no import())
   │
-  ├─ Has gpc.permissions in package.json?
-  │   └─ No → Reject with PLUGIN_INVALID_PERMISSION
-  │
-  ├─ All permissions recognized?
-  │   └─ No → Reject with PLUGIN_INVALID_PERMISSION
-  │
-  └─ Load plugin, enforce permissions
+  └─ Yes → isPluginTrusted() = true → import()
+        │
+        ├─ Has gpc.permissions in package.json?
+        │   └─ No → Reject with PLUGIN_INVALID_PERMISSION
+        │
+        ├─ All permissions recognized?
+        │   └─ No → Reject with PLUGIN_INVALID_PERMISSION
+        │
+        └─ Enforce permissions
 ```
+
+> **Security note:** Prior to v0.9.74, GPC imported the plugin module first and checked approval afterward. This allowed untrusted top-level module code (side effects on `import()`) to run during discovery -- an RCE risk. The new model gates `import()` behind `isPluginTrusted()`, so unapproved plugins never execute any code.
 
 ## Common permission patterns
 

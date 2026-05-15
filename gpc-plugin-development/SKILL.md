@@ -3,7 +3,7 @@ name: gpc-plugin-development
 description: "Use when building, extending, or debugging GPC plugins. Make sure to use this skill whenever the user mentions gpc plugins, plugin SDK, @gpc-cli/plugin-sdk, plugin hooks, plugin development, plugin scaffolding, gpc plugins init, beforeCommand, afterCommand, onError, beforeRequest, afterResponse, registerCommands, plugin permissions, plugin manifest, custom commands, plugin-ci, extend GPC, GPC addon — even if they don't explicitly say 'plugin.' Also trigger when someone wants to add custom behavior to GPC, integrate GPC with Slack or other services, build CI/CD extensions, hook into the command lifecycle, or register new CLI commands. For using the built-in CI plugin, see gpc-ci-integration."
 compatibility: "GPC v0.9.9+. Requires Node.js 20+, TypeScript 5+. Plugin SDK: @gpc-cli/plugin-sdk package."
 metadata:
-  version: 1.1.0
+  version: 1.2.0
 ---
 
 # gpc-plugin-development
@@ -155,6 +155,8 @@ Available permissions:
 
 First-party plugins (`@gpc-cli/*`) are auto-trusted — no permissions needed.
 
+> **Trust check order (v0.9.74+):** `discoverPlugins()` calls `isPluginTrusted()` before calling `import()` on any plugin specifier. Untrusted plugins are silently skipped without their module code ever running. Previously, GPC imported first and checked approval afterward, which allowed top-level module side-effects to execute before the trust decision was made.
+
 ### 4. Test your plugin
 
 ```typescript
@@ -240,7 +242,7 @@ Naming convention:
 |---------|-------------|-----|
 | Plugin not loading | Not in `plugins` config array | Add to `.gpcrc.json` plugins list |
 | `PLUGIN_INVALID_PERMISSION` | Unknown permission declared | Check valid permissions in references/permissions-system.md |
-| Third-party plugin blocked | Not in `approvedPlugins` | Add plugin name to `approvedPlugins` in config |
+| Third-party plugin silently missing | Not in `approvedPlugins` | Add plugin name to `approvedPlugins` in config — unapproved plugins are skipped without error |
 | Hook not firing | Wrong hook name or not registered | Verify hook registration in `register()` method |
 | Hook error crashes GPC | Error in `beforeCommand` handler | `onError` and API hooks swallow errors; `beforeCommand` does not |
 | Plugin not found | Wrong package name or not installed | Check `node_modules` for `gpc-plugin-*` or `@gpc-cli/plugin-*` |

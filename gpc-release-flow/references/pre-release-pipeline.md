@@ -100,6 +100,8 @@ gpc releases rollout halt --track production
 
 ## GitHub Actions example
 
+> **v0.9.74+ security pattern:** Scope `GPC_SERVICE_ACCOUNT` to individual steps that need it (upload, promote) rather than setting it at the job level. This limits credential exposure — steps that don't call the Play API (validate, vitals read, status) do not receive the secret.
+
 ```yaml
 name: Release to Production
 on:
@@ -113,7 +115,6 @@ jobs:
   release:
     runs-on: ubuntu-latest
     env:
-      GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
       GPC_APP: com.example.app
     steps:
       - uses: actions/checkout@v4
@@ -125,6 +126,9 @@ jobs:
         run: gpc validate app-release.aab --track internal
 
       - name: Upload to internal
+        # GPC_SERVICE_ACCOUNT is scoped to this step only (v0.9.74+: least-privilege pattern)
+        env:
+          GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
         run: gpc releases upload app-release.aab --track internal
 
       - name: Gate on vitals before promotion
@@ -133,6 +137,8 @@ jobs:
           gpc vitals anr --threshold 0.47
 
       - name: Promote to production (10% rollout)
+        env:
+          GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
         run: gpc releases promote --from internal --to production --rollout 10
 
       - name: Post status to step summary

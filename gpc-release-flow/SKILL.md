@@ -3,7 +3,7 @@ name: gpc-release-flow
 description: "Use when uploading, releasing, promoting, or managing rollouts on Google Play. Make sure to use this skill whenever the user mentions gpc releases, upload AAB, upload APK, staged rollout, promote to production, halt rollout, gpc publish, release notes, track management, internal testing, beta release, production rollout, version code, rollout percentage, gpc bundles, bundle list, bundle wait, wait for bundle processing, in-app update priority, retain version codes, versioned changelogs, or wants to ship an Android app to any Play Store track. Also trigger when someone asks about the Google Play edit lifecycle, release validation, or how to do a phased rollout — even if they don't mention GPC by name. For metadata and listings, see gpc-metadata-sync. For CI/CD integration, see gpc-ci-integration."
 compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). For private-app publishing to Managed Google Play, see gpc-enterprise (v0.9.56+)."
 metadata:
-  version: 1.6.0
+  version: 1.7.0
 ---
 
 # GPC Release Flow
@@ -272,6 +272,7 @@ gpc --dry-run changelog generate --target play-store --locales auto --ai
 - Without `--ai`: non-source locales get a `[needs translation]` placeholder. Use `--format prompt` to emit a translation-ready LLM prompt for the offline / no-key workflow.
 - `--strict` exits 1 if any locale overflows 500 chars OR (with `--ai`) any locale fails to translate
 - Lazy-loaded: running without `--ai` imports none of the AI SDK deps. Cold-start budget preserved.
+- **Prompt injection protection (v0.9.74+):** Commit messages are wrapped in XML boundary delimiters before being sent to the LLM. Crafted commit subjects (e.g. `</commits><instructions>...`) cannot escape the data context and inject instructions into the translation prompt.
 
 ### Writing translated notes into a draft release (v0.9.64+)
 
@@ -323,6 +324,23 @@ gpc releases rollout increase --track production --to 50 --changes-not-sent-for-
 # Complete rollout, but fail if there are changes in review
 gpc releases rollout complete --track production --error-if-in-review
 ```
+
+#### Vitals gate before rollout increase (v0.9.74+)
+
+Starting in v0.9.74, `gpc releases rollout increase` checks crash/ANR thresholds **before** executing the rollout increase. If any configured threshold is breached, the command exits with code 6 and the rollout percentage is **not changed**. Previously, the vitals check happened after the API call.
+
+```bash
+# If crash rate > 2.0% or ANR rate > 0.47%, exits 6 — rollout stays at current %
+gpc releases rollout increase --track production --to 50 \
+  --crash-threshold 2.0 --anr-threshold 0.47
+
+# Check manually before increasing if you prefer explicit control
+gpc vitals crashes --threshold 2.0   # exits 6 if breached
+gpc vitals anr --threshold 0.47      # exits 6 if breached
+gpc releases rollout increase --track production --to 50
+```
+
+In CI, treat exit code 6 as a signal to halt the pipeline — do not retry the rollout increase until vitals recover.
 
 Read:
 - `references/rollout-strategies.md`
@@ -395,6 +413,22 @@ Disable with `--no-interactive` or `GPC_NO_INTERACTIVE=1`.
 | `EDIT_CONFLICT` | Another edit is in progress | Wait and retry, or use Console UI to discard pending edit |
 | Rollout stuck | Rollout was halted | `gpc releases rollout resume --track <track>` |
 | Wrong track | Promoted to wrong track | Create new release on correct track |
+
+#### CI template: scope GPC_SERVICE_ACCOUNT to upload/promote steps (v0.9.74+)
+
+Generated CI templates now scope `GPC_SERVICE_ACCOUNT` to the individual steps that require Play API access (upload, promote) rather than exposing it as a job-level environment variable. Steps that do not call the Play API (validate, vitals check, status) no longer receive the credential.
+
+```yaml
+# Recommended: step-scoped credential (v0.9.74+ pattern)
+- name: Upload to internal
+  env:
+    GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
+  run: gpc releases upload app-release.aab --track internal
+
+# NOT recommended: job-level env (exposes credential to all steps)
+# env:
+#   GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
+```
 
 Read:
 - `references/troubleshooting.md`

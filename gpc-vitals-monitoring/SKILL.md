@@ -3,7 +3,7 @@ name: gpc-vitals-monitoring
 description: "Use when monitoring Android app health metrics from Google Play. Make sure to use this skill whenever the user mentions gpc vitals, gpc watch, gpc status, crash rate, ANR rate, startup time, Android vitals, crash monitoring, threshold alerting, vitals gating, rollout monitoring, auto-halt, breach notification, webhook alerting, frame rate, battery usage, memory issues, error tracking, app quality, user reviews, review replies, Play Store reviews, star rating, negative reviews, review export, financial reports, stats reports, or wants to check app health, monitor a staged rollout, respond to reviews, or download Play Console reports. Also trigger when someone asks about gating deployments on crash data, monitoring app performance after a release, watching a rollout for regressions, or tracking review sentiment — even if they don't mention GPC. For releases, see gpc-release-flow. For CI gating, see gpc-ci-integration."
 compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). Vitals data requires the app to have sufficient install volume."
 metadata:
-  version: 1.5.0
+  version: 1.6.0
 ---
 
 # GPC Vitals Monitoring
@@ -332,6 +332,51 @@ In CI, use exit code 6 to block promotion:
   if: success()
   run: gpc releases promote --from beta --to production --rollout 10
 ```
+
+Read:
+- `references/ci-gating.md`
+
+### 8a) Vitals gate on rollout increase (`--vitals-gate`, v0.9.74+)
+
+The `--vitals-gate` flag on rollout commands checks crash and ANR thresholds **before** increasing the rollout percentage. If any threshold is breached, the increase is skipped entirely and GPC exits with code 6. No users are exposed to the higher percentage while metrics are failing.
+
+**Previous behavior (before v0.9.74):** GPC increased the rollout percentage first, then checked vitals and halted if thresholds were breached. This left users on the new, higher percentage during the breach window.
+
+**New behavior (v0.9.74+):** GPC checks vitals first. If thresholds are breached, the rollout increase never happens.
+
+```bash
+# Increase rollout only if crash and ANR rates are within thresholds
+gpc releases rollout --track production --rollout 50 \
+  --vitals-gate --crash-threshold 2.0 --anr-threshold 0.47
+
+# Use in a staged rollout script
+gpc releases rollout --track production --rollout 10 --vitals-gate
+gpc releases rollout --track production --rollout 25 --vitals-gate
+gpc releases rollout --track production --rollout 50 --vitals-gate
+gpc releases rollout --track production --rollout 100 --vitals-gate
+```
+
+Exit code 6 means a vitals threshold was breached and the rollout increase was **not** applied. Exit code 0 means vitals passed and the rollout was increased.
+
+In CI, use `if: success()` guards to stop the pipeline at the first failing gate:
+
+```yaml
+- name: Ramp to 25%
+  run: gpc releases rollout --track production --rollout 25 --vitals-gate \
+       --crash-threshold 2.0 --anr-threshold 0.47
+
+- name: Ramp to 50%
+  if: success()
+  run: gpc releases rollout --track production --rollout 50 --vitals-gate \
+       --crash-threshold 2.0 --anr-threshold 0.47
+
+- name: Full rollout
+  if: success()
+  run: gpc releases rollout --track production --rollout 100 --vitals-gate \
+       --crash-threshold 2.0 --anr-threshold 0.47
+```
+
+Threshold defaults (if flags are omitted): crash 2%, ANR 0.47%. Override via `.gpcrc.json` `vitals.thresholds.*`.
 
 Read:
 - `references/ci-gating.md`

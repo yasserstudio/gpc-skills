@@ -94,6 +94,43 @@ gpc vitals compare crashes --days 7
 
 Use this in post-release monitoring to detect regressions.
 
+## Vitals gate on rollout increase (v0.9.74+)
+
+The `--vitals-gate` flag on rollout commands checks thresholds **before** applying the rollout increase. If a threshold is breached the increase is skipped and GPC exits 6. This prevents users from being exposed to a higher rollout percentage while metrics are failing.
+
+```bash
+# Safe ramp: only increases if vitals are within thresholds
+gpc releases rollout --track production --rollout 50 \
+  --vitals-gate --crash-threshold 2.0 --anr-threshold 0.47
+```
+
+Staged pipeline pattern:
+
+```yaml
+- name: Ramp to 25%
+  run: gpc releases rollout --track production --rollout 25 --vitals-gate \
+       --crash-threshold 2.0 --anr-threshold 0.47
+
+- name: Ramp to 50%
+  if: success()
+  run: gpc releases rollout --track production --rollout 50 --vitals-gate \
+       --crash-threshold 2.0 --anr-threshold 0.47
+
+- name: Full rollout
+  if: success()
+  run: gpc releases rollout --track production --rollout 100 --vitals-gate \
+       --crash-threshold 2.0 --anr-threshold 0.47
+```
+
+**Behavior difference from standalone threshold checks:**
+
+| Approach | When check runs | If breached |
+|----------|----------------|-------------|
+| `gpc vitals crashes --threshold` | After rollout increase | Increase already applied; halt separately |
+| `--vitals-gate` on rollout command | Before rollout increase | Increase never applied; exits 6 immediately |
+
+Use `--vitals-gate` for rollout safety. Use standalone `--threshold` for post-deploy monitoring or CI promotion gates.
+
 ## Considerations
 
 - **Data lag:** Vitals data may be delayed by 24-48 hours

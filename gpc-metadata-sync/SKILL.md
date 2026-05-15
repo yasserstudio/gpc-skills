@@ -3,7 +3,7 @@ name: gpc-metadata-sync
 description: "Use when managing Google Play store listings, metadata, screenshots, or images. Make sure to use this skill whenever the user mentions gpc listings, store listing, metadata sync, screenshots, Fastlane metadata, localization, app description, pull listings, push listings, feature graphic, Play Store images, app title, short description, full description, changelogs, image sync, image dedup, listings images sync, or wants to update any text or visual content on their Play Store page. Also trigger when someone asks about migrating from Fastlane supply, syncing metadata to/from local files, managing multi-language listings, or bulk-updating store content — even if they don't mention GPC explicitly. For releases and uploads, see gpc-release-flow."
 compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill)."
 metadata:
-  version: 1.3.0
+  version: 1.4.0
 ---
 
 # GPC Metadata Sync
@@ -182,12 +182,20 @@ gpc listings images upload --lang en-US --type phoneScreenshots screenshot.png
 
 # Multiple images (glob)
 gpc listings images upload --lang en-US --type phoneScreenshots ./screens/*.png
+
+# Preview what would be uploaded without making API calls (v0.9.74+)
+gpc listings images upload --lang en-US --type phoneScreenshots ./screens/*.png --dry-run
 ```
 
 #### Delete images:
 ```bash
 gpc listings images delete --lang en-US --type phoneScreenshots --id <image-id>
+
+# Preview what would be deleted without making API calls (v0.9.74+)
+gpc listings images delete --lang en-US --type phoneScreenshots --dry-run
 ```
+
+> **New in v0.9.74:** Both `gpc listings images upload` and `gpc listings images delete` respect `--dry-run`. In dry-run mode, the commands print what would happen (files that would be uploaded, image IDs that would be deleted) without calling the Play API.
 
 #### Sync images from a local directory (v0.9.69+)
 
@@ -245,7 +253,12 @@ All write operations support `--dry-run`:
 ```bash
 gpc listings update --lang en-US --title "New Title" --dry-run
 gpc listings push --dir metadata/ --dry-run
+gpc listings images upload --lang en-US --type phoneScreenshots ./screens/*.png --dry-run
+gpc listings images delete --lang en-US --type phoneScreenshots --dry-run
+gpc listings images sync --lang en-US --type phoneScreenshots --dir ./screens/ --dry-run
 ```
+
+In dry-run mode no API calls are made. The output describes what would change: files that would be uploaded, image IDs that would be deleted, and fields that would be updated.
 
 ## Verification
 
@@ -253,6 +266,20 @@ gpc listings push --dir metadata/ --dry-run
 - `gpc listings get --all-languages` confirms all languages are correct
 - `gpc listings images list --lang <lang> --type <type>` shows uploaded images
 - Play Console UI reflects the changes (may take a few minutes)
+
+## Security notes (v0.9.74+)
+
+### Symlink traversal protection in --notes-dir
+
+When `--notes-dir` is used to load release notes (e.g. `gpc releases upload --notes-dir changelogs/`), GPC now calls `lstat()` on every entry and rejects symbolic links before reading file contents. This prevents directory traversal attacks where a crafted symlink inside the notes directory points to sensitive files outside the tree (e.g. `/etc/passwd`, SSH keys).
+
+If a symlink is encountered, the command exits with a descriptive error identifying the offending path. Use real files in your notes directories.
+
+### CSV formula injection prevention in review exports
+
+`gpc reviews export` and other commands that produce CSV output now prefix cells that begin with `=`, `+`, `-`, `@`, tab (`\t`), or carriage return (`\r`) with a single quote (`'`). This prevents spreadsheet applications (Excel, Google Sheets) from interpreting user-supplied content (review text, app titles) as formulas when the CSV is opened.
+
+If you process the CSV programmatically, strip the leading `'` from string values where needed.
 
 ## Failure modes / debugging
 

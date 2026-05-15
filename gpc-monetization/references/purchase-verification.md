@@ -172,3 +172,15 @@ gpc purchases product get-v2 $TEST_TOKEN --json | jq '.purchaseStateContext.stat
 ```
 
 Exit code 0 means the purchase exists. Check the JSON state field for the actual state.
+
+## Purchase token security (v0.9.74+)
+
+Purchase tokens are sensitive — treat them like credentials.
+
+**GPC protections (automatic, no configuration needed):**
+
+- **Redacted in JSON output:** Any `purchaseToken` field in `gpc rtdn` output shows only the first 8 characters followed by `...REDACTED`. This applies to `gpc rtdn decode` and `gpc rtdn status`.
+- **Redacted in error messages:** When a purchase-related API call fails, the HTTP layer runs `redactPath()` on the request URL and error message before surfacing them. Tokens embedded in paths or error bodies are truncated the same way.
+- **URL-encoded in API paths:** Token parameters are passed through `encodeURIComponent` when constructing request URLs, preventing injection or path-traversal issues.
+
+**Implication for CI logs:** Purchase tokens will not appear in plain text in GPC output, even in `--verbose` or `--json` modes. If you need the full token for debugging, retrieve it from your Pub/Sub subscription or the Play Console directly.

@@ -39,6 +39,44 @@
         "Verifies CI pipelines pass before deleting the old key",
         "Clears token cache after rotation"
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "A security audit flagged that our GPC-based GitHub Actions workflow exposes the PLAY_SA_KEY secret to all steps in the job, including third-party actions. How should we fix this?",
+      "expected_output": "Explains step-scoped secrets pattern from v0.9.74 CI template",
+      "files": [],
+      "expectations": [
+        "Explains the difference between job-level env and step-level env in GitHub Actions",
+        "Provides example of scoping GPC_SERVICE_ACCOUNT to the specific step that calls gpc",
+        "Explains that step-scoped secrets are not accessible to other steps including third-party actions",
+        "References the v0.9.74 CI template convention"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "How does GPC prevent a malicious plugin from executing arbitrary code? I'm building a plugin and want to understand the trust model.",
+      "expected_output": "Explains the plugin trust model: isPluginTrusted(), FIRST_PARTY_PLUGINS, approved set, no import() before trust check",
+      "files": [],
+      "expectations": [
+        "Explains that isPluginTrusted() is called before import()",
+        "Mentions FIRST_PARTY_PLUGINS set for built-in plugins",
+        "Explains user-approved set for third-party plugins via gpc plugins add",
+        "States that untrusted specifiers are skipped before any module loading",
+        "Notes this prevents top-level module code execution from untrusted sources"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "I want to run a security audit on the GPC codebase using deepsec. What's the process?",
+      "expected_output": "Explains the deepsec audit workflow: pnpm security:deep, CI integration, triage process",
+      "files": [],
+      "expectations": [
+        "Shows pnpm security:deep command or the individual npx deepsec steps",
+        "Explains that deepsec runs as a CI job on every push",
+        "Mentions that findings are exported as artifacts for review",
+        "Explains the triage workflow: review findings, fix, revalidate",
+        "Notes that the v0.9.74 release resolved 16 findings from an initial deepsec audit"
+      ]
     }
   ]
 }

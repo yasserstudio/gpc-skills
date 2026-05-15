@@ -39,11 +39,17 @@ gpc listings images upload --lang en-US --type phoneScreenshots screenshot1.png
 gpc listings images upload --lang en-US --type phoneScreenshots \
   screenshot1.png screenshot2.png screenshot3.png
 
+# Preview upload without making API calls (v0.9.74+)
+gpc listings images upload --lang en-US --type phoneScreenshots screenshot1.png --dry-run
+
 # Delete all images of a type
 gpc listings images delete --lang en-US --type phoneScreenshots
 
 # Delete a specific image by ID
 gpc listings images delete --lang en-US --type phoneScreenshots --id <image-id>
+
+# Preview deletion without making API calls (v0.9.74+)
+gpc listings images delete --lang en-US --type phoneScreenshots --dry-run
 ```
 
 ## Best practices

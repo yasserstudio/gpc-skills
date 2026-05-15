@@ -1,6 +1,13 @@
 # API Client Reference
 
-Complete reference for the PlayApiClient returned by `createApiClient()`. Covers all 215 endpoints.
+Complete reference for the PlayApiClient returned by `createApiClient()`. Covers all 217 endpoints.
+
+## Contributor rules (v0.9.74+)
+
+- **URL path parameters:** All path parameters must be wrapped with the `p()` helper (`encodeURIComponent`) in `http.ts`. Never interpolate raw values. Example: `/${p(packageName)}/edits/${p(editId)}`.
+- **Rate limiter:** Per-bucket promise-chain mutex — no interval scheduling. Concurrent calls to the same bucket queue automatically.
+- **SSRF guard:** `validateSessionUri()` runs on every resumable upload session URI. Do not bypass.
+- **Error redaction:** `redactPath()` runs on all error messages — `/tokens/`, `/purchases/`, `/purchaseToken/` values are replaced with `[REDACTED]`. Log `error.message`, not raw URLs.
 
 ## Client namespaces
 
@@ -207,6 +214,8 @@ const all = await paginateAll(fetchFn);
 ```
 
 ### Rate limiting
+
+As of v0.9.74, each bucket uses a per-bucket promise-chain mutex instead of interval-based scheduling. Concurrent callers within the same bucket queue in arrival order without token races.
 
 ```typescript
 import { createRateLimiter, RATE_LIMIT_BUCKETS } from "@gpc-cli/api";

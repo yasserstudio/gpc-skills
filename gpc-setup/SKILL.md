@@ -3,7 +3,7 @@ name: gpc-setup
 description: "Use when setting up GPC (Google Play Console CLI): authentication with service accounts, OAuth, or Application Default Credentials; configuration files (.gpcrc.json, env vars, XDG paths); auth profiles; running gpc doctor; troubleshooting auth errors. Make sure to use this skill whenever the user mentions gpc auth, service account setup, gpc config, gpc doctor, GPC_SERVICE_ACCOUNT, gpc auth login, Google Play API credentials, Play Console authentication, gpc setup, gpc setup wizard, one-command onboarding, or wants to install/configure GPC — even if they don't explicitly say 'setup.' Also trigger when someone is troubleshooting auth failures, token expiration, keychain issues, or proxy/network configuration for GPC."
 compatibility: "GPC v0.9+. Requires Node.js 20+, pnpm 9+ (for development). npm for installation."
 metadata:
-  version: 1.6.0
+  version: 1.7.0
 ---
 
 # GPC Setup
@@ -292,6 +292,25 @@ The completion scripts fill in live values for several flags at TAB time, backed
 | `--track`       | Track names for the current app (from status cache)           |
 
 If your package/track completions are stale, run any command that touches `gpc status` (or `gpc status` directly) to refresh the cache.
+
+## Security behaviors (v0.9.74+)
+
+### `gpc config set` — silent on sensitive values
+
+`gpc config set <key> <value>` no longer echoes the value back to the terminal. This prevents sensitive values (tokens, secrets, service account paths) from appearing in terminal history or CI logs.
+
+```bash
+gpc config set app com.example.app   # sets silently, no echo
+gpc config list                       # use this to verify values
+```
+
+### `gpc doctor` — proxy credential redaction
+
+When a proxy is configured via `HTTPS_PROXY` or `HTTP_PROXY`, `gpc doctor` strips any embedded credentials from the diagnostic output. The displayed URL shows only `protocol://host/path` — usernames and passwords are never printed.
+
+### Skills installer — env variable allowlist
+
+The skills installer now passes only an explicit allowlist of environment variables to child processes (PATH, HOME, NODE_ENV, npm_config_registry, and proxy vars). It no longer forwards the full shell environment, which reduces the risk of leaking secrets present in unrelated env vars.
 
 ## Verification
 

@@ -63,6 +63,9 @@ All known GPC error codes with causes and fixes.
 | `UPLOAD_SESSION_NOT_FOUND` | Session expired (404) | Start a new upload session |
 | `UPLOAD_SESSION_EXPIRED` | Session gone (410) | Start a new upload session |
 | `UPLOAD_INVALID_CHUNK_SIZE` | Chunk size not multiple of 256 KB | Set `GPC_UPLOAD_CHUNK_SIZE` to a multiple of 262144 (256 KB) |
+| `UPLOAD_INSECURE_URI` | Session URI uses a non-HTTPS scheme | GPC rejects non-HTTPS upload URIs; check proxy or MITM stripping TLS |
+| `UPLOAD_URI_HOST_MISMATCH` | Session URI host does not match expected upload host | URI returned by Google API points to an unexpected host; do not proceed |
+| `UPLOAD_INVALID_URI` | Session URI is malformed or unparseable | API returned a bad Location header; retry the upload |
 
 ## Release errors (exit code 4)
 

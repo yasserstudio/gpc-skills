@@ -1,5 +1,37 @@
 # Changelog
 
+## v1.21.0 -- 2026-05-15
+
+Synced with GPC v0.9.74 (security hardening release).
+
+### Updated Skills
+
+- **gpc-security** (0.13.0 -> 0.14.0) -- Major update: full deepsec audit catalog (16 findings), new runtime-security.md reference covering all fixes, p() helper convention, redactPath() pattern, env allowlist pattern, deepsec audit process, supply chain hardening.
+
+- **gpc-ci-integration** (1.5.0 -> 1.6.0) -- Step-scoped secrets in all workflow templates, --ignore-scripts enforcement, lockfile integrity verification, deepsec CI job, workflow_dispatch triggers.
+
+- **gpc-sdk-usage** (1.4.0 -> 1.5.0) -- API path encoding via p() helper, per-bucket promise-chain mutex in rate limiter, validateSessionUri() SSRF protection, redactPath() in all error paths.
+
+- **gpc-release-flow** (1.6.0 -> 1.7.0) -- Vitals gate checks before rollout increase, prompt injection hardening in AI changelog, step-scoped secrets in CI templates.
+
+- **gpc-metadata-sync** (1.3.0 -> 1.4.0) -- Image upload/delete now respect --dry-run, symlink traversal protection in --notes-dir, CSV formula injection prevention.
+
+- **gpc-plugin-development** (1.1.0 -> 1.2.0) -- Plugin trust model: isPluginTrusted() gates import(), unapproved plugins silently skipped.
+
+- **gpc-setup** (1.6.0 -> 1.7.0) -- Config set no longer echoes values, doctor strips proxy credentials, skills installer env allowlist.
+
+- **gpc-troubleshooting** (0.17.0 -> 0.18.0) -- Three new SSRF error codes, vitals gate behavior change, plugin silent-skip, redacted error message guidance.
+
+- **gpc-vitals-monitoring** (1.5.0 -> 1.6.0) -- Vitals gate checks thresholds before rollout increase (was after), staged pipeline patterns.
+
+- **gpc-monetization** (0.12.0 -> 0.13.0) -- Purchase token redaction in RTDN output and API error messages, URL encoding on all purchase paths.
+
+### Marquee changes in GPC v0.9.74
+
+- **16 security fixes** from deepsec AI audit: plugin RCE, SSRF, symlink traversal, credential redaction, API path encoding, CSV injection, prompt injection, rate limiter race, vitals gate ordering, and more.
+- **CI supply chain hardening**: deepsec scanning, restricted install scripts, lockfile verification, step-scoped secrets.
+- **deepsec before every release**: `pnpm security:deep` is now step 0 in the release checklist.
+
 ## v1.20.0 -- 2026-04-30
 
 Synced with GPC v0.9.71.

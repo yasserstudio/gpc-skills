@@ -127,5 +127,17 @@ rm -P "$NEW_KEY_PATH"
 - [ ] Keys are rotated every 90 days
 - [ ] Old keys are deleted promptly
 - [ ] CI secrets are updated before deleting old keys
+- [ ] CI secrets are scoped to steps, not jobs (v0.9.74 pattern)
 - [ ] Token cache is cleared after rotation
 - [ ] Only necessary permissions are granted to service accounts
+
+## NPM token rotation
+
+GPC's npm publish automation uses a granular NPM_TOKEN with a 90-day expiry. When rotating:
+
+1. Generate a new granular token at npmjs.com (scoped to the `@gpc-cli` org, automation type).
+2. Update the `NPM_TOKEN` secret in the GitHub repository settings.
+3. Verify by triggering a dry-run release workflow.
+4. Revoke the old token at npmjs.com immediately after confirming the new one works.
+
+The same overlap-then-delete pattern used for Google service account keys applies here: create first, update CI, verify, then revoke the old token.

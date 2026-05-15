@@ -75,6 +75,8 @@ gpc releases rollout complete --track production
 
 ## Vitals-Gated Rollout (CI)
 
+> **v0.9.74+ behavior change:** `gpc releases rollout increase` now checks crash/ANR thresholds **before** executing the rollout increase. If any threshold is breached, the command exits with code 6 and the rollout percentage is **not changed**. In earlier versions, the vitals check ran after the API call.
+
 ```bash
 #!/bin/bash
 set -e
@@ -85,11 +87,14 @@ gpc releases upload app.aab --track production --rollout 5
 # Wait for crash data
 sleep 3600  # 1 hour
 
-# Check vitals — exits 6 if threshold breached
-gpc vitals crashes --threshold 2.0
-gpc vitals anr --threshold 0.47
+# Option A (v0.9.74+): pass thresholds directly — vitals are checked before the increase
+# Exits 6 without touching rollout if thresholds are breached
+gpc releases rollout increase --track production --to 50 \
+  --crash-threshold 2.0 --anr-threshold 0.47
 
-# If we get here, vitals are OK — increase to 50%
+# Option B: explicit pre-check (any version)
+gpc vitals crashes --threshold 2.0   # exits 6 if breached
+gpc vitals anr --threshold 0.47      # exits 6 if breached
 gpc releases rollout increase --track production --to 50
 ```
 

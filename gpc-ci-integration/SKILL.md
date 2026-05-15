@@ -3,7 +3,7 @@ name: gpc-ci-integration
 description: "Use when integrating GPC into CI/CD pipelines. Make sure to use this skill whenever the user mentions GitHub Actions, GitLab CI, Bitbucket Pipelines, CircleCI, CI/CD, automated release, pipeline, GPC_SERVICE_ACCOUNT, JSON output, CSV output, TSV output, exit codes, gpc in CI, automate Play Store deployment, release workflow, deploy to Play Store from CI, automated rollout, step summary, bundle wait, wait for bundle processing, or wants to set up any kind of automated Google Play deployment pipeline. Also trigger when someone asks about running GPC in a headless environment, parsing GPC output in scripts, using GPC exit codes for conditional logic, or configuring retries and timeouts for CI — even if they don't mention a specific CI platform. For local setup, see gpc-setup. For release commands, see gpc-release-flow."
 compatibility: "GPC v0.9+. Works with any CI platform that supports Node.js 22+ (recommended) or 20+, or standalone binary."
 metadata:
-  version: 1.5.0
+  version: 1.6.0
 ---
 
 # GPC CI Integration
@@ -55,6 +55,7 @@ name: Upload to Play Store
 on:
   push:
     tags: ['v*']
+  workflow_dispatch: {}
 
 jobs:
   release:
@@ -65,12 +66,14 @@ jobs:
       - name: Build AAB
         run: ./gradlew bundleRelease
 
+      - name: Install GPC
+        run: npm install -g @gpc-cli/cli --ignore-scripts
+
       - name: Upload to Play Store
         env:
           GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
           GPC_APP: com.example.app
         run: |
-          npm install -g @gpc-cli/cli
           gpc releases upload app/build/outputs/bundle/release/app-release.aab \
             --track internal \
             --changes-not-sent-for-review
@@ -94,18 +97,19 @@ jobs:
   release:
     runs-on: ubuntu-latest
     env:
-      GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
       GPC_APP: com.example.app
     steps:
       - uses: actions/checkout@v4
 
       - name: Install GPC
-        run: npm install -g @gpc-cli/cli
+        run: npm install -g @gpc-cli/cli --ignore-scripts
 
       - name: Preflight compliance check
         run: gpc preflight app-release.aab --fail-on error --json
 
       - name: Upload release
+        env:
+          GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
         run: |
           gpc releases upload app-release.aab \
             --track ${{ inputs.track }} \
@@ -115,16 +119,22 @@ jobs:
             --device-tier-config default
 
       - name: Error if in review
+        env:
+          GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
         run: gpc releases status --error-if-in-review
 
       - name: Check vitals
         if: inputs.track == 'production'
+        env:
+          GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
         run: |
           gpc vitals crashes --threshold 2.0
           gpc vitals anr --threshold 0.47
 
       - name: Release status
         if: always()
+        env:
+          GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
         run: gpc releases status --output markdown >> $GITHUB_STEP_SUMMARY
 
       - name: Generate GitHub Release notes
@@ -388,7 +398,7 @@ GPC's own CI uses 12 protection layers. When integrating GPC into your pipeline,
 
 ```yaml
 # Pin GPC version (don't rely on @latest in production)
-- run: npm install -g @gpc-cli/cli@0.9.50
+- run: npm install -g @gpc-cli/cli@0.9.74 --ignore-scripts
 
 # Or use the standalone binary (no npm supply chain risk)
 - run: curl -fsSL https://raw.githubusercontent.com/yasserstudio/gpc/main/scripts/install.sh | bash
@@ -397,12 +407,71 @@ GPC's own CI uses 12 protection layers. When integrating GPC into your pipeline,
 - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
 ```
 
+**--ignore-scripts on all pnpm/npm install commands (v0.9.74+)**
+
+All CI `pnpm install` and `npm install` commands must use `--ignore-scripts` to block lifecycle-script execution by untrusted packages. GPC's own `pnpm.onlyBuiltDependencies` is set to `["turbo", "esbuild"]` in `package.json` — only those two packages are permitted to run install scripts.
+
+```yaml
+- name: Install dependencies
+  run: pnpm install --frozen-lockfile --ignore-scripts
+```
+
+**Lockfile integrity verification (v0.9.74+)**
+
+Verify `pnpm-lock.yaml` has not been tampered with before installing:
+
+```yaml
+- name: Verify lockfile integrity
+  run: |
+    sha256sum pnpm-lock.yaml > /tmp/lockfile.sha256
+    # Compare against the known-good SHA stored as a repo secret or artifact
+    echo "${{ secrets.LOCKFILE_SHA256 }}  pnpm-lock.yaml" | sha256sum -c -
+```
+
+**Step-scoped secrets (v0.9.74+)**
+
+Never set `GPC_SERVICE_ACCOUNT` at the job level. Always scope it to the specific step that needs it:
+
+```yaml
+# WRONG — secret is available to every step in the job
+jobs:
+  release:
+    env:
+      GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
+
+# CORRECT — secret only visible to the upload step
+- name: Upload release
+  env:
+    GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
+  run: gpc releases upload app-release.aab --track internal
+```
+
+**Deep security scan (v0.9.74+)**
+
+GPC ships a `pnpm security:deep` script that runs deepsec scanning across all packages. Add it to your release pipeline:
+
+```yaml
+- name: Deep security scan
+  run: pnpm security:deep
+```
+
+**workflow_dispatch trigger for manual re-runs (v0.9.74+)**
+
+Add `workflow_dispatch: {}` to every release workflow so engineers can re-trigger failed runs without creating a new tag:
+
+```yaml
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch: {}
+```
+
 For Socket.dev scanning on your own repo, add `socket ci` to your workflow:
 
 ```yaml
 - name: Socket Security Scan
   run: |
-    npm install -g socket@latest
+    npm install -g socket@latest --ignore-scripts
     socket ci --repo your-repo
   env:
     SOCKET_SECURITY_API_TOKEN: ${{ secrets.SOCKET_SECURITY_API_TOKEN }}

@@ -3,7 +3,7 @@ name: gpc-troubleshooting
 description: "Use when debugging GPC errors, failures, or unexpected behavior. Make sure to use this skill whenever the user mentions gpc error, gpc failing, exit code, AUTH_FAILED, API_FORBIDDEN, NETWORK_ERROR, CONFIG_MISSING, EDIT_CONFLICT, upload failed, permission denied, timeout, rate limit, gpc doctor failing, unexpected exit code, command not working, GPC crash, debug GPC, verbose output, --json error, threshold breach — even if they don't explicitly say 'troubleshoot.' Also trigger when someone encounters any GPC error they don't understand, when gpc doctor reports issues, when CI pipelines fail with GPC commands, or when they need to interpret exit codes. For auth-specific setup issues, see gpc-setup. For CI-specific issues, see gpc-ci-integration."
 compatibility: "GPC v0.9+. Covers all packages: @gpc-cli/cli, @gpc-cli/core, @gpc-cli/api, @gpc-cli/auth, @gpc-cli/config."
 metadata:
-  version: 0.17.0
+  version: 0.18.0
 ---
 
 # gpc-troubleshooting
@@ -168,6 +168,9 @@ gpc config list
 | `UPLOAD_SESSION_NOT_FOUND` | Session expired (404) | Start a new upload session |
 | `UPLOAD_SESSION_EXPIRED` | Session gone (410) | Start a new upload session |
 | `UPLOAD_INVALID_CHUNK_SIZE` | Chunk size not multiple of 256 KB | Set `GPC_UPLOAD_CHUNK_SIZE` to a multiple of 262144 (256 KB) |
+| `UPLOAD_INSECURE_URI` | Session URI uses a non-HTTPS scheme | GPC rejects non-HTTPS upload URIs; check for proxy or MITM stripping TLS |
+| `UPLOAD_URI_HOST_MISMATCH` | Session URI host does not match expected upload host | URI returned by Google API points to an unexpected host; do not proceed |
+| `UPLOAD_INVALID_URI` | Session URI is malformed or unparseable | API returned a bad Location header; retry the upload or file a bug |
 
 ```bash
 # Validate before uploading
@@ -196,13 +199,29 @@ gpc vitals crashes --json | jq '.crashRate'
 gpc vitals crashes --threshold 1.5 && gpc releases promote --from beta --to production
 ```
 
+**Behavior change in v0.9.74:** Exit code 6 now fires **before** any rollout percentage increase is applied. In previous versions, GPC would increase the rollout first and then check the threshold, potentially expanding a bad release. Now the gate evaluates current vitals and exits 6 immediately if the threshold is breached, leaving the rollout percentage unchanged.
+
 ### 8. Plugin errors (exit code 10)
 
 | Error | Cause | Fix |
 |-------|-------|-----|
 | `PLUGIN_INVALID_PERMISSION` | Third-party plugin declares unknown permission | Check valid permissions in plugin-sdk docs |
-| Plugin not loading | Not in config or not approved | Add to `plugins` and `approvedPlugins` in .gpcrc.json |
+| Plugin not loading (no error shown) | Not in `approvedPlugins` — silently skipped | Add to `approvedPlugins` in .gpcrc.json; unapproved plugins are never imported |
+| Plugin not loading | In `approvedPlugins` but not in `plugins` list | Add to both `plugins` and `approvedPlugins` in .gpcrc.json |
 | Plugin error in hook | Bug in plugin handler | Check plugin logs; `onError`/API hooks swallow errors |
+
+**Note (v0.9.74+):** Plugins not in `approvedPlugins` are silently skipped during discovery — no error is raised and no module code is executed. If a plugin appears to vanish without explanation, verify it is listed in both `plugins` and `approvedPlugins` in `.gpcrc.json`.
+
+### Redacted paths in error messages (v0.9.74+)
+
+GPC uses `redactPath()` to strip sensitive substrings from file paths before including them in error messages. In some cases this affects purchase token paths -- if a token value appears within a file path, it will be replaced with `***REDACTED***`.
+
+Example:
+```
+Error: file not found: /data/***REDACTED***/receipt.json
+```
+
+This is intentional. The actual path is available via `GPC_DEBUG=1` in controlled environments where log output is secured.
 
 ### Changelog generation errors (v0.9.61+)
 
