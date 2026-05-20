@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.22.0 -- 2026-05-20
+
+Synced with GPC v0.9.76 (Google I/O 2026 response).
+
+### Updated Skills
+
+- **gpc-setup** (1.7.0 -> 1.8.0) -- Embedded docs count 99 -> 108 (blog, new guide pages).
+
+- **gpc-onboarding** (0.13.0 -> 0.14.0) -- Embedded docs count 99 -> 108.
+
+- **gpc-monetization** (0.13.0 -> 0.14.0) -- SubscriptionPurchaseV2 new fields (onHoldStateContext, inGracePeriodStateContext). Data safety API section (get/update from CSV).
+
+- **gpc-sdk-usage** (1.5.0 -> 1.6.0) -- Compatibility line updated for v0.9.76 typed fields and data safety API.
+
+### Marquee changes in GPC v0.9.76
+
+- Full API contract audit (50+ fixes against official reference docs)
+- SubscriptionPurchaseV2 new fields: onHoldStateContext, inGracePeriodStateContext
+- Data safety API (CSV format, input validation)
+- Blog launch, docs restructure (108 pages, nav streamlined from 8 to 5 items)
+
+---
+
 ## v1.21.0 -- 2026-05-15
 
 Synced with GPC v0.9.74 (security hardening release).
