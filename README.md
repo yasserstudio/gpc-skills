@@ -131,6 +131,11 @@ gpc-<skill>/
 | "Delete removed screenshots from Play Store" | `gpc-metadata-sync` |
 | "Validate a release commit without publishing" | `gpc-release-flow` |
 | "App commit fails with changesNotSentForReview error" | `gpc-troubleshooting` |
+| "Set in-app update priority for a release" | `gpc-release-flow` |
+| "Keep old version codes active alongside new upload" | `gpc-release-flow` |
+| "Get or update Data Safety declarations" | `gpc-monetization` |
+| "Compare local signing key against Play certificate" | `gpc-setup` |
+| "Check SubscriptionPurchaseV2 hold/grace period state" | `gpc-monetization` |
 
 ## Reference Files Index
 
@@ -243,9 +248,11 @@ gpc-<skill>/
 - GPC v0.9.61+ required for `gpc changelog generate` (referenced by `gpc-release-flow`, `gpc-ci-integration`, `gpc-sdk-usage`)
 - GPC v0.9.62+ required for multilingual Play Store release notes (`--target play-store --locales <csv|auto>`; referenced by `gpc-release-flow`, `gpc-metadata-sync`, `gpc-migrate-fastlane`, `gpc-sdk-usage`, `gpc-ci-integration`)
 - GPC v0.9.63+ required for AI-assisted translation (`--ai` flag, BYO key for Anthropic / OpenAI / Google / Vercel AI Gateway; referenced by `gpc-release-flow`, `gpc-metadata-sync`, `gpc-ci-integration`)
-- GPC v0.9.64+ required for `--apply` (write translated notes into draft release), bundle upload race fix (Fibonacci-backoff poll after AAB upload), and embedded offline docs (`gpc docs list/show/search/init/web` with 99 pages)
+- GPC v0.9.64+ required for `--apply` (write translated notes into draft release), bundle upload race fix (Fibonacci-backoff poll after AAB upload), and embedded offline docs (`gpc docs list/show/search/init/web` with 108 pages)
 - GPC v0.9.65+ required for April 2026 policy scanners: `contacts-permission-broad`, `geofencing-foreground-service`, `health-connect-granular` (compliance deadline: May 15, 2026)
 - GPC v0.9.71+ required for `gpc doctor` quota proximity and plugin health checks (referenced by `gpc-setup`, `gpc-troubleshooting`, `gpc-plugin-development`)
+- GPC v0.9.75+ required for data safety API (`gpc data-safety get/update`), signing key verification (`gpc doctor --verify`), and `gpc doctor` shell completion detection
+- GPC v0.9.76+ required for `SubscriptionPurchaseV2` typed fields (`onHoldStateContext`, `inGracePeriodStateContext`); full API contract audit with 50+ fixes
 - `gpc-android-cli-interop` (v1.12.0+) pairs with Google's [official Android CLI](https://android-developers.googleblog.com/2026/04/build-android-apps-3x-faster-using-any-agent.html) (released 2026-04-16). Install Google's CLI separately; the interop skill assumes both tools are installed and declares the handoff between them.
 - Node.js 20+ (or standalone binary)
 - Google Play Developer API access (service account)
