@@ -1,5 +1,31 @@
 # Changelog
 
+## v1.23.0 -- 2026-05-22
+
+Synced with GPC v0.9.77 (upload timeout fix, supply chain hardening).
+
+### Updated Skills
+
+- **gpc-release-flow** (1.6.0 -> 1.7.0) -- npm publishing via Trusted Publisher (OIDC) + Staged Publishing. Multi-retry guard on validate/commit (v0.9.77). Known bugs table for v0.9.78 (tracks update wipes, changesNotSentForReview gap, version reassignment).
+
+- **gpc-security** (v0.9+ -> v0.9.77+) -- Supply chain hardening: Trusted Publisher OIDC, Staged Publishing with 2FA, NPM_TOKEN deleted. Defense layers expanded from 12 to 15.
+
+- **gpc-sdk-usage** (1.6.0 -> 1.6.1) -- Fibonacci backoff extended in v0.9.77, multi-retry guard on validate/commit.
+
+- **gpc-troubleshooting** -- Added EDIT_VALIDATE_FAILED row with v0.9.77 multi-retry guard.
+
+- **gpc-monetization** -- Minor version alignment.
+
+- **gpc-setup** -- Minor version alignment.
+
+### Marquee changes in GPC v0.9.77
+
+- Fix large AAB upload timeout: Fibonacci backoff polling (~86s), multi-retry guard on validate/commit (15s, 30s, 45s)
+- Supply chain hardening: Trusted Publisher (OIDC), Staged Publishing (human 2FA), NPM_TOKEN deleted
+- 2,319 tests
+
+---
+
 ## v1.22.0 -- 2026-05-20
 
 Synced with GPC v0.9.76 (Google I/O 2026 response).

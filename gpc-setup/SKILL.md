@@ -1,9 +1,9 @@
 ---
 name: gpc-setup
-description: "Use when setting up GPC (Google Play Console CLI): authentication with service accounts, OAuth, or Application Default Credentials; configuration files (.gpcrc.json, env vars, XDG paths); auth profiles; running gpc doctor; troubleshooting auth errors. Make sure to use this skill whenever the user mentions gpc auth, service account setup, gpc config, gpc doctor, GPC_SERVICE_ACCOUNT, gpc auth login, Google Play API credentials, Play Console authentication, gpc setup, gpc setup wizard, one-command onboarding, or wants to install/configure GPC — even if they don't explicitly say 'setup.' Also trigger when someone is troubleshooting auth failures, token expiration, keychain issues, or proxy/network configuration for GPC."
+description: "Use when setting up GPC (Google Play Console CLI): authentication with service accounts, OAuth, or Application Default Credentials; configuration files (.gpcrc.json, env vars, XDG paths); auth profiles; running gpc doctor; troubleshooting auth errors. Make sure to use this skill whenever the user mentions gpc auth, gpc setup, service account setup, gpc config, gpc doctor, GPC_SERVICE_ACCOUNT, gpc auth login, Google Play API credentials, Play Console authentication, or wants to install/configure GPC — even if they don't explicitly say 'setup.' Also trigger when someone is troubleshooting auth failures, token expiration, keychain issues, or proxy/network configuration for GPC."
 compatibility: "GPC v0.9+. Requires Node.js 20+, pnpm 9+ (for development). npm for installation."
 metadata:
-  version: 1.8.0
+  version: 1.5.0
 ---
 
 # GPC Setup
@@ -13,6 +13,7 @@ metadata:
 Use this skill when the task involves:
 
 - Installing GPC (`npm install -g @gpc-cli/cli` or standalone binary)
+- Running the unified setup wizard (`gpc setup`, v0.9.68+)
 - Authenticating with Google Play Developer API (service account, OAuth, ADC)
 - Managing auth profiles (`gpc auth profiles`, `gpc auth switch`)
 - Configuring GPC (`.gpcrc.json`, env vars, `gpc config init`)
@@ -45,7 +46,34 @@ npx @gpc-cli/cli --version
 curl -fsSL https://raw.githubusercontent.com/yasserstudio/gpc/main/scripts/install.sh | bash
 ```
 
-### 1) Authenticate
+### 1) Unified setup (v0.9.68+, recommended)
+
+The fastest way to get GPC configured from scratch:
+
+```bash
+gpc setup
+```
+
+`gpc setup` is a single command that combines authentication, configuration, and verification into one guided flow:
+
+1. Detects existing config (resumes if partial)
+2. Prompts for auth method (service account, OAuth, or ADC)
+3. Validates credentials
+4. Sets default package name
+5. Writes `.gpcrc.json`
+6. Runs `gpc doctor` to verify everything works
+
+For CI/CD or headless environments, use the non-interactive variant:
+
+```bash
+gpc setup --auto
+```
+
+`--auto` reads from environment variables (`GPC_SERVICE_ACCOUNT`, `GPC_APP`) and skips all prompts. Exits 0 on success, non-zero with actionable errors on failure. Ideal for Docker images, GitHub Actions setup steps, and onboarding scripts.
+
+If you need more control, use the individual commands below.
+
+### 1a) Authenticate
 
 Three auth strategies, in order of recommendation:
 
@@ -110,30 +138,6 @@ Works automatically in Cloud Build, Cloud Run, GKE — no configuration needed:
 gpc apps list
 ```
 
-### 1b) One-command guided setup (v0.9.68+)
-
-For new users or new machines, `gpc setup` is the fastest path to a working configuration:
-
-```bash
-gpc setup
-```
-
-This interactive wizard covers the full onboarding flow in a single command:
-
-1. Authenticates (service account, OAuth, or ADC — prompted interactively)
-2. Picks a default app from your Play Console (lists available apps)
-3. Writes `.gpcrc.json` with the chosen app, profile, and output format
-4. Installs shell completion for your current shell (bash/zsh/fish)
-5. Runs `gpc doctor` automatically to verify the result
-
-**CI/headless mode** — skip all prompts with `--auto`:
-
-```bash
-gpc setup --auto
-```
-
-In `--auto` mode, `gpc setup` uses `GPC_SERVICE_ACCOUNT` + `GPC_APP` env vars and skips interactive steps. Ideal for bootstrapping a fresh CI runner from a single pipeline step.
-
 ### 2) Configure defaults
 
 #### Interactive setup wizard:
@@ -196,44 +200,45 @@ Checks (22 total):
 - Node.js version (≥ 20)
 - Configuration loaded
 - Default app set and valid Android package name format
+- Config and cache directory permissions
+- Service account file exists and permissions (not group/world-readable)
+- Profile env var points to a known profile
+- Proxy URL valid (if HTTPS_PROXY set)
+- CA cert file exists (if GPC_CA_CERT set)
+- DNS resolution (androidpublisher + playdeveloperreporting)
 - Authentication valid
-- API connectivity (googleapis.com + playdeveloperreporting.googleapis.com)
-- Proxy configuration (if set)
-- GPC version (suggests update if outdated)
-- HTTPS probe
-- App access verification
-- Service account key age
-- Unknown config keys
-- Token cache health
-- Disk space
-- CI detection
-- Developer verification status
-- API quota proximity (warns at >80% daily or per-minute usage, v0.9.71+)
-- Plugin health (discovers, loads, reports each configured plugin, v0.9.71+)
+- API connectivity (access token obtained)
+- Developer verification deadline (September 30, 2026)
+- Stale cache warning (>7 days)
+- Shell completion detection (bash/zsh)
+- API quota proximity: warns if daily or per-minute usage exceeds 80% (v0.9.71+)
+- Plugin health: verifies each configured plugin loads without errors (v0.9.71+)
+- Signing key verification: `--verify` fetches Play signing cert and compares against local keystore (v0.9.75+)
 
 Use `gpc doctor --fix` to auto-remediate fixable issues (version, auth, config keys).
 
 JSON output is supported: `gpc doctor --json` or `gpc doctor --output json`.
 
-### 5a) Check developer verification (v0.9.66+)
+#### Signing key verification (v0.9.75+)
 
 ```bash
-gpc verify              # Account-aware status with app info, signing enrollment, days until enforcement
+# Show Play signing certificate fingerprint
+gpc doctor --verify
+
+# Compare against a local keystore
+gpc doctor --verify --keystore release.keystore --store-pass $STORE_PASSWORD
+```
+
+Environment variable alternatives: `GPC_KEYSTORE_PATH` and `GPC_STORE_PASSWORD`.
+
+### 5a) Check developer verification
+
+```bash
+gpc verify              # Status, deadlines, resources
 gpc verify --open       # Open verification page in browser
-gpc verify checklist    # Interactive 7-step readiness walkthrough (markdown report for CI)
 ```
 
-Google's Android developer verification enforcement begins September 30, 2026 for BR, ID, SG, TH. `gpc doctor` includes this as a verification-deadline check.
-
-#### Signing key verification
-
-```bash
-gpc doctor --verify                                       # API-side signing cert check
-gpc doctor --verify --keystore release.jks --store-pass x # Compare local keystore against API cert
-gpc preflight signing                                     # Cert consistency across two most recent bundles
-```
-
-`gpc doctor --verify` pulls your app's signing certificate from Google Play via `generatedApks` and optionally compares it against a local keystore (requires `keytool` from JDK). `gpc preflight signing` compares certs across your two most recent bundle versions and exits 6 on mismatch (CI-friendly).
+Google's Android developer verification enforcement begins September 2026 for BR, ID, SG, TH. `gpc doctor` includes this as check #20.
 
 ### 5b) Browse documentation from CLI (v0.9.64+ embedded docs)
 
@@ -292,25 +297,6 @@ The completion scripts fill in live values for several flags at TAB time, backed
 | `--track`       | Track names for the current app (from status cache)           |
 
 If your package/track completions are stale, run any command that touches `gpc status` (or `gpc status` directly) to refresh the cache.
-
-## Security behaviors (v0.9.74+)
-
-### `gpc config set` — silent on sensitive values
-
-`gpc config set <key> <value>` no longer echoes the value back to the terminal. This prevents sensitive values (tokens, secrets, service account paths) from appearing in terminal history or CI logs.
-
-```bash
-gpc config set app com.example.app   # sets silently, no echo
-gpc config list                       # use this to verify values
-```
-
-### `gpc doctor` — proxy credential redaction
-
-When a proxy is configured via `HTTPS_PROXY` or `HTTP_PROXY`, `gpc doctor` strips any embedded credentials from the diagnostic output. The displayed URL shows only `protocol://host/path` — usernames and passwords are never printed.
-
-### Skills installer — env variable allowlist
-
-The skills installer now passes only an explicit allowlist of environment variables to child processes (PATH, HOME, NODE_ENV, npm_config_registry, and proxy vars). It no longer forwards the full shell environment, which reduces the risk of leaking secrets present in unrelated env vars.
 
 ## Verification
 

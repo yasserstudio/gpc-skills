@@ -1,6 +1,6 @@
 ---
 name: gpc-release-flow
-description: "Use when uploading, releasing, promoting, or managing rollouts on Google Play. Make sure to use this skill whenever the user mentions gpc releases, upload AAB, upload APK, staged rollout, promote to production, halt rollout, gpc publish, release notes, track management, internal testing, beta release, production rollout, version code, rollout percentage, gpc bundles, bundle list, bundle wait, wait for bundle processing, in-app update priority, retain version codes, versioned changelogs, or wants to ship an Android app to any Play Store track. Also trigger when someone asks about the Google Play edit lifecycle, release validation, or how to do a phased rollout — even if they don't mention GPC by name. For metadata and listings, see gpc-metadata-sync. For CI/CD integration, see gpc-ci-integration."
+description: "Use when uploading, releasing, promoting, or managing rollouts on Google Play. Make sure to use this skill whenever the user mentions gpc releases, upload AAB, upload APK, staged rollout, promote to production, halt rollout, gpc publish, release notes, track management, internal testing, beta release, production rollout, version code, rollout percentage, or wants to ship an Android app to any Play Store track. Also trigger when someone asks about the Google Play edit lifecycle, release validation, or how to do a phased rollout — even if they don't mention GPC by name. For metadata and listings, see gpc-metadata-sync. For CI/CD integration, see gpc-ci-integration."
 compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). For private-app publishing to Managed Google Play, see gpc-enterprise (v0.9.56+)."
 metadata:
   version: 1.7.0
@@ -61,11 +61,22 @@ The `publish` command handles the full flow — upload, track assignment, releas
 gpc publish app-release.aab --track internal
 gpc publish app-release.aab --track beta --notes "Bug fixes and improvements"
 gpc publish app-release.aab --track production --rollout 10
+
+# Set in-app update priority (0-5) so clients can prompt updates (v0.9.70+)
+gpc publish app-release.aab --track production --rollout 10 --in-app-update-priority 5
+
+# Retain older version codes alongside the new upload (v0.9.70+)
+gpc publish app-release.aab --track production --retain-version-codes 42,43
+
+# Validate only — run the full pipeline (upload, track assignment, validate) but stop
+# before committing. Useful for CI dry-validation against the real API. (v0.9.68+)
+gpc publish app-release.aab --track beta --validate-only
 ```
 
 Multi-language release notes from directory:
 ```bash
 gpc publish app-release.aab --track beta --notes-dir ./release-notes/
+# Falls back to default.txt when a locale-specific file is missing (v0.9.70+)
 ```
 
 #### B) Step-by-step release
@@ -85,12 +96,17 @@ gpc releases upload app-release.aab --track production --rollout 10
 # Upload as draft (not visible to users until explicitly released)
 gpc releases upload app-release.aab --track production --status draft
 
+# Validate only — upload and validate but do not commit (v0.9.68+)
+gpc releases upload app-release.aab --track beta --validate-only
+
 # Set release notes
 gpc releases notes set --track beta --lang en-US --notes "Bug fixes"
 gpc releases notes set --track beta --file release-notes/  # From directory
 ```
 
 > **New in v0.9.47:** APK files are auto-detected and uploaded via the correct `edits.apks.upload` endpoint. Use `--status draft` to create draft releases for manual review in the Play Console before going live.
+
+> **npm publishing (v0.9.77+):** GPC packages are published via Trusted Publisher (OIDC) with Staged Publishing. CI stages packages automatically; a maintainer approves with 2FA before they go live on npm. No long-lived `NPM_TOKEN` is used. See `gpc-ci-integration` for CI/CD workflow details.
 
 #### Additional upload flags (v0.9.51+)
 
@@ -116,45 +132,25 @@ gpc releases upload app.aab --track production --error-if-in-review
 | `--device-tier-config` | numeric ID or `LATEST` | Applies a device tier targeting configuration so different APKs are served to different device classes |
 | `--changes-not-sent-for-review` | boolean flag | Commits the edit without sending changes for review. Required when a previous submission was rejected and you are not yet ready for re-review |
 | `--error-if-in-review` | boolean flag | Causes the command to exit with a non-zero code if there are already changes in review, instead of silently overwriting them |
+| `--validate-only` | boolean flag | Runs the full upload and validation pipeline but stops before `edits.commit`. The edit is deleted after validation. Useful for CI pre-merge checks (v0.9.68+) |
+| `--in-app-update-priority` | `0`-`5` | Sets the in-app update priority for this release. `0` = default (no urgency), `5` = highest urgency. Clients using the Play Core in-app update API can read this to decide whether to show a flexible or immediate update prompt (v0.9.70+) |
+| `--retain-version-codes` | comma-separated | Comma-separated list of version codes to retain alongside the new upload. Prevents older APKs/AABs from being deactivated by the new release (v0.9.70+) |
 
-#### Upload flags (v0.9.70+)
+#### Fastlane-style changelog fallback (v0.9.70+)
 
-```bash
-# Set in-app update priority (0 = default, 5 = highest urgency)
-gpc releases upload app.aab --track production --in-app-update-priority 5
-
-# Retain previous version codes alongside the new upload
-gpc releases upload app.aab --track internal --retain-version-codes 40,41
-
-# Fastlane-style versioned release notes (auto-detected)
-gpc releases upload app.aab --track production --notes-dir changelogs/
-```
-
-| Flag | Values | Description |
-|------|--------|-------------|
-| `--in-app-update-priority` | `0`-`5` | Controls how aggressively Android prompts users to update via the in-app updates API. 0 is the default (no special priority), 5 is the highest. Preserved on promote. |
-| `--retain-version-codes` | comma-separated codes | Keeps previous version codes active in the same track release alongside the new upload. Duplicates are automatically removed. |
-| `--notes-dir` (versioned) | directory path | When the directory contains locale subdirectories (e.g., `en-US/`, `ja-JP/`), GPC auto-detects Fastlane-style versioned notes: reads `{versionCode}.txt` first, falls back to `default.txt` per language. Flat directories (`{lang}.txt`) still work as before. |
+When `--notes-dir` is used and no locale-specific file exists for a given locale, GPC falls back to `default.txt` in the notes directory. This matches Fastlane's convention and avoids empty release notes for unlisted locales.
 
 ### Rejected Apps
 
 When Google Play rejects a submission, your app enters a "changes in review" state. Subsequent uploads or promotions will fail unless you handle this explicitly:
 
-1. **Auto-rescue (v0.9.69+, default):** `gpc releases commit` automatically retries the commit with `changesNotSentForReview=true` when it receives a 403 for a rejected-update app. No flag required — this is the new default behavior. You will see a warning in the output indicating the auto-rescue was triggered.
-2. **If you want to push changes without triggering a new review** (e.g., updating metadata while fixing the rejection reason), use `--changes-not-sent-for-review` explicitly. This commits the edit but leaves the review state untouched.
-3. **If you want to guard against accidentally overwriting in-review changes** (e.g., a CI pipeline that should not clobber a pending review), use `--error-if-in-review`. The command will exit with code 4 (`API` error) if changes are currently in review.
-4. **If you are ready to re-submit for review**, omit both flags and upload normally. Google Play will replace the pending submission with your new one.
+1. **If you want to push changes without triggering a new review** (e.g., updating metadata while fixing the rejection reason), use `--changes-not-sent-for-review`. This commits your edit but leaves the review state untouched.
+2. **If you want to guard against accidentally overwriting in-review changes** (e.g., a CI pipeline that should not clobber a pending review), use `--error-if-in-review`. The command will exit with code 4 (`API` error) if changes are currently in review.
+3. **If you are ready to re-submit for review**, omit both flags and upload normally. Google Play will replace the pending submission with your new one.
 
 These flags apply to `gpc releases upload`, `gpc publish`, `gpc releases promote`, `gpc releases rollout`, `gpc listings push/update/delete`, `gpc listings images upload/delete`, `gpc testers add/remove/import`, `gpc tracks create/update`, and `gpc apps update`.
 
 > **Note (v0.9.52+):** When `--changes-not-sent-for-review` is set, GPC skips server-side edit validation (`edits.validate`) and goes straight to `edits.commit`. This is required because Google's validate endpoint does not accept the `changesNotSentForReview` parameter and rejects edits for apps with rejected updates. Your changes are still validated by the commit call itself.
-
-> **Dry-run validation (v0.9.68+):** Use `--validate-only` on `gpc releases commit` to run `edits.validate` without committing. Exits 0 if the edit is valid, non-zero otherwise. Useful for pre-commit CI checks without publishing.
-
-```bash
-gpc releases commit --validate-only   # validate the open edit without committing
-```
-
 Read:
 - `references/upload-lifecycle.md`
 
@@ -191,7 +187,6 @@ gpc releases promote --from internal --to beta --status draft
 ```
 
 > **Note:** Since v0.9.39, `gpc releases promote` auto-retries once on 409 EDIT_CONFLICT (another edit is open).
-> **Note:** Since v0.9.70, promote preserves `inAppUpdatePriority` and `name` from the source release. Previously these fields were dropped during promotion.
 
 Promote also supports the review-control flags (v0.9.51+):
 
@@ -272,7 +267,6 @@ gpc --dry-run changelog generate --target play-store --locales auto --ai
 - Without `--ai`: non-source locales get a `[needs translation]` placeholder. Use `--format prompt` to emit a translation-ready LLM prompt for the offline / no-key workflow.
 - `--strict` exits 1 if any locale overflows 500 chars OR (with `--ai`) any locale fails to translate
 - Lazy-loaded: running without `--ai` imports none of the AI SDK deps. Cold-start budget preserved.
-- **Prompt injection protection (v0.9.74+):** Commit messages are wrapped in XML boundary delimiters before being sent to the LLM. Crafted commit subjects (e.g. `</commits><instructions>...`) cannot escape the data context and inject instructions into the translation prompt.
 
 ### Writing translated notes into a draft release (v0.9.64+)
 
@@ -295,7 +289,9 @@ gpc changelog generate --target play-store --locales auto --ai --apply --dry-run
 - Uses `withRetryOnConflict` for 409 edit conflicts
 - `--dry-run` shows the notes that would be written without touching the API
 
-> **Bundle upload race fix (v0.9.64+):** After uploading a large AAB (65MB+), GPC now polls `bundles.list` with Fibonacci backoff (2s, 3s, 5s, 8s, 13s) before calling `edits.validate`. This fixes intermittent `INVALID_ARGUMENT: Some of the Android App Bundle uploads are not completed yet` errors that affected all AAB upload paths.
+> **Bundle upload race fix (v0.9.64+, extended v0.9.77):** After uploading a large AAB (65MB+), GPC polls `bundles.list` with Fibonacci backoff (2s, 3s, 5s, 8s, 13s, 21s, 34s -- ~86s total) before calling `edits.validate`. This fixes intermittent `INVALID_ARGUMENT: Some of the Android App Bundle uploads are not completed yet` errors that affected all AAB upload paths. GPC is the only known CLI that handles this server-side processing gap; Google's API docs do not document the async behavior.
+
+> **Multi-retry guard on validate/commit (v0.9.77):** After bundle processing completes, `edits.validate` and `edits.commit` each retry up to 3 times with escalating timeouts (15s, 30s, 45s). This handles transient server-side delays where the bundle is processed but the edit is not yet committable.
 
 See `apps/docs/guide/multilingual-release-notes.md` for the full walkthrough, including the Vercel AI Gateway path (cost-per-run in USD reported back).
 
@@ -325,23 +321,6 @@ gpc releases rollout increase --track production --to 50 --changes-not-sent-for-
 gpc releases rollout complete --track production --error-if-in-review
 ```
 
-#### Vitals gate before rollout increase (v0.9.74+)
-
-Starting in v0.9.74, `gpc releases rollout increase` checks crash/ANR thresholds **before** executing the rollout increase. If any configured threshold is breached, the command exits with code 6 and the rollout percentage is **not changed**. Previously, the vitals check happened after the API call.
-
-```bash
-# If crash rate > 2.0% or ANR rate > 0.47%, exits 6 — rollout stays at current %
-gpc releases rollout increase --track production --to 50 \
-  --crash-threshold 2.0 --anr-threshold 0.47
-
-# Check manually before increasing if you prefer explicit control
-gpc vitals crashes --threshold 2.0   # exits 6 if breached
-gpc vitals anr --threshold 0.47      # exits 6 if breached
-gpc releases rollout increase --track production --to 50
-```
-
-In CI, treat exit code 6 as a signal to halt the pipeline — do not retry the rollout increase until vitals recover.
-
 Read:
 - `references/rollout-strategies.md`
 
@@ -351,29 +330,6 @@ Read:
 gpc tracks list                    # List all tracks
 gpc tracks get production          # Show track details + current releases
 ```
-
-### 5b) Bundle management (v0.9.69+)
-
-Standalone commands for inspecting and waiting on uploaded bundles — useful in CI pipelines that need to gate on processing completion before validation or promotion.
-
-```bash
-# List all uploaded bundles for an app
-gpc bundles list
-
-# Filter to a specific version code
-gpc bundles find --version-code 142
-
-# Wait for a bundle to finish processing (CI use case)
-gpc bundles wait --version-code 142
-```
-
-`gpc bundles wait` polls until the bundle transitions from `PROCESSING` to `ACTIVE` (or another terminal state) and exits 0 on success or 1 on timeout/error. Use it as a gate step after upload before calling `edits.commit` or `gpc releases promote`.
-
-| Command | Description |
-|---------|-------------|
-| `gpc bundles list` | List all bundles with version code, state, and upload timestamp |
-| `gpc bundles find --version-code <n>` | Find a specific bundle by version code |
-| `gpc bundles wait --version-code <n>` | Poll until bundle is fully processed (CI gate) |
 
 ### 6) Preview with dry-run
 
@@ -414,22 +370,6 @@ Disable with `--no-interactive` or `GPC_NO_INTERACTIVE=1`.
 | Rollout stuck | Rollout was halted | `gpc releases rollout resume --track <track>` |
 | Wrong track | Promoted to wrong track | Create new release on correct track |
 
-#### CI template: scope GPC_SERVICE_ACCOUNT to upload/promote steps (v0.9.74+)
-
-Generated CI templates now scope `GPC_SERVICE_ACCOUNT` to the individual steps that require Play API access (upload, promote) rather than exposing it as a job-level environment variable. Steps that do not call the Play API (validate, vitals check, status) no longer receive the credential.
-
-```yaml
-# Recommended: step-scoped credential (v0.9.74+ pattern)
-- name: Upload to internal
-  env:
-    GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
-  run: gpc releases upload app-release.aab --track internal
-
-# NOT recommended: job-level env (exposes credential to all steps)
-# env:
-#   GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
-```
-
 Read:
 - `references/troubleshooting.md`
 - `references/pre-release-pipeline.md` — end-to-end: validate → upload → vitals gate → promote → staged rollout
@@ -443,6 +383,14 @@ gpc rtdn status              # Check Pub/Sub topic configuration
 gpc rtdn decode <payload>    # Decode base64 notification payload
 gpc rtdn test                # Guidance for testing RTDN setup
 ```
+
+## Known bugs (fix planned for v0.9.78)
+
+| Bug | Impact | Workaround |
+|-----|--------|------------|
+| `tracks update` silently wipes tracks | No string coercion on `versionCodes` and flat-only extraction cause the API call to send empty/malformed version code arrays, effectively clearing the track | Use `gpc releases upload` or `gpc publish` instead of raw `tracks update`; verify track state with `gpc tracks get <track>` after any manual track operation |
+| `--changes-not-sent-for-review` flag never reaches API | `validateAndCommit` gap: the flag is parsed by the CLI but not forwarded through the validate/commit call chain | Use the Play Console UI for commits that require `changesNotSentForReview`, or apply the patch from the tracking issue |
+| Cannot assign already-uploaded versionCode to a new track without re-uploading | The edit lifecycle requires a fresh upload per edit session; referencing an existing versionCode from a prior edit is not supported | Re-upload the same AAB/APK to the new track. The Play API deduplicates by signing key + versionCode, so the upload is fast but required |
 
 ## Related skills
 

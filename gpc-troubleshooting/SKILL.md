@@ -3,7 +3,7 @@ name: gpc-troubleshooting
 description: "Use when debugging GPC errors, failures, or unexpected behavior. Make sure to use this skill whenever the user mentions gpc error, gpc failing, exit code, AUTH_FAILED, API_FORBIDDEN, NETWORK_ERROR, CONFIG_MISSING, EDIT_CONFLICT, upload failed, permission denied, timeout, rate limit, gpc doctor failing, unexpected exit code, command not working, GPC crash, debug GPC, verbose output, --json error, threshold breach — even if they don't explicitly say 'troubleshoot.' Also trigger when someone encounters any GPC error they don't understand, when gpc doctor reports issues, when CI pipelines fail with GPC commands, or when they need to interpret exit codes. For auth-specific setup issues, see gpc-setup. For CI-specific issues, see gpc-ci-integration."
 compatibility: "GPC v0.9+. Covers all packages: @gpc-cli/cli, @gpc-cli/core, @gpc-cli/api, @gpc-cli/auth, @gpc-cli/config."
 metadata:
-  version: 0.18.0
+  version: 0.16.0
 ---
 
 # gpc-troubleshooting
@@ -39,7 +39,7 @@ gpc --version
 # Run failing command with verbose output
 GPC_DEBUG=1 gpc <failing-command>
 
-# Get error as JSON for parsing
+# Get error as JSON for parsing (also: --output csv, --output tsv since v0.9.68)
 gpc <failing-command> --json
 ```
 
@@ -97,7 +97,7 @@ export GPC_SERVICE_ACCOUNT=$(cat ~/path/to/key.json)
 | `API_PACKAGE_NAME_MISMATCH` | 400 | applicationId doesn't match target app | Verify applicationId matches target app |
 | `API_APP_NOT_FOUND` | 404 | App not in developer account | Verify package name and developer account |
 | `API_INSUFFICIENT_PERMISSIONS` | 403 | Service account missing permissions | Grant required roles in Play Console → Settings → API access |
-| `API_CHANGES_NOT_SENT_FOR_REVIEW` | 400/403 | App has rejected update, requires review flag | v0.9.69+: `gpc releases commit` auto-rescues this 403 by retrying with `changesNotSentForReview=true`. For other commands, add `--changes-not-sent-for-review` flag |
+| `API_CHANGES_NOT_SENT_FOR_REVIEW` | 400/403 | App has rejected update, requires review flag | Add `--changes-not-sent-for-review` flag to the command |
 | `API_CHANGES_ALREADY_IN_REVIEW` | 400 | Changes already in review, new commit would silently cancel | Use `--error-if-in-review` to prevent silent cancellation |
 
 ```bash
@@ -137,7 +137,7 @@ export GPC_CA_CERT=/path/to/ca-cert.pem
 
 | Error | Cause | Fix |
 |-------|-------|-----|
-| `CONFIG_MISSING` | No .gpcrc.json or env vars | Run `gpc config init` |
+| `CONFIG_MISSING` | No .gpcrc.json or env vars | Run `gpc setup` (v0.9.68+) or `gpc config init` |
 | `CONFIG_INVALID` | Malformed .gpcrc.json | Validate JSON syntax |
 | `CONFIG_APP_MISSING` | No app specified | Set with `gpc config set app` or `--app` flag |
 
@@ -168,9 +168,7 @@ gpc config list
 | `UPLOAD_SESSION_NOT_FOUND` | Session expired (404) | Start a new upload session |
 | `UPLOAD_SESSION_EXPIRED` | Session gone (410) | Start a new upload session |
 | `UPLOAD_INVALID_CHUNK_SIZE` | Chunk size not multiple of 256 KB | Set `GPC_UPLOAD_CHUNK_SIZE` to a multiple of 262144 (256 KB) |
-| `UPLOAD_INSECURE_URI` | Session URI uses a non-HTTPS scheme | GPC rejects non-HTTPS upload URIs; check for proxy or MITM stripping TLS |
-| `UPLOAD_URI_HOST_MISMATCH` | Session URI host does not match expected upload host | URI returned by Google API points to an unexpected host; do not proceed |
-| `UPLOAD_INVALID_URI` | Session URI is malformed or unparseable | API returned a bad Location header; retry the upload or file a bug |
+| `EDIT_VALIDATE_FAILED` | Transient validate/commit failure after upload | Auto-retried with multi-retry guard (15s, 30s, 45s) since v0.9.77; if persistent, check bundle status |
 
 ```bash
 # Validate before uploading
@@ -199,29 +197,13 @@ gpc vitals crashes --json | jq '.crashRate'
 gpc vitals crashes --threshold 1.5 && gpc releases promote --from beta --to production
 ```
 
-**Behavior change in v0.9.74:** Exit code 6 now fires **before** any rollout percentage increase is applied. In previous versions, GPC would increase the rollout first and then check the threshold, potentially expanding a bad release. Now the gate evaluates current vitals and exits 6 immediately if the threshold is breached, leaving the rollout percentage unchanged.
-
 ### 8. Plugin errors (exit code 10)
 
 | Error | Cause | Fix |
 |-------|-------|-----|
 | `PLUGIN_INVALID_PERMISSION` | Third-party plugin declares unknown permission | Check valid permissions in plugin-sdk docs |
-| Plugin not loading (no error shown) | Not in `approvedPlugins` — silently skipped | Add to `approvedPlugins` in .gpcrc.json; unapproved plugins are never imported |
-| Plugin not loading | In `approvedPlugins` but not in `plugins` list | Add to both `plugins` and `approvedPlugins` in .gpcrc.json |
+| Plugin not loading | Not in config or not approved | Add to `plugins` and `approvedPlugins` in .gpcrc.json |
 | Plugin error in hook | Bug in plugin handler | Check plugin logs; `onError`/API hooks swallow errors |
-
-**Note (v0.9.74+):** Plugins not in `approvedPlugins` are silently skipped during discovery — no error is raised and no module code is executed. If a plugin appears to vanish without explanation, verify it is listed in both `plugins` and `approvedPlugins` in `.gpcrc.json`.
-
-### Redacted paths in error messages (v0.9.74+)
-
-GPC uses `redactPath()` to strip sensitive substrings from file paths before including them in error messages. In some cases this affects purchase token paths -- if a token value appears within a file path, it will be replaced with `***REDACTED***`.
-
-Example:
-```
-Error: file not found: /data/***REDACTED***/receipt.json
-```
-
-This is intentional. The actual path is available via `GPC_DEBUG=1` in controlled environments where log output is secured.
 
 ### Changelog generation errors (v0.9.61+)
 
@@ -234,7 +216,7 @@ This is intentional. The actual path is available via `GPC_DEBUG=1` in controlle
 | `CHANGELOG_LOCALES_AUTO_NO_APP`  | `--locales auto` without an authenticated client + app (v0.9.62+) | Pass `--app <package>` or set config.app, check credentials |
 | `CHANGELOG_LOCALES_EMPTY`        | `--locales auto` returned zero locales (v0.9.62+)            | Create at least one Play Store listing, or pass explicit `--locales` |
 | `RELEASE_NO_DRAFT`               | `--apply` found no draft release on the target track (v0.9.64+) | Create a draft release first (`gpc releases upload --status draft`) |
-| `BUNDLE_PROCESSING_TIMEOUT`      | AAB upload completed but bundle not processed within ~31s (v0.9.64+) | Retry the upload; if persistent, check bundle size and Google's server status |
+| `BUNDLE_PROCESSING_TIMEOUT`      | AAB upload completed but bundle not processed within ~86s (v0.9.64+, extended v0.9.77) | Retry the upload, or use `--status draft` and commit later; if persistent, check bundle size and Google's server status |
 
 ### 9. Debug mode
 
@@ -278,12 +260,13 @@ export GPC_UPLOAD_TIMEOUT=300000  # Upload timeout in ms (5 min)
 
 | Symptom | Likely Cause | Fix |
 |---------|-------------|-----|
-| `gpc doctor` fails on auth | Credentials not configured | Run `gpc auth login` |
+| `gpc doctor` fails on auth | Credentials not configured | Run `gpc setup` (v0.9.68+) or `gpc auth login` |
 | `gpc doctor` fails on API | Service account lacks API access | Enable Google Play Developer API in GCP |
-| `gpc doctor` warns on quota | API usage >80% of daily or per-minute limit | Space out API calls or wait before retrying |
-| `gpc doctor` warns on plugin | Plugin failed to load | Reinstall: `npm install <plugin-name>` |
+| `gpc doctor` quota warning | >80% of daily or per-minute API quota used | Reduce request frequency or request quota increase from Google (v0.9.71+) |
+| `gpc doctor` plugin error | A configured plugin fails to load | Check plugin package version, reinstall, or remove from config (v0.9.71+) |
+| `gpc doctor --verify` mismatch | Local keystore differs from Play signing cert | Register local key in Play Console or use Play App Signing (v0.9.75+) |
 | All commands timeout | Network/proxy issue | Check `HTTPS_PROXY`, `GPC_CA_CERT`, `GPC_TIMEOUT` |
-| Commands work locally, fail in CI | Missing env vars in CI | Set `GPC_SERVICE_ACCOUNT` and `GPC_APP` in CI secrets |
+| Commands work locally, fail in CI | Missing env vars in CI | Set `GPC_SERVICE_ACCOUNT` and `GPC_APP` in CI secrets; run `gpc setup --auto` (v0.9.68+) |
 | JSON output has no `suggestion` | Unexpected error type | File a bug — all errors should have suggestions |
 
 ## Related skills

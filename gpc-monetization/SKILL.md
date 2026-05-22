@@ -3,7 +3,7 @@ name: gpc-monetization
 description: "Use when managing in-app purchases, subscriptions, pricing, or Real-Time Developer Notifications in Google Play. Make sure to use this skill whenever the user mentions gpc subscriptions, gpc iap, gpc purchases, gpc pricing, gpc rtdn, in-app products, base plans, subscription offers, one-time products, consumable products, purchase verification, purchase acknowledgement, purchase token, subscription cancellation, subscription deferral, voided purchases, refunds, regional pricing, currency conversion, price migration, SKU management, monetization, revenue, billing, subscription analytics, churn, trial conversion, subscriber count, RTDN, Real-Time Developer Notifications, Pub/Sub notifications, subscription events, purchase events — even if they don't explicitly say 'monetization.' Also trigger when someone wants to create or update subscriptions, manage base plan lifecycle (activate/deactivate), set up introductory offers, verify server-side purchases, handle refunds, convert prices across regions, sync IAP products from files, migrate subscribers to new prices, view subscription analytics, decode Pub/Sub notification payloads, or check RTDN topic configuration. For release management, see gpc-release-flow. For CI automation, see gpc-ci-integration."
 compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). Subscriptions and IAP require products configured in Google Play Console."
 metadata:
-  version: 0.14.0
+  version: 0.13.0
 ---
 
 # gpc-monetization
@@ -346,29 +346,6 @@ gpc rtdn test
 Notification types include: `SUBSCRIPTION_PURCHASED`, `SUBSCRIPTION_CANCELED`, `SUBSCRIPTION_RENEWED`, `SUBSCRIPTION_REVOKED`, `SUBSCRIPTION_EXPIRED`, `ONE_TIME_PRODUCT_PURCHASED`, `VOIDED_PURCHASE`, and more.
 
 > **New in v0.9.47:** RTDN commands help debug subscription lifecycle events. Set up a Pub/Sub topic in GCP, configure it in Play Console > Monetization setup, and use `gpc rtdn decode` to inspect payloads.
-
-#### Purchase token redaction in RTDN output (v0.9.74+)
-
-Purchase tokens are sensitive identifiers that should not appear in logs or CI output. As of v0.9.74, GPC redacts purchase tokens in all `gpc rtdn` JSON output: only the first 8 characters are shown, followed by `...REDACTED`.
-
-Example JSON output from `gpc rtdn decode`:
-
-```json
-{
-  "notificationType": 4,
-  "subscriptionId": "premium_monthly",
-  "purchaseToken": "ghIkjlMn...REDACTED"
-}
-```
-
-Redaction applies in two places:
-
-- **RTDN JSON output** (`gpc rtdn decode`, `gpc rtdn status`): `purchaseToken` field is truncated.
-- **API error messages**: When a purchase-related API call fails, any purchase token present in the error or request path is redacted via `redactPath()` in the HTTP layer. This prevents tokens from leaking into error logs or CI output.
-
-All purchase-related API paths also URL-encode token parameters (`encodeURIComponent`) before constructing request URLs.
-
-If you need the full token for a support case, retrieve it directly from your Pub/Sub message or Google Play Console — never rely on GPC output as the token source.
 
 ### 7. Subscription analytics
 
