@@ -3,7 +3,7 @@ name: gpc-troubleshooting
 description: "Use when debugging GPC errors, failures, or unexpected behavior. Make sure to use this skill whenever the user mentions gpc error, gpc failing, exit code, AUTH_FAILED, API_FORBIDDEN, NETWORK_ERROR, CONFIG_MISSING, EDIT_CONFLICT, upload failed, permission denied, timeout, rate limit, gpc doctor failing, unexpected exit code, command not working, GPC crash, debug GPC, verbose output, --json error, threshold breach — even if they don't explicitly say 'troubleshoot.' Also trigger when someone encounters any GPC error they don't understand, when gpc doctor reports issues, when CI pipelines fail with GPC commands, or when they need to interpret exit codes. For auth-specific setup issues, see gpc-setup. For CI-specific issues, see gpc-ci-integration."
 compatibility: "GPC v0.9+. Covers all packages: @gpc-cli/cli, @gpc-cli/core, @gpc-cli/api, @gpc-cli/auth, @gpc-cli/config."
 metadata:
-  version: 0.16.0
+  version: 0.17.0
 ---
 
 # gpc-troubleshooting
@@ -139,6 +139,8 @@ export GPC_CA_CERT=/path/to/ca-cert.pem
 |-------|-------|-----|
 | `CONFIG_MISSING` | No .gpcrc.json or env vars | Run `gpc setup` (v0.9.68+) or `gpc config init` |
 | `CONFIG_INVALID` | Malformed .gpcrc.json | Validate JSON syntax |
+| `CONFIG_INVALID_JSON` | Config file contains syntax errors (v0.9.80+) | Run `cat <file> \| python3 -m json.tool` to find the error |
+| `CONFIG_INVALID_KEY` | Key is empty, malformed, or a reserved name (v0.9.80+) | Use a valid alphanumeric profile/key name |
 | `CONFIG_APP_MISSING` | No app specified | Set with `gpc config set app` or `--app` flag |
 
 ```bash
@@ -214,6 +216,9 @@ gpc vitals crashes --threshold 1.5 && gpc releases promote --from beta --to prod
 | `CHANGELOG_LOCALES_REQUIRED`     | `--target play-store` passed without `--locales` (v0.9.62+)  | Pass `--locales en-US,fr-FR` or `--locales auto`             |
 | `CHANGELOG_LOCALES_INVALID`      | One or more `--locales` are not valid BCP 47 (v0.9.62+)      | Use Play Store-supported codes like `en-US`, `fr-FR`, `de-DE` |
 | `CHANGELOG_LOCALES_AUTO_NO_APP`  | `--locales auto` without an authenticated client + app (v0.9.62+) | Pass `--app <package>` or set config.app, check credentials |
+| `CHANGELOG_FETCH_FAILED`         | GitHub API unreachable or returned an error (v0.9.80+) | Check network; view changelog at the docs site |
+| `CHANGELOG_VERSION_NOT_FOUND`    | Requested version not found in GitHub releases (v0.9.80+) | Run `gpc changelog --limit 10` to see available versions |
+| `WATCH_WEBHOOK_FAILED`           | Webhook endpoint returned non-2xx (v0.9.80+) | Check the webhook URL and server status |
 | `CHANGELOG_LOCALES_EMPTY`        | `--locales auto` returned zero locales (v0.9.62+)            | Create at least one Play Store listing, or pass explicit `--locales` |
 | `RELEASE_NO_DRAFT`               | `--apply` found no draft release on the target track (v0.9.64+) | Create a draft release first (`gpc releases upload --status draft`) |
 | `BUNDLE_PROCESSING_TIMEOUT`      | AAB upload completed but bundle not processed within ~86s (v0.9.64+, extended v0.9.77) | Retry the upload, or use `--status draft` and commit later; if persistent, check bundle size and Google's server status |

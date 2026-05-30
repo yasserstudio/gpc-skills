@@ -1,5 +1,30 @@
 # Changelog
 
+## v1.24.0 -- 2026-05-30
+
+Synced with GPC v0.9.80 (security audit, API alignment, code quality).
+
+### Updated Skills
+
+- **gpc-security** (0.13.0 -> 0.14.0) -- Webhook payload redaction, auth error credential masking, ADC hash-based cache keys, project config plugin trust gate. Compat bumped to v0.9.80+.
+
+- **gpc-preflight** (1.2.0 -> 1.3.0) -- testOnly read from `<application>` element (was `<manifest>` root). 16KB alignment scanner now checks APK native libs. ELF header read increased to 4096 bytes. `skippedScanners` in result JSON. targetSdkMinimum default 36.
+
+- **gpc-plugin-development** (1.2.0 -> 1.3.0) -- Permission enforcement at hook registration time. `register()` crash guard. Project `.gpcrc.json` can no longer self-approve plugins.
+
+- **gpc-troubleshooting** (0.16.0 -> 0.17.0) -- New error codes: CONFIG_INVALID_JSON, CONFIG_INVALID_KEY, CHANGELOG_FETCH_FAILED, CHANGELOG_VERSION_NOT_FOUND, WATCH_WEBHOOK_FAILED.
+
+- **gpc-sdk-usage** (1.6.0 -> 1.7.0) -- API type alignment: canceledStateContext nested shape, signupPromotion {oneTimeCode, vanityCode}, developerAccountPermissions plural, buyOption/rentOption fields. download() retry with backoff. Null-safe bundles.list/tracks.list.
+
+### Marquee changes in GPC v0.9.80
+
+- 15 security fixes (plugin trust gate, CI hardening, webhook redaction, preflight false negatives)
+- 13 API alignment fixes (discovery doc rev 20260520)
+- 20 code quality fixes (null safety, download retry, permission enforcement)
+- 2,343 tests, deepsec re-scan: 0 new findings
+
+---
+
 ## v1.23.0 -- 2026-05-22
 
 Synced with GPC v0.9.77 (upload timeout fix, supply chain hardening).

@@ -1,9 +1,9 @@
 ---
 name: gpc-security
 description: "Use when dealing with GPC credential security, secret management, audit logging, or access control. Make sure to use this skill whenever the user mentions credentials, service account key, secret rotation, key rotation, credential storage, audit log, audit trail, security best practices, .gpcrc.json security, secrets in CI, GPC_SERVICE_ACCOUNT safety, keychain, token cache, credential leak, key compromise, secure deployment — even if they don't explicitly say 'security.' Also trigger when someone asks about where GPC stores credentials, how to rotate service account keys, how to audit who did what with GPC, how to securely pass credentials in CI/CD, or how to handle a compromised service account key. For auth setup, see gpc-setup. For CI configuration, see gpc-ci-integration."
-compatibility: "GPC v0.9.77+. Covers credential storage, audit logging, supply chain hardening, and security patterns across all packages."
+compatibility: "GPC v0.9.80+. Covers credential storage, audit logging, supply chain hardening, and security patterns across all packages."
 metadata:
-  version: 0.13.0
+  version: 0.14.0
 ---
 
 # gpc-security
@@ -140,6 +140,10 @@ GPC automatically redacts sensitive data in all output:
 - Access tokens are never shown in verbose output
 - Private keys are never included in error messages
 - `--json` output redacts credential fields
+- Webhook payloads are redacted via `redactSensitive()` before dispatch to Slack/Discord/custom endpoints (v0.9.80+)
+- Auth error messages redact long inputs that look like pasted credentials (v0.9.80+)
+- ADC token cache uses hash-based keys per credential source to prevent multi-account confusion (v0.9.80+)
+- Project `.gpcrc.json` cannot self-approve plugins -- `approvedPlugins` is only trusted from user config (v0.9.80+)
 
 ### 5. Least-privilege permissions
 
