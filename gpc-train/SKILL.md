@@ -3,7 +3,7 @@ name: gpc-train
 description: "Use when setting up or managing automated staged rollout pipelines with GPC. Trigger when the user mentions gpc train, release train, staged rollout automation, rollout pipeline, release gates, automatic rollout progression, auto-halt on regression, rollout stages — even if they don't explicitly say 'train.' Also trigger when someone wants to automatically progress a release from internal → alpha → production with time gates, or set up crash/ANR gates that pause a rollout."
 compatibility: "GPC v0.9.35+. Requires authenticated GPC setup (see gpc-setup skill). Release train config goes in .gpcrc.json."
 metadata:
-  version: 0.10.0
+  version: 0.10.1
 ---
 
 # GPC Release Train

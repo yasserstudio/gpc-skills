@@ -1,9 +1,9 @@
 ---
 name: gpc-vitals-monitoring
 description: "Use when monitoring Android app health metrics from Google Play. Make sure to use this skill whenever the user mentions gpc vitals, gpc watch, gpc status, crash rate, ANR rate, startup time, Android vitals, crash monitoring, threshold alerting, vitals gating, rollout monitoring, auto-halt, breach notification, webhook alerting, frame rate, battery usage, memory issues, error tracking, app quality, user reviews, review replies, Play Store reviews, star rating, negative reviews, review export, financial reports, stats reports, or wants to check app health, monitor a staged rollout, respond to reviews, or download Play Console reports. Also trigger when someone asks about gating deployments on crash data, monitoring app performance after a release, watching a rollout for regressions, or tracking review sentiment — even if they don't mention GPC. For releases, see gpc-release-flow. For CI gating, see gpc-ci-integration."
-compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). Vitals data requires the app to have sufficient install volume."
+compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Vitals data requires the app to have sufficient install volume."
 metadata:
-  version: 1.6.0
+  version: 1.7.0
 ---
 
 # GPC Vitals Monitoring
@@ -380,6 +380,29 @@ Threshold defaults (if flags are omitted): crash 2%, ANR 0.47%. Override via `.g
 
 Read:
 - `references/ci-gating.md`
+
+### 8b) Vitals gate crash-rate fix (v0.9.82)
+
+The vitals gate crash-rate check on `rollout increase` (the `--vitals-gate` flag) was silently skipping the check in earlier versions. The root cause: GPC was accessing a `.data` field on the `MetricSetResponse` shape returned by the Reporting API, but that field does not exist. As a result, the gate always passed regardless of crash rate.
+
+The fix in v0.9.82 reads `rows[last].metrics[firstMetric].decimalValue.value`, which matches how `gpc train` reads crash rates from the same API. Upgrading to v0.9.82+ is required for the `--vitals-gate` crash-rate check to work correctly.
+
+### 8c) VitalsThresholds in config (v0.9.82)
+
+`VitalsThresholds` is now a formally typed field in `GpcConfig` and `ResolvedConfig` in `@gpc-cli/config`. Set thresholds project-wide in `.gpcrc.json`:
+
+```json
+{
+  "vitals": {
+    "thresholds": {
+      "crashRate": 2.0,
+      "anrRate": 0.5
+    }
+  }
+}
+```
+
+These values are used as defaults by `--vitals-gate`, `gpc watch`, and `gpc vitals crashes/anr --threshold`. CLI flags still take priority over config.
 
 ### 9) Reporting API rate limit
 

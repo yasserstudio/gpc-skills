@@ -1,9 +1,9 @@
 ---
 name: gpc-preflight
 description: "Use when scanning an AAB or APK for Google Play policy compliance before submission, or checking signing key consistency across releases. Trigger when the user mentions preflight, compliance check, policy scan, pre-submission check, signing key consistency, certificate mismatch, or wants to verify their AAB/APK meets Google Play requirements. Also trigger for questions about restricted permissions, target SDK requirements, 64-bit compliance, hardcoded secrets detection, or Data Safety form reminders."
-compatibility: "GPC v0.9.80+ for latest scanner fixes. v0.9.66+ for signing consistency. v0.9.65+ for April 2026 policy rules. APK support added in v0.9.47. AAB/APK scans are entirely offline; signing consistency requires auth."
+compatibility: "GPC v0.9.82+. v0.9.66+ for signing consistency. v0.9.65+ for April 2026 policy rules. APK support added in v0.9.47. AAB/APK scans are entirely offline; signing consistency requires auth."
 metadata:
-  version: 1.3.0
+  version: 1.3.1
 ---
 
 # GPC Preflight Scanner
@@ -68,6 +68,8 @@ gpc preflight app.aab --fail-on error --json
 }
 ```
 
+API level 36 (Android 16) is required by August 31, 2026 for all new apps and updates on Google Play. The `targetSdkMinimum` default in GPC preflight was updated to 36 in v0.9.79 to reflect this deadline.
+
 ## Exit codes
 
 - `0` — all checks passed
@@ -78,7 +80,7 @@ gpc preflight app.aab --fail-on error --json
 
 | Rule ID | Severity | What |
 |---------|----------|------|
-| targetSdk-below-minimum | critical | targetSdkVersion < 35 |
+| targetSdk-below-minimum | critical | targetSdkVersion < 36 |
 | debuggable-true | critical | android:debuggable="true" |
 | testOnly-true | critical | android:testOnly="true" |
 | missing-arm64 | critical | 32-bit ARM without 64-bit |
@@ -126,6 +128,18 @@ Three rules added for Google Play's April 15, 2026 policy batch. Compliance dead
 2. **Geofencing foreground service** (`geofencing-foreground-service`): Fires when a service has `foregroundServiceType` containing "location" AND the app declares `ACCESS_BACKGROUND_LOCATION`. Google removed geofencing as an approved foreground service use case. For legitimate background location tracking (navigation, fitness), suppress via `"disabledRules": ["geofencing-foreground-service"]`.
 
 3. **Health Connect granular permissions** (`health-connect-granular`): Flags `READ_ALL_HEALTH_DATA`. Severity is `warning` when `targetSdk >= 36` (Android 16 requirement), `info` otherwise. Replace with granular permissions like `health.READ_STEPS`, `health.READ_HEART_RATE`, etc.
+
+### False-negative fixes (v0.9.80)
+
+Four scanner accuracy improvements shipped in v0.9.80:
+
+1. **`testOnly` attribute source**: The `testOnly` scanner now reads `android:testOnly` from the `<application>` element of the manifest. Previously it was incorrectly reading from the `<manifest>` root, causing the check to always report no finding even when `testOnly="true"` was set on the application.
+
+2. **16KB alignment scanner scope**: The 16KB page alignment scanner now checks native libraries inside APKs in addition to AABs. Previously it only inspected AAB artifacts, leaving APK native libraries unscanned.
+
+3. **ELF header read size**: The ELF header reader was increased from 256 bytes to 4096 bytes. Small reads were insufficient for some native library formats, causing alignment checks to be skipped silently.
+
+4. **`skippedScanners` in results**: Scanners that are disabled via `skippedScanners` (or skipped due to missing inputs) are now reported in the scan result JSON under a `skippedScanners` array. This makes it visible in CI when a scanner did not run.
 
 ### Adding to CI
 

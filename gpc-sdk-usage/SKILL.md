@@ -1,9 +1,9 @@
 ---
 name: gpc-sdk-usage
 description: "Use when building applications that programmatically interact with the Google Play Developer API using GPC's TypeScript SDK packages. Make sure to use this skill whenever the user mentions @gpc-cli/api, @gpc-cli/auth, PlayApiClient, createApiClient, resolveAuth, Google Play API client, TypeScript SDK, programmatic access, API client, HTTP client, rate limiter, pagination, edit lifecycle in code, Node.js Google Play, server-side Play Store, backend integration — even if they don't explicitly say 'SDK.' Also trigger when someone wants to build a backend service, custom dashboard, automation script, or any TypeScript/JavaScript application that interacts with Google Play programmatically rather than through the CLI. For CLI usage, see other gpc-* skills. For building plugins, see gpc-plugin-development."
-compatibility: "GPC v0.9.9+ (new APIs require v0.9.51+, typed acknowledge/revoke bodies require v0.9.55+, Play Custom App Publishing API + `createEnterpriseClient` + `HttpClient.uploadCustomApp<T>` + `ResumableUploadOptions.initialMetadata` require v0.9.56+, changelog generation exports (`generateChangelog`, `renderPlayStore`, `resolveLocales`, `buildLocaleBundle`, `PLAY_STORE_LIMIT`, `LocaleBundle`, `LocaleEntry`) require v0.9.62+, apply + bundle processing exports (`applyReleaseNotes`, `waitForBundleProcessing`, `validateBundleForApply`, `bundleToReleaseNotes`) require v0.9.64+, `inAppUpdatePriority` + `retainedVersionCodes` on upload require v0.9.70+, `SubscriptionPurchaseV2.onHoldStateContext` + `inGracePeriodStateContext` typed fields require v0.9.76+, extended `waitForBundleProcessing` Fibonacci backoff (~86s) + multi-retry guard on validate/commit require v0.9.77+, API type alignment (canceledStateContext nested shape, signupPromotion {oneTimeCode, vanityCode}, developerAccountPermissions plural, buyOption/rentOption fields, download retry with backoff, null-safe bundles.list/tracks.list) require v0.9.80+). Requires Node.js 20+, TypeScript 5+. Packages: @gpc-cli/api, @gpc-cli/auth."
+compatibility: "GPC v0.9.82+ (new APIs require v0.9.51+, typed acknowledge/revoke bodies require v0.9.55+, Play Custom App Publishing API + `createEnterpriseClient` + `HttpClient.uploadCustomApp<T>` + `ResumableUploadOptions.initialMetadata` require v0.9.56+, changelog generation exports (`generateChangelog`, `renderPlayStore`, `resolveLocales`, `buildLocaleBundle`, `PLAY_STORE_LIMIT`, `LocaleBundle`, `LocaleEntry`) require v0.9.62+, apply + bundle processing exports (`applyReleaseNotes`, `waitForBundleProcessing`, `validateBundleForApply`, `bundleToReleaseNotes`) require v0.9.64+, `inAppUpdatePriority` + `retainedVersionCodes` on upload require v0.9.70+, `SubscriptionPurchaseV2.onHoldStateContext` + `inGracePeriodStateContext` typed fields require v0.9.76+, extended `waitForBundleProcessing` Fibonacci backoff (~86s) + multi-retry guard on validate/commit require v0.9.77+, `edits.tracks.create` for custom closed testing tracks require v0.9.79+, `OfferPhaseDetails` on Orders + `download()` exponential backoff require v0.9.79+, API type alignment (canceledStateContext nested shape, signupPromotion {oneTimeCode, vanityCode}, developerAccountPermissions plural, buyOption/rentOption fields, download retry with backoff, null-safe bundles.list/tracks.list) require v0.9.80+, `VitalsThresholds` in `GpcConfig`/`ResolvedConfig` require v0.9.82+). Requires Node.js 20+, TypeScript 5+. Packages: @gpc-cli/api, @gpc-cli/auth."
 metadata:
-  version: 1.7.0
+  version: 1.7.1
 ---
 
 # gpc-sdk-usage
@@ -133,6 +133,15 @@ await client.edits.commit(APP, edit.id, {
 **Important:** Only one edit can be open at a time. Always commit or delete edits.
 
 ### 4. Common patterns
+
+#### Create a custom closed testing track (v0.9.79+)
+
+```typescript
+// Create a custom closed testing track before uploading to it
+const track = await client.edits.tracks.create(packageName, "my-custom-track");
+```
+
+Custom tracks must be created before any release can be assigned to them. After creation, use the standard `client.tracks.update()` call to push a release to the new track.
 
 #### Upload a release
 
@@ -378,6 +387,37 @@ await applyReleaseNotes(client, "com.example.app", "production", releaseNotes);
 // v0.9.77 also adds multi-retry guard on validate/commit (15s, 30s, 45s).
 await waitForBundleProcessing(client, "com.example.app", editId, versionCode);
 ```
+
+### VitalsThresholds in config types (v0.9.82+)
+
+`VitalsThresholds` is now part of the typed config surface exposed by `@gpc-cli/config`:
+
+```typescript
+import type { GpcConfig } from "@gpc-cli/config";
+
+const config: GpcConfig = {
+  vitals: {
+    thresholds: { crashRate: 2.0 },
+  },
+};
+```
+
+`VitalsThresholds` is also present on `ResolvedConfig` (the fully merged runtime shape). Use it when building tooling that reads or writes GPC config files programmatically.
+
+### OfferPhaseDetails on Orders (v0.9.79+)
+
+The flat `offerPhase` string field on Orders is deprecated. Read from `offerPhaseDetails` instead:
+
+```typescript
+const order = await client.purchases.orders.get(APP, orderId);
+// Deprecated: order.offerPhase
+// Preferred:
+const phase = order.offerPhaseDetails; // OfferPhaseDetails — phase type, cycle counts, pricing
+```
+
+### download() exponential backoff (v0.9.80+)
+
+`client.download()` (used for APK/AAB binary downloads) now retries automatically with exponential backoff, matching the retry behavior of `request()`. No code changes needed — transient 5xx errors and network timeouts are retried transparently.
 
 ### API correctness history (recent)
 

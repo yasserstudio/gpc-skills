@@ -1,9 +1,9 @@
 ---
 name: gpc-security
 description: "Use when dealing with GPC credential security, secret management, audit logging, or access control. Make sure to use this skill whenever the user mentions credentials, service account key, secret rotation, key rotation, credential storage, audit log, audit trail, security best practices, .gpcrc.json security, secrets in CI, GPC_SERVICE_ACCOUNT safety, keychain, token cache, credential leak, key compromise, secure deployment — even if they don't explicitly say 'security.' Also trigger when someone asks about where GPC stores credentials, how to rotate service account keys, how to audit who did what with GPC, how to securely pass credentials in CI/CD, or how to handle a compromised service account key. For auth setup, see gpc-setup. For CI configuration, see gpc-ci-integration."
-compatibility: "GPC v0.9.80+. Covers credential storage, audit logging, supply chain hardening, and security patterns across all packages."
+compatibility: "GPC v0.9.82+. Covers credential storage, audit logging, supply chain hardening, and security patterns across all packages."
 metadata:
-  version: 0.14.0
+  version: 0.14.1
 ---
 
 # gpc-security
@@ -270,7 +270,34 @@ GPC only has 4 runtime dependencies: `google-auth-library`, `commander`, `protob
 
 Configuration: `socket.yml` at repo root controls Socket.dev alert rules. `.npmrc` controls `min-release-age`. `.github/CODEOWNERS` controls review requirements. Release workflow uses `pnpm release-staged` with OIDC authentication.
 
-### 9. Developer verification
+### 9. Security audit posture (v0.9.80 + v0.9.82)
+
+**v0.9.80 deepsec re-scan**: A full-codebase deepsec audit was run after the v0.9.80 security fixes. Result: 0 new findings. All previously tracked findings from the v0.9.74 audit were resolved.
+
+**Webhook redaction (v0.9.80)**: Webhook payloads dispatched to Slack, Discord, and custom endpoints via `--webhook-url` are now redacted before dispatch. Sensitive fields are stripped from the payload before it leaves the process. This applies to all `gpc watch` breach events and any other webhook dispatch paths.
+
+**google-auth-library bump (v0.9.82)**: `google-auth-library` was upgraded to 10.7.0. This clears the only remaining tracked production audit finding: a `brace-expansion` transitive vulnerability. GPC now has zero production audit findings.
+
+### 9a. GPC GitHub Action security
+
+The GPC GitHub Action (`yasserstudio/gpc-action`) is a TypeScript action running on Node 24 with the following security properties:
+
+- **OIDC auth**: The action authenticates to Google Play using OIDC token exchange. No long-lived secrets are stored in the action itself.
+- **Built-in preflight gate**: The action runs `gpc preflight` before upload. A failing preflight scan blocks the publish step.
+- **No stored NPM token**: The action uses Trusted Publisher (OIDC) for any npm operations. No `NPM_TOKEN` is stored in GitHub secrets.
+- **Node 24 runtime**: Matches the current GPC CLI CI matrix for consistency.
+
+Usage:
+```yaml
+- uses: yasserstudio/gpc-action@v1
+  with:
+    service-account: ${{ secrets.PLAY_SA_KEY }}
+    package-name: com.example.app
+    aab: app/build/outputs/bundle/release/app-release.aab
+    track: beta
+```
+
+### 10. Developer verification
 
 Google's Android developer verification enforcement begins September 2026 (BR, ID, SG, TH):
 
@@ -282,7 +309,7 @@ gpc verify --json       # Machine-readable output
 
 `gpc doctor` includes a verification check. `gpc status` shows a footer reminder. `gpc preflight` shows a post-scan reminder.
 
-### 10. Signing key verification (v0.9.75+)
+### 11. Signing key verification (v0.9.75+)
 
 Verify your local signing key matches the Play signing certificate:
 

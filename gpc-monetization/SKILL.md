@@ -1,9 +1,9 @@
 ---
 name: gpc-monetization
 description: "Use when managing in-app purchases, subscriptions, pricing, or Real-Time Developer Notifications in Google Play. Make sure to use this skill whenever the user mentions gpc subscriptions, gpc iap, gpc purchases, gpc pricing, gpc rtdn, in-app products, base plans, subscription offers, one-time products, consumable products, purchase verification, purchase acknowledgement, purchase token, subscription cancellation, subscription deferral, voided purchases, refunds, regional pricing, currency conversion, price migration, SKU management, monetization, revenue, billing, subscription analytics, churn, trial conversion, subscriber count, RTDN, Real-Time Developer Notifications, Pub/Sub notifications, subscription events, purchase events — even if they don't explicitly say 'monetization.' Also trigger when someone wants to create or update subscriptions, manage base plan lifecycle (activate/deactivate), set up introductory offers, verify server-side purchases, handle refunds, convert prices across regions, sync IAP products from files, migrate subscribers to new prices, view subscription analytics, decode Pub/Sub notification payloads, or check RTDN topic configuration. For release management, see gpc-release-flow. For CI automation, see gpc-ci-integration."
-compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). Subscriptions and IAP require products configured in Google Play Console."
+compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Subscriptions and IAP require products configured in Google Play Console."
 metadata:
-  version: 0.13.0
+  version: 0.15.0
 ---
 
 # gpc-monetization
@@ -242,6 +242,37 @@ gpc otp offers deactivate --app com.example.app --product-id sku_id --offer-id o
 
 Matches the subscription-offer lifecycle. Without this, OTP offers relied on state being set through batch update calls only.
 
+### OTP offer and purchase-option batch operations (v0.9.79+)
+
+Batch operations on one-time product offers and purchase options:
+
+```bash
+# Retrieve multiple OTP offers in one call
+gpc one-time-products offers batch-get --product-id <sku> --offer-ids "offer_a,offer_b"
+
+# Update multiple OTP offers from JSON
+gpc one-time-products offers batch-update --file otp-offers.json --dry-run
+gpc one-time-products offers batch-update --file otp-offers.json
+
+# Bulk activate or deactivate OTP offers
+gpc one-time-products offers batch-update-states --file otp-states.json --dry-run
+gpc one-time-products offers batch-update-states --file otp-states.json
+
+# Delete multiple OTP offers at once
+gpc one-time-products offers batch-delete --product-id <sku> --offer-ids "offer_a,offer_b" --dry-run
+gpc one-time-products offers batch-delete --product-id <sku> --offer-ids "offer_a,offer_b"
+
+# Bulk delete purchase options across products
+gpc one-time-products purchase-options batch-delete --file po-delete.json --dry-run
+gpc one-time-products purchase-options batch-delete --file po-delete.json
+
+# Bulk update purchase-option states (activate/deactivate)
+gpc one-time-products purchase-options batch-update-states --file po-states.json --dry-run
+gpc one-time-products purchase-options batch-update-states --file po-states.json
+```
+
+All batch commands support `--dry-run` and `--json`. These operations cover the full v0.9.79 OTP batch surface: 4 offer methods (`batch-get`, `batch-update`, `batch-update-states`, `batch-delete`) and 2 purchase-option methods (`batch-delete`, `batch-update-states`).
+
 ### 5. Purchases — verification and lifecycle
 
 #### A. Product purchases
@@ -267,6 +298,7 @@ gpc purchases subscription acknowledge <subscription-id> <token> --payload "orde
 
 # Get subscription purchase details (v2 API)
 # Returns SubscriptionPurchaseV2 with onHoldStateContext, inGracePeriodStateContext (v0.9.76+)
+# Both context objects are surfaced in --json output and structured display
 gpc purchases subscription get <token>
 
 # Cancel a subscription (v1 — requires subscription-id)
@@ -304,6 +336,8 @@ gpc purchases orders get <order-id>
 # Batch retrieve orders (up to 1000)
 gpc purchases orders batch-get --ids "GPA.1234,GPA.5678"
 ```
+
+> **New in v0.9.79:** Orders now expose an `OfferPhaseDetails` type that replaces the flat `offerPhase` field. `OfferPhaseDetails` is a structured object with richer phase information (phase type, cycle counts, and pricing details). The flat `offerPhase` field is deprecated; read from `offerPhaseDetails` in new code.
 
 #### E. Voided purchases and refunds
 

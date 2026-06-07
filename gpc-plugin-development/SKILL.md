@@ -3,7 +3,7 @@ name: gpc-plugin-development
 description: "Use when building, extending, or debugging GPC plugins. Make sure to use this skill whenever the user mentions gpc plugins, plugin SDK, @gpc-cli/plugin-sdk, plugin hooks, plugin development, plugin scaffolding, gpc plugins init, beforeCommand, afterCommand, onError, beforeRequest, afterResponse, registerCommands, plugin permissions, plugin manifest, custom commands, plugin-ci, extend GPC, GPC addon — even if they don't explicitly say 'plugin.' Also trigger when someone wants to add custom behavior to GPC, integrate GPC with Slack or other services, build CI/CD extensions, hook into the command lifecycle, or register new CLI commands. For using the built-in CI plugin, see gpc-ci-integration."
 compatibility: "GPC v0.9.9+. Requires Node.js 20+, TypeScript 5+. Plugin SDK: @gpc-cli/plugin-sdk package."
 metadata:
-  version: 1.3.0
+  version: 1.3.1
 ---
 
 # gpc-plugin-development

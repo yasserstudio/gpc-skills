@@ -1,9 +1,9 @@
 ---
 name: gpc-setup
 description: "Use when setting up GPC (Google Play Console CLI): authentication with service accounts, OAuth, or Application Default Credentials; configuration files (.gpcrc.json, env vars, XDG paths); auth profiles; running gpc doctor; troubleshooting auth errors. Make sure to use this skill whenever the user mentions gpc auth, gpc setup, service account setup, gpc config, gpc doctor, GPC_SERVICE_ACCOUNT, gpc auth login, Google Play API credentials, Play Console authentication, or wants to install/configure GPC — even if they don't explicitly say 'setup.' Also trigger when someone is troubleshooting auth failures, token expiration, keychain issues, or proxy/network configuration for GPC."
-compatibility: "GPC v0.9+. Requires Node.js 20+, pnpm 9+ (for development). npm for installation."
+compatibility: "GPC v0.9.82+. Requires Node.js 20+, pnpm 9+ (for development). npm for installation."
 metadata:
-  version: 1.5.0
+  version: 1.6.0
 ---
 
 # GPC Setup
@@ -170,6 +170,20 @@ Guided wizard that:
 | `GPC_NO_COLOR` | Disable color output |
 | `GPC_NO_INTERACTIVE` | Disable interactive prompts |
 | `GPC_SKIP_KEYCHAIN` | Skip OS keychain, use file storage |
+
+#### Config resolution precedence (v0.9.81+)
+
+When the same setting is supplied through multiple sources, GPC resolves in this order (highest priority first):
+
+| Priority | Source | Example |
+|----------|--------|---------|
+| 1 | CLI flags | `--service-account key.json`, `--app com.example.app` |
+| 2 | Environment variables | `GPC_SERVICE_ACCOUNT`, `GPC_APP` |
+| 3 | Active profile | set via `gpc auth switch <name>` |
+| 4 | `.gpcrc.json` | project-level or global config file |
+| 5 | Defaults | built-in fallback values |
+
+Prior to v0.9.81, an active profile silently took precedence over `GPC_SERVICE_ACCOUNT` and `GPC_APP` env vars. That bug is fixed. Env vars and CLI flags now reliably override whatever profile is active, which is important for CI environments where secrets are injected at run time.
 
 Read:
 - `references/configuration.md`

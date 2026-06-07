@@ -1,9 +1,9 @@
 ---
 name: gpc-release-flow
 description: "Use when uploading, releasing, promoting, or managing rollouts on Google Play. Make sure to use this skill whenever the user mentions gpc releases, upload AAB, upload APK, staged rollout, promote to production, halt rollout, gpc publish, release notes, track management, internal testing, beta release, production rollout, version code, rollout percentage, or wants to ship an Android app to any Play Store track. Also trigger when someone asks about the Google Play edit lifecycle, release validation, or how to do a phased rollout — even if they don't mention GPC by name. For metadata and listings, see gpc-metadata-sync. For CI/CD integration, see gpc-ci-integration."
-compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). For private-app publishing to Managed Google Play, see gpc-enterprise (v0.9.56+)."
+compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). For private-app publishing to Managed Google Play, see gpc-enterprise (v0.9.56+)."
 metadata:
-  version: 1.7.0
+  version: 1.8.0
 ---
 
 # GPC Release Flow
@@ -267,6 +267,7 @@ gpc --dry-run changelog generate --target play-store --locales auto --ai
 - Without `--ai`: non-source locales get a `[needs translation]` placeholder. Use `--format prompt` to emit a translation-ready LLM prompt for the offline / no-key workflow.
 - `--strict` exits 1 if any locale overflows 500 chars OR (with `--ai`) any locale fails to translate
 - Lazy-loaded: running without `--ai` imports none of the AI SDK deps. Cold-start budget preserved.
+- AI SDK v6 (v0.9.82+): the underlying `@ai-sdk/*` packages were upgraded from 5.x to 6.0. The public `--ai` interface and all model provider options are unchanged. No migration steps are required for users.
 
 ### Writing translated notes into a draft release (v0.9.64+)
 
@@ -331,6 +332,27 @@ gpc tracks list                    # List all tracks
 gpc tracks get production          # Show track details + current releases
 ```
 
+#### Assign an existing version code to a different track (v0.9.78+)
+
+If an AAB is already uploaded, you can assign its version code to a different track without re-uploading:
+
+```bash
+gpc releases assign 42 --track beta
+gpc releases assign 42 --track production --rollout 10
+```
+
+This is useful when you want to move a version code from one testing track to another, or when a CI build uploaded to internal and you want to assign it to alpha for a wider audience.
+
+#### Create a custom closed testing track (v0.9.79+)
+
+Google Play supports custom closed testing tracks in addition to the built-in `internal`, `alpha`, `beta`, and `production` tracks:
+
+```bash
+gpc tracks create --track-id my-custom-track --name "Partner Testing"
+```
+
+Uses `edits.tracks.create` under the hood. After creation, use the custom track ID in any `--track` flag.
+
 ### 6) Preview with dry-run
 
 All write operations support `--dry-run`:
@@ -339,6 +361,16 @@ All write operations support `--dry-run`:
 gpc releases upload app.aab --track beta --dry-run
 gpc releases promote --from beta --to production --rollout 10 --dry-run
 gpc releases rollout increase --track production --to 50 --dry-run
+```
+
+With `--json` and `--dry-run` together, the output includes `executed[]` and `skipped[]` arrays so CI pipelines can inspect which steps would have run (v0.9.79+):
+
+```json
+{
+  "dryRun": true,
+  "executed": [],
+  "skipped": ["upload", "validate", "commit"]
+}
 ```
 
 ### 7) Interactive mode
@@ -370,6 +402,23 @@ Disable with `--no-interactive` or `GPC_NO_INTERACTIVE=1`.
 | Rollout stuck | Rollout was halted | `gpc releases rollout resume --track <track>` |
 | Wrong track | Promoted to wrong track | Create new release on correct track |
 
+#### Commit rejection: reviewPending and nextStep (v0.9.79+)
+
+When Google Play rejects the `edits.commit` call because changes must go through review, GPC returns a structured result instead of a plain error:
+
+```json
+{
+  "reviewPending": true,
+  "nextStep": "Your changes are under Google review. Check Play Console for status or use --changes-not-sent-for-review to bypass review for non-reviewed tracks."
+}
+```
+
+The `reviewPending` field is always a boolean. The `nextStep` string is human-readable guidance. CI pipelines can key on `reviewPending === true` to decide whether to poll, notify, or exit.
+
+#### Internal track skips review (v0.9.79+)
+
+The internal testing track does not require Google review. When committing to the `internal` track, GPC sets `reviewSkipped: true` in the structured output to indicate that the commit went through immediately without entering the review queue.
+
 Read:
 - `references/troubleshooting.md`
 - `references/pre-release-pipeline.md` — end-to-end: validate → upload → vitals gate → promote → staged rollout
@@ -384,13 +433,15 @@ gpc rtdn decode <payload>    # Decode base64 notification payload
 gpc rtdn test                # Guidance for testing RTDN setup
 ```
 
-## Known bugs (fix planned for v0.9.78)
+## Previously known bugs (fixed in v0.9.78)
 
-| Bug | Impact | Workaround |
-|-----|--------|------------|
-| `tracks update` silently wipes tracks | No string coercion on `versionCodes` and flat-only extraction cause the API call to send empty/malformed version code arrays, effectively clearing the track | Use `gpc releases upload` or `gpc publish` instead of raw `tracks update`; verify track state with `gpc tracks get <track>` after any manual track operation |
-| `--changes-not-sent-for-review` flag never reaches API | `validateAndCommit` gap: the flag is parsed by the CLI but not forwarded through the validate/commit call chain | Use the Play Console UI for commits that require `changesNotSentForReview`, or apply the patch from the tracking issue |
-| Cannot assign already-uploaded versionCode to a new track without re-uploading | The edit lifecycle requires a fresh upload per edit session; referencing an existing versionCode from a prior edit is not supported | Re-upload the same AAB/APK to the new track. The Play API deduplicates by signing key + versionCode, so the upload is fast but required |
+All items below were resolved in v0.9.78. Listed for historical context only.
+
+| Bug | Status |
+|-----|--------|
+| `tracks update` silently wipes tracks | Fixed: versionCode coercion + nested JSON support |
+| `--changes-not-sent-for-review` flag never reaches API | Fixed: `validateAndCommit` auto-rescue on validate (15+ commands) |
+| Cannot assign already-uploaded versionCode to a new track without re-uploading | Fixed: `gpc releases assign <versionCode> --track <track>` |
 
 ## Related skills
 

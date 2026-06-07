@@ -1,5 +1,43 @@
 # Changelog
 
+## v1.25.0 -- 2026-06-07
+
+Synced with GPC v0.9.78-v0.9.82. Covers GitHub Action launch, config precedence fix, vitals gate fix, and 4 new release versions since v1.24.0.
+
+### Updated Skills
+
+- **gpc-ci-integration** (1.6.0 -> 1.7.0) -- GPC GitHub Action (`yasserstudio/gpc-action`) as the quickest CI path, with Marketplace link, usage example, and r0adkll migration guide. Node.js 24 support. Config resolution precedence table. Pinned install version bumped to 0.9.82.
+
+- **gpc-release-flow** (1.7.0 -> 1.8.0) -- `gpc releases assign` command (v0.9.78). Custom closed testing track creation via `edits.tracks.create` (v0.9.79). `reviewPending`/`nextStep` structured output on commit rejection (v0.9.79). `reviewSkipped` on internal track. Dry-run `executed[]`/`skipped[]` arrays. AI SDK v6 migration note. Known bugs section updated to "fixed in v0.9.78".
+
+- **gpc-setup** (1.5.0 -> 1.6.0) -- Config resolution precedence table (CLI flags > env vars > profile > .gpcrc.json > defaults). Documents the v0.9.81 precedence fix.
+
+- **gpc-troubleshooting** (0.17.0 -> 0.17.1) -- New error catalog entries: `API_EDIT_EXPIRED`, `API_ROLLOUT_DECREASE_FORBIDDEN`, `REVIEW_SKIPPED`. Commit rejection `reviewPending` structured output. Config precedence fix note.
+
+- **gpc-preflight** (1.3.0 -> 1.3.1) -- Compat bumped to v0.9.82+. Manifest scanner row updated with testOnly + targetSdk detail.
+
+- **gpc-vitals-monitoring** (1.6.0 -> 1.7.0) -- Vitals gate crash-rate extraction fix (v0.9.82): now reads correct `MetricSetResponse` shape. `VitalsThresholds` type in `GpcConfig`/`ResolvedConfig` with `.gpcrc.json` example.
+
+- **gpc-security** (0.14.0 -> 0.14.1) -- Compat bumped to v0.9.82+. Production audit finding cleared (google-auth-library 10.7.0). GitHub Action security notes.
+
+- **gpc-monetization** (0.13.0 -> 0.15.0) -- `OfferPhaseDetails` type on Orders deprecating `offerPhase` (v0.9.79). OTP purchase option offers: 7 batch commands (v0.9.79).
+
+- **gpc-sdk-usage** (1.7.0 -> 1.7.1) -- `edits.tracks.create` example (v0.9.79). `VitalsThresholds` config type (v0.9.82). `OfferPhaseDetails` access pattern. Compat bumped to v0.9.82+.
+
+- **gpc-plugin-development** (1.3.0 -> 1.3.1) -- Compat alignment with v0.9.82.
+
+- **gpc-train** (0.10.0 -> 0.10.1) -- Version alignment.
+
+### Marquee changes in GPC v0.9.78-v0.9.82
+
+- v0.9.82: Dependency health, AI SDK v6, vitals gate fix, zero production audit findings
+- v0.9.81: GPC GitHub Action on Marketplace, config precedence fix
+- v0.9.79: Developer clarity, preflight targetSdk 36, Node 24 CI
+- v0.9.78: Track fixes, `gpc releases assign`, validateAndCommit auto-rescue
+- 2,345 tests
+
+---
+
 ## v1.24.0 -- 2026-05-30
 
 Synced with GPC v0.9.80 (security audit, API alignment, code quality).

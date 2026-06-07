@@ -1,9 +1,9 @@
 ---
 name: gpc-troubleshooting
 description: "Use when debugging GPC errors, failures, or unexpected behavior. Make sure to use this skill whenever the user mentions gpc error, gpc failing, exit code, AUTH_FAILED, API_FORBIDDEN, NETWORK_ERROR, CONFIG_MISSING, EDIT_CONFLICT, upload failed, permission denied, timeout, rate limit, gpc doctor failing, unexpected exit code, command not working, GPC crash, debug GPC, verbose output, --json error, threshold breach — even if they don't explicitly say 'troubleshoot.' Also trigger when someone encounters any GPC error they don't understand, when gpc doctor reports issues, when CI pipelines fail with GPC commands, or when they need to interpret exit codes. For auth-specific setup issues, see gpc-setup. For CI-specific issues, see gpc-ci-integration."
-compatibility: "GPC v0.9+. Covers all packages: @gpc-cli/cli, @gpc-cli/core, @gpc-cli/api, @gpc-cli/auth, @gpc-cli/config."
+compatibility: "GPC v0.9.82+. Covers all packages: @gpc-cli/cli, @gpc-cli/core, @gpc-cli/api, @gpc-cli/auth, @gpc-cli/config."
 metadata:
-  version: 0.17.0
+  version: 0.17.1
 ---
 
 # gpc-troubleshooting
@@ -99,6 +99,8 @@ export GPC_SERVICE_ACCOUNT=$(cat ~/path/to/key.json)
 | `API_INSUFFICIENT_PERMISSIONS` | 403 | Service account missing permissions | Grant required roles in Play Console → Settings → API access |
 | `API_CHANGES_NOT_SENT_FOR_REVIEW` | 400/403 | App has rejected update, requires review flag | Add `--changes-not-sent-for-review` flag to the command |
 | `API_CHANGES_ALREADY_IN_REVIEW` | 400 | Changes already in review, new commit would silently cancel | Use `--error-if-in-review` to prevent silent cancellation |
+| `API_EDIT_EXPIRED` | 410 | The open edit session has expired (edits expire after ~30 minutes of inactivity) | GPC now includes a clear `API_EDIT_EXPIRED` message with a suggestion to retry the command. The command will automatically create a fresh edit on retry. |
+| `API_ROLLOUT_DECREASE_FORBIDDEN` | 400 | Staged rollout percentage can only be increased, not decreased | To stop a rollout, use `gpc releases rollout halt --track production`. To continue, use `gpc releases rollout increase` with a higher percentage. |
 
 ```bash
 # Check if an edit is stuck
@@ -143,6 +145,8 @@ export GPC_CA_CERT=/path/to/ca-cert.pem
 | `CONFIG_INVALID_KEY` | Key is empty, malformed, or a reserved name (v0.9.80+) | Use a valid alphanumeric profile/key name |
 | `CONFIG_APP_MISSING` | No app specified | Set with `gpc config set app` or `--app` flag |
 
+**Config precedence fix (v0.9.81+):** Before v0.9.81, an active profile would silently win over `GPC_SERVICE_ACCOUNT`/`GPC_APP` env vars and the `--service-account`/`--app` flags. This was a bug. Since v0.9.81, the documented precedence is enforced: flags override env vars, env vars override the active profile, the active profile overrides defaults. If env vars appear to be ignored, check whether an active profile is set with `gpc config list` and either update or deactivate it.
+
 ```bash
 # Initialize config
 gpc config init
@@ -171,6 +175,7 @@ gpc config list
 | `UPLOAD_SESSION_EXPIRED` | Session gone (410) | Start a new upload session |
 | `UPLOAD_INVALID_CHUNK_SIZE` | Chunk size not multiple of 256 KB | Set `GPC_UPLOAD_CHUNK_SIZE` to a multiple of 262144 (256 KB) |
 | `EDIT_VALIDATE_FAILED` | Transient validate/commit failure after upload | Auto-retried with multi-retry guard (15s, 30s, 45s) since v0.9.77; if persistent, check bundle status |
+| `REVIEW_SKIPPED` | Internal track commit completed without entering Google review queue | Expected behavior. The `internal` track does not require review. GPC sets `reviewSkipped: true` in structured JSON output (v0.9.79+) to confirm the commit went through immediately. |
 
 ```bash
 # Validate before uploading
@@ -183,6 +188,19 @@ gpc releases list --track beta
 # Preview upload
 gpc releases upload app.aab --track beta --dry-run
 ```
+
+#### Commit rejection: reviewPending structured output (v0.9.79+)
+
+When `edits.commit` is rejected because Google requires review, the `--json` output includes a structured result instead of a plain error:
+
+```json
+{
+  "reviewPending": true,
+  "nextStep": "Your changes are under Google review. Check Play Console for status or use --changes-not-sent-for-review to bypass review for non-reviewed tracks."
+}
+```
+
+CI pipelines can key on `reviewPending === true` to decide whether to wait, notify, or exit. The `nextStep` field always contains human-readable guidance on what to do next.
 
 ### 7. Vitals threshold breach (exit code 6)
 
@@ -272,6 +290,7 @@ export GPC_UPLOAD_TIMEOUT=300000  # Upload timeout in ms (5 min)
 | `gpc doctor --verify` mismatch | Local keystore differs from Play signing cert | Register local key in Play Console or use Play App Signing (v0.9.75+) |
 | All commands timeout | Network/proxy issue | Check `HTTPS_PROXY`, `GPC_CA_CERT`, `GPC_TIMEOUT` |
 | Commands work locally, fail in CI | Missing env vars in CI | Set `GPC_SERVICE_ACCOUNT` and `GPC_APP` in CI secrets; run `gpc setup --auto` (v0.9.68+) |
+| Env vars `GPC_SERVICE_ACCOUNT` / `GPC_APP` seem to be ignored | Active profile overriding env vars (pre-v0.9.81 bug) | Upgrade to v0.9.81+. Check active profile with `gpc config list`; env vars and flags now correctly override the profile. |
 | JSON output has no `suggestion` | Unexpected error type | File a bug — all errors should have suggestions |
 
 ## Related skills

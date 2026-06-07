@@ -1,9 +1,9 @@
 ---
 name: gpc-ci-integration
 description: "Use when integrating GPC into CI/CD pipelines. Make sure to use this skill whenever the user mentions GitHub Actions, GitLab CI, Bitbucket Pipelines, CircleCI, CI/CD, automated release, pipeline, GPC_SERVICE_ACCOUNT, JSON output, CSV output, TSV output, exit codes, gpc in CI, automate Play Store deployment, release workflow, deploy to Play Store from CI, automated rollout, step summary, bundle wait, wait for bundle processing, or wants to set up any kind of automated Google Play deployment pipeline. Also trigger when someone asks about running GPC in a headless environment, parsing GPC output in scripts, using GPC exit codes for conditional logic, or configuring retries and timeouts for CI — even if they don't mention a specific CI platform. For local setup, see gpc-setup. For release commands, see gpc-release-flow."
-compatibility: "GPC v0.9+. Works with any CI platform that supports Node.js 22+ (recommended) or 20+, or standalone binary."
+compatibility: "GPC v0.9.82+. Works with any CI platform that supports Node.js 24+ (recommended), 22+, or 20+, or standalone binary."
 metadata:
-  version: 1.6.0
+  version: 1.7.0
 ---
 
 # GPC CI Integration
@@ -30,6 +30,39 @@ Use this skill when the task involves:
 
 ## Procedure
 
+### Quickest path: GPC GitHub Action (v0.9.81+)
+
+For GitHub Actions users, the GPC GitHub Action is the fastest way to publish to the Play Store. No Node.js setup step, no manual install, no wrapper script.
+
+Available on the [GitHub Actions Marketplace](https://github.com/marketplace/actions/gpc-google-play-console-cli).
+
+**Minimal usage:**
+
+```yaml
+- uses: yasserstudio/gpc-action@v1
+  with:
+    service-account-json: ${{ secrets.GPC_SERVICE_ACCOUNT }}
+    package-name: com.example.app
+    release-file: app/build/outputs/bundle/release/app-release.aab
+    track: internal
+```
+
+One step replaces the full install + run + cleanup sequence. The action runs a built-in preflight compliance gate before uploading, so non-compliant AABs are rejected before they reach the Play API.
+
+**Migrating from `r0adkll/upload-google-play`?** It is a drop-in replacement. The input names are the same; change one line:
+
+```yaml
+# Before:
+- uses: r0adkll/upload-google-play@v1
+
+# After:
+- uses: yasserstudio/gpc-action@v1
+```
+
+The action is a TypeScript action running on Node 24. No additional configuration is required for the migration.
+
+For advanced pipelines (multi-step, vitals gating, changelog generation), continue with the manual workflow patterns below.
+
 ### 0) CI environment behavior
 
 GPC auto-detects CI environments:
@@ -45,6 +78,18 @@ GPC_NO_INTERACTIVE=1   # Explicitly disable prompts
 GPC_NO_COLOR=1         # Explicitly disable colors
 GPC_OUTPUT=json        # Force JSON output
 ```
+
+**Config resolution precedence (v0.9.81+):** CLI flags override env vars, which override the active profile, which overrides `.gpcrc.json`, which falls back to defaults.
+
+```
+--service-account / --app flags  (highest priority)
+  GPC_SERVICE_ACCOUNT / GPC_APP env vars
+    active profile (gpc auth switch <name>)
+      .gpcrc.json
+        defaults
+```
+
+Prior to v0.9.81, an active profile silently won over `GPC_SERVICE_ACCOUNT`/`GPC_APP` env vars. This is now fixed. If your CI sets `GPC_SERVICE_ACCOUNT` and a profile is also active, the env var takes effect as expected.
 
 ### 1) GitHub Actions
 
@@ -398,7 +443,7 @@ GPC's own CI uses 12 protection layers. When integrating GPC into your pipeline,
 
 ```yaml
 # Pin GPC version (don't rely on @latest in production)
-- run: npm install -g @gpc-cli/cli@0.9.74 --ignore-scripts
+- run: npm install -g @gpc-cli/cli@0.9.82 --ignore-scripts
 
 # Or use the standalone binary (no npm supply chain risk)
 - run: curl -fsSL https://raw.githubusercontent.com/yasserstudio/gpc/main/scripts/install.sh | bash
