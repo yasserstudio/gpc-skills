@@ -10,7 +10,7 @@ These skills teach Claude Code how to use GPC for common Google Play workflows: 
 npx skills add yasserstudio/gpc-skills
 ```
 
-## Available Skills (18)
+## Available Skills (19)
 
 | Skill | Description |
 |-------|-------------|
@@ -32,6 +32,7 @@ npx skills add yasserstudio/gpc-skills
 | **gpc-train** | Automated staged rollout pipeline with crash/ANR gates and time gates |
 | **gpc-enterprise** | **New in v0.9.56.** Publish private apps to Managed Google Play via the Play Custom App Publishing API. First Android publishing CLI with this support. |
 | **gpc-android-cli-interop** | **New in v1.12.0.** Handoff router between [Google's official Android CLI](https://android-developers.googleblog.com/2026/04/build-android-apps-3x-faster-using-any-agent.html) (build/dev) and GPC (publishing). Triggers after `android run` / `android build` to route into the right GPC skill. |
+| **gpc-games** | **New in v1.26.0.** Play Games Services achievement and leaderboard configuration CRUD (`gpc games achievements/leaderboards` list/get/create/update/delete/diff), diff/sync workflow, `gpc games runtime` read-only, and `--game-id` resolution. |
 
 ## Skill Structure
 
@@ -240,6 +241,11 @@ gpc-<skill>/
 |------|-------|
 | (inline) | First-run setup, `gpc quickstart`, `gpc init`, `gpc doctor --fix` |
 
+### gpc-games
+| File | Topic |
+|------|-------|
+| `references/games-config-schema.md` | Achievement and leaderboard configuration schema, field reference, and diff/sync workflow |
+
 ## Compatibility
 
 - GPC v0.9.52+ (`npm install -g @gpc-cli/cli`) for most skills
@@ -254,6 +260,8 @@ gpc-<skill>/
 - GPC v0.9.75+ required for data safety API (`gpc data-safety get/update`), signing key verification (`gpc doctor --verify`), and `gpc doctor` shell completion detection
 - GPC v0.9.76+ required for `SubscriptionPurchaseV2` typed fields (`onHoldStateContext`, `inGracePeriodStateContext`); full API contract audit with 50+ fixes
 - `gpc-android-cli-interop` (v1.12.0+) pairs with Google's [official Android CLI](https://android-developers.googleblog.com/2026/04/build-android-apps-3x-faster-using-any-agent.html) (released 2026-04-16). Install Google's CLI separately; the interop skill assumes both tools are installed and declares the handoff between them.
+- GPC v0.9.86+ required for `gpc-games` (Play Games Configuration API: achievement and leaderboard CRUD)
+- GPC v0.9.87+ recommended: consistent `list --json` envelope across grants, testers, and tracks (referenced by `gpc-user-management`, `gpc-release-flow`, `gpc-sdk-usage`)
 - Node.js 20+ (or standalone binary)
 - Google Play Developer API access (service account)
 - For `gpc-enterprise`: an additional "create and publish private apps" permission granted to the service account in Play Console

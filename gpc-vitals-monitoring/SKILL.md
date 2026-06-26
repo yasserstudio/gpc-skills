@@ -1,9 +1,9 @@
 ---
 name: gpc-vitals-monitoring
 description: "Use when monitoring Android app health metrics from Google Play. Make sure to use this skill whenever the user mentions gpc vitals, gpc watch, gpc status, crash rate, ANR rate, startup time, Android vitals, crash monitoring, threshold alerting, vitals gating, rollout monitoring, auto-halt, breach notification, webhook alerting, frame rate, battery usage, memory issues, error tracking, app quality, user reviews, review replies, Play Store reviews, star rating, negative reviews, review export, financial reports, stats reports, or wants to check app health, monitor a staged rollout, respond to reviews, or download Play Console reports. Also trigger when someone asks about gating deployments on crash data, monitoring app performance after a release, watching a rollout for regressions, or tracking review sentiment — even if they don't mention GPC. For releases, see gpc-release-flow. For CI gating, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Vitals data requires the app to have sufficient install volume."
+compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Vitals data requires the app to have sufficient install volume. v0.9.83+ adds reviews fidelity fields and the unified list envelope."
 metadata:
-  version: 1.7.0
+  version: 1.8.0
 ---
 
 # GPC Vitals Monitoring
@@ -284,6 +284,9 @@ gpc reviews list --lang en
 # Filter by time
 gpc reviews list --since 7d
 
+# Full text of truncated reviews (v0.9.83+)
+gpc reviews list --full-text
+
 # Single review details
 gpc reviews get <review-id>
 
@@ -301,6 +304,8 @@ gpc reviews export --format csv --output reviews.csv
 ```
 
 > **New in v0.9.47:** `--all` auto-paginates through all review pages. Reply text is validated against the 350-character Google Play limit before sending — exceeding the limit exits code 2 immediately. Note: the Reviews API only returns production reviews from the last 7 days.
+
+> **New in v0.9.83:** `reviews list` adds `hasReply`, `lang`, and an explicit `[truncated]` marker to each review, plus a `--full-text` flag that fetches the complete untruncated text. `reviews list --json` uses the unified `{ reviews, nextPageToken, meta.count }` envelope (breaking for scripts reading a bare array).
 
 Read:
 - `references/review-management.md`

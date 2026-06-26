@@ -1,0 +1,42 @@
+{
+  "skill_name": "gpc-games",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I need to add a new achievement to our game: a hidden standard achievement worth 10 points called 'First Victory' for winning the first match. Show me the JSON and the GPC commands, and how to preview before it goes live.",
+      "expected_output": "Provides achievement JSON and creates it with gpc games achievements create --file, using --dry-run first",
+      "files": [],
+      "expectations": [
+        "Shows an achievement.json with achievementType STANDARD and initialState HIDDEN",
+        "Includes draft.name.translations and draft.pointValue 10",
+        "Uses gpc games achievements create --file achievement.json --dry-run before applying",
+        "Mentions setting the game id via --game-id, GPC_GAME_ID, or games.applicationId",
+        "Notes the id is the numeric Play Games application id, not the package name"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "We keep our leaderboard definitions as JSON files in the repo. In CI I want to detect when the live Play Games config has drifted from our files before we push changes. How do I do that with GPC?",
+      "expected_output": "Shows gpc games leaderboards diff against the file, then update to apply",
+      "files": [],
+      "expectations": [
+        "Shows gpc games leaderboards diff <leaderboard-id> --file leaderboard.json",
+        "Explains diff reports field-by-field differences between local and remote",
+        "Recommends diff in CI to detect drift, then update --file to apply",
+        "Shows gpc games leaderboards update <leaderboard-id> --file leaderboard.json"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "How do I list all the achievements configured for our game as JSON for a dashboard, and where do I get the game id from?",
+      "expected_output": "Shows gpc games achievements list --json and how to resolve the numeric game id",
+      "files": [],
+      "expectations": [
+        "Shows gpc games achievements list --json",
+        "Explains the JSON envelope has the items key plus nextPageToken and meta.count",
+        "Explains the numeric game application id comes from Play Games Services > Configuration",
+        "Shows --game-id / GPC_GAME_ID / games.applicationId precedence"
+      ]
+    }
+  ]
+}

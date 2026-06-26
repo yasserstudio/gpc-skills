@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.26.0 -- 2026-06-26
+
+New **gpc-games** skill plus a sync covering GPC v0.9.83 through v0.9.87 (v1.25.0 covered through v0.9.82).
+
+### New Skill
+
+- **gpc-games** (1.0.0) -- Google Play Games Services achievement and leaderboard configuration CRUD (`gpc games achievements/leaderboards` list/get/create/update/delete/diff), the `gpc games runtime` read-only commands, and `--game-id` / `GPC_GAME_ID` / `games.applicationId` resolution. New in GPC v0.9.86.
+
+### Updated Skills
+
+- **gpc-user-management** (0.11.0 -> 0.12.0) -- `grants list` and `testers list` now return the unified `--json` envelope (GPC v0.9.87, breaking for scripts reading a bare array). `testers list` emits `googleGroups: []` when a track has no groups. `users list` shares the same envelope (v0.9.83).
+- **gpc-release-flow** (1.8.0 -> 1.9.0) -- `tracks list` now returns the unified `--json` envelope (GPC v0.9.87).
+- **gpc-sdk-usage** (1.7.1 -> 1.8.0) -- pagination resume fix and unified list envelope (GPC v0.9.83/v0.9.87).
+- **gpc-monetization** (0.15.0 -> 0.16.0) -- `--regions-version` now sent on subscription/OTP writes (GPC v0.9.84); IAP/subscription list use the unified envelope (GPC v0.9.83).
+- **gpc-vitals-monitoring** (1.7.0 -> 1.8.0) -- `reviews list` gains hasReply/lang/[truncated]/`--full-text` and the unified envelope (GPC v0.9.83).
+- **gpc-troubleshooting** (0.17.1 -> 0.18.0) -- npm global install failure resolved (GPC v0.9.84/v0.9.85).
+
+### Bundle
+
+19 skills (was 18). Synced to GPC v0.9.87.
+
+---
+
 ## v1.25.0 -- 2026-06-07
 
 Synced with GPC v0.9.78-v0.9.82. Covers GitHub Action launch, config precedence fix, vitals gate fix, and 4 new release versions since v1.24.0.

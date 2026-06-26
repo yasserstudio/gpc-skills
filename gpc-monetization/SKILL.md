@@ -1,9 +1,9 @@
 ---
 name: gpc-monetization
 description: "Use when managing in-app purchases, subscriptions, pricing, or Real-Time Developer Notifications in Google Play. Make sure to use this skill whenever the user mentions gpc subscriptions, gpc iap, gpc purchases, gpc pricing, gpc rtdn, in-app products, base plans, subscription offers, one-time products, consumable products, purchase verification, purchase acknowledgement, purchase token, subscription cancellation, subscription deferral, voided purchases, refunds, regional pricing, currency conversion, price migration, SKU management, monetization, revenue, billing, subscription analytics, churn, trial conversion, subscriber count, RTDN, Real-Time Developer Notifications, Pub/Sub notifications, subscription events, purchase events — even if they don't explicitly say 'monetization.' Also trigger when someone wants to create or update subscriptions, manage base plan lifecycle (activate/deactivate), set up introductory offers, verify server-side purchases, handle refunds, convert prices across regions, sync IAP products from files, migrate subscribers to new prices, view subscription analytics, decode Pub/Sub notification payloads, or check RTDN topic configuration. For release management, see gpc-release-flow. For CI automation, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Subscriptions and IAP require products configured in Google Play Console."
+compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Subscriptions and IAP require products configured in Google Play Console. v0.9.84+ sends --regions-version to the API on subscription/OTP writes."
 metadata:
-  version: 0.15.0
+  version: 0.16.0
 ---
 
 # gpc-monetization
@@ -70,6 +70,8 @@ gpc subscriptions create --file subscription.json
 # Specify a regions version (defaults to 2022/02)
 gpc subscriptions create --file subscription.json --regions-version "2022/02"
 ```
+
+> **Fixed in v0.9.84:** `--regions-version` is now actually sent to the Google Play API on subscriptions and one-time-products create, update, and offer commands. In v0.9.77-v0.9.83 it was accepted by GPC but silently ignored. Default is `2022/02` if not specified. IAP and subscription `list --json` also now use the unified `{ <key>, nextPageToken, meta.count }` envelope (GPC v0.9.83).
 
 `Read:` `references/subscription-schema.md` for the JSON structure and field reference.
 

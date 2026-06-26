@@ -1,9 +1,9 @@
 ---
 name: gpc-release-flow
 description: "Use when uploading, releasing, promoting, or managing rollouts on Google Play. Make sure to use this skill whenever the user mentions gpc releases, upload AAB, upload APK, staged rollout, promote to production, halt rollout, gpc publish, release notes, track management, internal testing, beta release, production rollout, version code, rollout percentage, or wants to ship an Android app to any Play Store track. Also trigger when someone asks about the Google Play edit lifecycle, release validation, or how to do a phased rollout — even if they don't mention GPC by name. For metadata and listings, see gpc-metadata-sync. For CI/CD integration, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). For private-app publishing to Managed Google Play, see gpc-enterprise (v0.9.56+)."
+compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). For private-app publishing to Managed Google Play, see gpc-enterprise (v0.9.56+). v0.9.87+ returns a consistent list --json envelope on tracks list."
 metadata:
-  version: 1.8.0
+  version: 1.9.0
 ---
 
 # GPC Release Flow
@@ -331,6 +331,8 @@ Read:
 gpc tracks list                    # List all tracks
 gpc tracks get production          # Show track details + current releases
 ```
+
+> **New in v0.9.87:** `tracks list --json` now returns the unified envelope `{ tracks, nextPageToken, meta.count }`, matching the other list commands. Table output is unchanged; only the `--json` shape changed.
 
 #### Assign an existing version code to a different track (v0.9.78+)
 

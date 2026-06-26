@@ -1,9 +1,9 @@
 ---
 name: gpc-user-management
 description: "Use when managing Google Play developer account users, permissions, grants, or testers. Make sure to use this skill whenever the user mentions gpc users, gpc testers, gpc grants, developer account permissions, user roles, invite user, remove user, permission grants, per-app permissions, per-app grants, standalone grants, tester groups, beta testers, internal testers, alpha testers, Google Group testers, tester CSV import, team management, access control, user audit — even if they don't explicitly say 'user management.' Also trigger when someone wants to invite team members to their Play Console, update permissions for existing users, manage per-app grants independently from users, manage who can test their app, import testers from a CSV file, or audit who has access to their developer account. For authentication setup, see gpc-setup. For release track management, see gpc-release-flow."
-compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). User commands require developer account ID. Tester commands require an app with testing tracks configured."
+compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). User commands require developer account ID. Tester commands require an app with testing tracks configured. v0.9.87+ returns a consistent list --json envelope on grants/testers."
 metadata:
-  version: 0.11.0
+  version: 0.12.0
 ---
 
 # gpc-user-management
@@ -190,6 +190,8 @@ gpc grants delete user@example.com \
 **When to use `gpc grants` vs `gpc users update --grant`:**
 - Use `gpc grants` for managing grants on existing users without modifying their developer-level role
 - Use `gpc users invite --grant` or `gpc users update --grant` when also changing the user's account-level permissions
+
+> **New in v0.9.87:** `grants list` and `testers list` now return the unified `--json` envelope `{ <key>, nextPageToken, meta.count, message? }`, matching other list commands. Scripts reading a bare array will break — update to destructure the keyed field. `testers list` also emits `googleGroups: []` when a track has no Google Groups configured (the `items` key is always present). `users list` shares the same envelope as of GPC v0.9.83.
 
 `Read:` `references/permissions.md` for the full list of per-app permission constants.
 
