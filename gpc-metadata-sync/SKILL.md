@@ -3,7 +3,7 @@ name: gpc-metadata-sync
 description: "Use when managing Google Play store listings, metadata, screenshots, or images. Make sure to use this skill whenever the user mentions gpc listings, store listing, metadata sync, screenshots, Fastlane metadata, localization, app description, pull listings, push listings, feature graphic, Play Store images, app title, short description, full description, changelogs, image sync, image dedup, listings images sync, save quota, publish quota exceeded, too many API saves, screenshot display order, or wants to update any text or visual content on their Play Store page. Also trigger when someone asks about migrating from Fastlane supply, syncing metadata to/from local files, managing multi-language listings, or bulk-updating store content — even if they don't mention GPC explicitly. For releases and uploads, see gpc-release-flow."
 compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill)."
 metadata:
-  version: 1.5.0
+  version: 1.5.1
 ---
 
 # GPC Metadata Sync
@@ -38,8 +38,8 @@ gpc listings get
 # Specific language
 gpc listings get --lang ja-JP
 
-# All languages at once
-gpc listings get --all-languages
+# All languages at once (omit --lang)
+gpc listings get
 
 # JSON output for scripting
 gpc listings get --output json
@@ -50,14 +50,16 @@ gpc listings get --output json
 ```bash
 gpc listings update --lang en-US \
   --title "My App" \
-  --short-desc "A great app for great things" \
-  --full-desc "Full description here..."
+  --short "A great app for great things" \
+  --full "Full description here..."
 ```
 
-Or from a metadata directory:
+Or read the full description from a file:
 ```bash
-gpc listings update --lang en-US --file metadata/en-US/
+gpc listings update --lang en-US --full-file metadata/en-US/full_description.txt
 ```
+
+To update every locale from a Fastlane-style directory in one edit, use `gpc listings push --dir metadata/` (section 2).
 
 ### 1a) Validate listings locally (lint)
 
@@ -268,7 +270,7 @@ In dry-run mode no API calls are made. The output describes what would change: f
 ## Verification
 
 - `gpc listings get --lang <lang>` shows updated content
-- `gpc listings get --all-languages` confirms all languages are correct
+- `gpc listings get` (no `--lang`) confirms all languages are correct
 - `gpc listings images list --lang <lang> --type <type>` shows uploaded images
 - Play Console UI reflects the changes (may take a few minutes)
 

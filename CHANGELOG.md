@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.27.1 -- 2026-07-24
+
+Flag-accuracy fix for gpc-metadata-sync, from a command-reference audit against GPC v0.9.92 source.
+
+### Updated Skills
+
+- **gpc-metadata-sync** (1.5.0 -> 1.5.1) -- Corrected `gpc listings` flags that did not exist in the CLI: `gpc listings get --all-languages` -> `gpc listings get` (omit `--lang` for all languages), `gpc listings update --short-desc/--full-desc` -> `--short`/`--full`, and the nonexistent `gpc listings update --file <dir>` -> `--full-file <path>` (with a pointer to `gpc listings push --dir` for whole-directory updates). Pre-existing errors, not introduced by v1.27.0.
+
+---
+
 ## v1.27.0 -- 2026-07-24
 
 Save-quota guidance for image sync, plus the v0.9.92 screenshot display-order and absent-directory safety behavior. Prompted by a maintainer report (GH #95) where per-image `upload`/`delete` loops exhausted the daily Play publish (save) quota.
