@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.27.0 -- 2026-07-24
+
+Save-quota guidance for image sync, plus the v0.9.92 screenshot display-order and absent-directory safety behavior. Prompted by a maintainer report (GH #95) where per-image `upload`/`delete` loops exhausted the daily Play publish (save) quota.
+
+### Updated Skills
+
+- **gpc-metadata-sync** (1.4.0 -> 1.5.0) -- New save-quota rule: prefer `gpc listings images sync --dir ... --delete` (one committed edit = one save for the whole run, zero on a no-op) over looping per-image `upload`/`delete` (one save per call, hundreds per multi-locale run). Documents the v0.9.92 display-order guarantee (`--delete` re-uploads in sorted filename order when a locale/type differs in content or order) and absent-directory safety (an absent type dir is left untouched; a present-but-empty dir clears that type). Two new failure-mode rows (quota exceeded, screenshots out of order) and quota trigger terms in the description.
+
+### Bundle
+
+19 skills. Synced to GPC v0.9.92.
+
+---
+
 ## v1.26.0 -- 2026-06-26
 
 New **gpc-games** skill plus a sync covering GPC v0.9.83 through v0.9.87 (v1.25.0 covered through v0.9.82).

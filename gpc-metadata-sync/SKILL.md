@@ -1,9 +1,9 @@
 ---
 name: gpc-metadata-sync
-description: "Use when managing Google Play store listings, metadata, screenshots, or images. Make sure to use this skill whenever the user mentions gpc listings, store listing, metadata sync, screenshots, Fastlane metadata, localization, app description, pull listings, push listings, feature graphic, Play Store images, app title, short description, full description, changelogs, image sync, image dedup, listings images sync, or wants to update any text or visual content on their Play Store page. Also trigger when someone asks about migrating from Fastlane supply, syncing metadata to/from local files, managing multi-language listings, or bulk-updating store content — even if they don't mention GPC explicitly. For releases and uploads, see gpc-release-flow."
+description: "Use when managing Google Play store listings, metadata, screenshots, or images. Make sure to use this skill whenever the user mentions gpc listings, store listing, metadata sync, screenshots, Fastlane metadata, localization, app description, pull listings, push listings, feature graphic, Play Store images, app title, short description, full description, changelogs, image sync, image dedup, listings images sync, save quota, publish quota exceeded, too many API saves, screenshot display order, or wants to update any text or visual content on their Play Store page. Also trigger when someone asks about migrating from Fastlane supply, syncing metadata to/from local files, managing multi-language listings, or bulk-updating store content — even if they don't mention GPC explicitly. For releases and uploads, see gpc-release-flow."
 compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill)."
 metadata:
-  version: 1.4.0
+  version: 1.5.0
 ---
 
 # GPC Metadata Sync
@@ -197,27 +197,32 @@ gpc listings images delete --lang en-US --type phoneScreenshots --dry-run
 
 > **New in v0.9.74:** Both `gpc listings images upload` and `gpc listings images delete` respect `--dry-run`. In dry-run mode, the commands print what would happen (files that would be uploaded, image IDs that would be deleted) without calling the Play API.
 
-#### Sync images from a local directory (v0.9.69+)
+#### Sync images from a local directory (v0.9.69+) — PREFER THIS over per-image upload/delete
 
-`gpc listings images sync` uses SHA-256 content hashing to deduplicate images — it only uploads files that are not already on Play Store, and optionally deletes remote images that have no local counterpart.
+`gpc listings images sync` uses SHA-256 content hashing to deduplicate images — it only uploads files that are not already on Play Store, and optionally deletes remote images that have no local counterpart. It does the entire job inside **one** Play edit and **one** commit.
+
+> **Save-quota rule (important — always reach for `sync` first).** Google enforces a per-app **publish (save) limit** that is far lower than the general API request quota, and every committed edit counts as one save. The per-image `gpc listings images upload` and `gpc listings images delete` commands each open and commit their own edit, so looping them over many locales burns one save per call — e.g. 5 images × 27 locales × 2 form factors with delete-then-upload is roughly 540 saves per run and exhausts the daily limit in a few runs. `sync --dir` (optionally with `--delete`) collapses the whole run into a single save, and a no-op re-run (nothing changed) is discarded without committing, costing zero. Only use the standalone `upload`/`delete` commands for a genuine one-off single-image fix.
 
 ```bash
+# Sync EVERY locale and image type under a tree, mirror deletions — one save for the whole run
+gpc listings images sync --dir ./images --delete
+
 # Sync all phone screenshots for en-US from a local directory
 gpc listings images sync --lang en-US --type phoneScreenshots --dir ./screens/
 
 # Sync all image types for a language
 gpc listings images sync --lang en-US --dir ./screenshots/en-US/
 
-# Delete remote images that no longer exist locally
-gpc listings images sync --lang en-US --type phoneScreenshots --dir ./screens/ --delete
-
-# Preview what would change without touching the API
-gpc listings images sync --lang en-US --type phoneScreenshots --dir ./screens/ --dry-run
+# Preview what would change without touching the API (spends no save)
+gpc listings images sync --dir ./images --delete --dry-run
 ```
 
 **Key behaviors:**
 - SHA-256 hash of each local file is compared against the remote image hash. Already-matching images are skipped (no re-upload).
+- Whole run is a single edit + single commit = **one save** (zero on a no-op). This is the quota-safe path; see the save-quota rule above.
 - `--delete` removes remote images that have no matching local file. Without this flag, extra remote images are left in place.
+- **Display order guaranteed with `--delete` (v0.9.92+):** the Play API has no reorder endpoint and keeps upload order, so a hash-only partial update would leave screenshots out of order (unchanged image keeps its slot, changed one is appended). When a locale/type differs from local in content *or* order, `--delete` clears that combo in one call and re-uploads local files in sorted filename order (`1.png`, `2.png`, ...); a combo already in order is skipped. Name files to sort in display order; zero-pad (`01.png`) near a per-type cap.
+- **Absent-directory safety (v0.9.92+):** a type directory that is absent locally is left untouched, so syncing only screenshots never wipes a remote icon or feature graphic. A present-but-empty directory is an explicit "clear this type."
 - `--dry-run` prints a diff table (`add / skip / delete`) without making any API calls.
 - Supports the same image types as `gpc listings images upload`: `phoneScreenshots`, `sevenInchScreenshots`, `tenInchScreenshots`, `tvScreenshots`, `wearScreenshots`, `icon`, `featureGraphic`, `tvBanner`, `promoGraphic`.
 
@@ -286,6 +291,8 @@ If you process the CSV programmatically, strip the leading `'` from string value
 | Symptom | Likely Cause | Fix |
 |---------|-------------|-----|
 | `LISTING_NOT_FOUND` | Language not set up in Play Console | Add the language in Console first, then push |
+| Daily save/publish quota exceeded after a few runs | Looping per-image `upload`/`delete` (one committed edit = one save each) | Switch to `gpc listings images sync --dir ... --delete` (one save for the whole run) and `gpc listings push --dir` for text. See the save-quota rule in section 4. |
+| Screenshots out of display order after a partial update | Older GPC, or per-image upload appends changed images last | Upgrade to v0.9.92+ and use `sync --delete` (guarantees order); name files `1.png`, `2.png`, ... |
 | Image upload fails | Wrong format or size | Check Google's image requirements (PNG/JPEG, size limits per type) |
 | Truncated description | Exceeds character limit | Title: 30 chars, short desc: 80 chars, full desc: 4000 chars |
 | Push shows no changes | Local files match remote | Confirm edits are saved in the correct file paths |
