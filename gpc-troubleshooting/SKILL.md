@@ -1,9 +1,9 @@
 ---
 name: gpc-troubleshooting
-description: "Use when debugging GPC errors, failures, or unexpected behavior. Make sure to use this skill whenever the user mentions gpc error, gpc failing, exit code, AUTH_FAILED, API_FORBIDDEN, NETWORK_ERROR, CONFIG_MISSING, EDIT_CONFLICT, upload failed, permission denied, timeout, rate limit, gpc doctor failing, unexpected exit code, command not working, GPC crash, debug GPC, verbose output, --json error, threshold breach — even if they don't explicitly say 'troubleshoot.' Also trigger when someone encounters any GPC error they don't understand, when gpc doctor reports issues, when CI pipelines fail with GPC commands, or when they need to interpret exit codes. For auth-specific setup issues, see gpc-setup. For CI-specific issues, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Covers all packages: @gpc-cli/cli, @gpc-cli/core, @gpc-cli/api, @gpc-cli/auth, @gpc-cli/config. v0.9.85+ resolves the npm global install failure."
+description: "Use when debugging GPC errors, failures, or unexpected behavior. Make sure to use this skill whenever the user mentions gpc error, gpc failing, exit code, AUTH_FAILED, API_FORBIDDEN, NETWORK_ERROR, CONFIG_MISSING, EDIT_CONFLICT, upload failed, permission denied, timeout, rate limit, gpc doctor failing, unexpected exit code, command not working, GPC crash, debug GPC, verbose output, --json error, threshold breach, REPORT_ACCESS_DENIED, REPORT_BUCKET_NOT_FOUND, reports bucket access, bulk reports permission denied — even if they don't explicitly say 'troubleshoot.' Also trigger when someone encounters any GPC error they don't understand, when gpc doctor reports issues, when CI pipelines fail with GPC commands, or when they need to interpret exit codes. For auth-specific setup issues, see gpc-setup. For CI-specific issues, see gpc-ci-integration."
+compatibility: "GPC v0.9.82+. Covers all packages: @gpc-cli/cli, @gpc-cli/core, @gpc-cli/api, @gpc-cli/auth, @gpc-cli/config. v0.9.85+ resolves the npm global install failure. v0.9.93+ adds the REPORT_* bulk-report error codes and the doctor reports-bucket check."
 metadata:
-  version: 0.18.0
+  version: 0.19.0
 ---
 
 # gpc-troubleshooting
@@ -241,6 +241,29 @@ gpc vitals crashes --threshold 1.5 && gpc releases promote --from beta --to prod
 | `RELEASE_NO_DRAFT`               | `--apply` found no draft release on the target track (v0.9.64+) | Create a draft release first (`gpc releases upload --status draft`) |
 | `BUNDLE_PROCESSING_TIMEOUT`      | AAB upload completed but bundle not processed within ~86s (v0.9.64+, extended v0.9.77) | Retry the upload, or use `--status draft` and commit later; if persistent, check bundle size and Google's server status |
 
+### Bulk report errors (v0.9.93+)
+
+`gpc reports list` and `gpc reports download stats|financial` read Play's monthly bulk-report CSVs from the Cloud Storage bucket linked to the developer account (`pubsite_prod_<developerId>`). Before v0.9.93 these commands only printed guidance; they now do real network work, with their own error codes.
+
+| Code | Exit | Meaning | Fix |
+|------|------|---------|-----|
+| `REPORT_ACCESS_DENIED` | 4 | Credential is valid but not authorized to read the reports bucket | Play Console -> Users and permissions -> the service account -> Account permissions -> enable "View app information and download bulk reports (read-only)", wait a few minutes, then retry |
+| `REPORT_AUTH_REJECTED` | 3 | Google rejected the token itself (HTTP 401) | Check the key with `gpc auth status`, verify the system clock, then `gpc auth clear-cache` and retry |
+| `REPORT_BUCKET_UNKNOWN` | 2 | No bucket configured and no developer id to derive one from | Set `developerId` / `GPC_DEVELOPER_ID`, or pass `--bucket` / `GPC_REPORTS_BUCKET` / `reports.bucket` |
+| `REPORT_BUCKET_INVALID` | 2 | The configured bucket name is not a valid GCS bucket name | Copy the exact Cloud Storage URI from Play Console -> Download reports (a `gs://` URI is accepted and reduced to the bucket name) |
+| `REPORT_BUCKET_NOT_FOUND` | 4 | The bucket does not exist or is invisible to this account | Confirm the name; the default is `pubsite_prod_<developerId>` |
+| `REPORT_OBJECT_NOT_FOUND` | 4 | No object matched the type / month / dimension | The error lists available dimensions or months; a month is only published after it ends |
+| `REPORT_LIST_FAILED` | 4 | The bucket listing call failed | Retry; check network and `gpc doctor` |
+| `REPORT_DOWNLOAD_FAILED` | 4 | The object fetch failed | Retry; check network |
+| `REPORT_DECODE_FAILED` | 4 | The object could not be gunzipped or decoded from UTF-16 | Retry the download; if it persists, save the raw object with `--output-file` and report it |
+| `REPORT_ARCHIVE_UNREADABLE` | 4 | A financial ZIP archive could not be read | Save it raw with `--output-file report.zip` and open it locally |
+| `REPORT_MULTIPLE_ENTRIES` | 2 | A financial archive holds several CSVs, so there is nothing single to print | Use `--output-file report.zip` to save the archive, or `--json` to inline every entry |
+| `INVALID_REPORT_DIMENSION` | 2 | `--dimension` is not one of the supported values | Use `overview`, `country`, `language`, `os_version`, `device`, `app_version`, `carrier`, or `traffic_source` (reviews reports have no dimension) |
+| `MISSING_REQUIRED_OPTION` | 2 | A required flag such as `--month` or `--type` was omitted | Check the synopsis: stats downloads need `--month` and `--type` |
+| `INVALID_LIMIT` | 2 | `--limit` is not a positive integer | Pass a positive whole number |
+
+`gpc doctor` includes a `reports-bucket` probe: it warns when the grant is missing (403/401) or the bucket name is wrong (404), so it is the fastest way to confirm setup before debugging a command.
+
 ### 9. Debug mode
 
 Enable verbose output for any command:
@@ -292,6 +315,8 @@ export GPC_UPLOAD_TIMEOUT=300000  # Upload timeout in ms (5 min)
 | Commands work locally, fail in CI | Missing env vars in CI | Set `GPC_SERVICE_ACCOUNT` and `GPC_APP` in CI secrets; run `gpc setup --auto` (v0.9.68+) |
 | Env vars `GPC_SERVICE_ACCOUNT` / `GPC_APP` seem to be ignored | Active profile overriding env vars (pre-v0.9.81 bug) | Upgrade to v0.9.81+. Check active profile with `gpc config list`; env vars and flags now correctly override the profile. |
 | `npm install -g @gpc-cli/cli` fails with `EUNSUPPORTEDPROTOCOL` | `workspace:*` specifiers leaked into published manifests (v0.9.77-v0.9.83) | Reinstall on v0.9.84+ or v0.9.85+: `npm install -g @gpc-cli/cli@latest`. Fixed in v0.9.84 (cli+core) and fully resolved in v0.9.85 (api package re-published). |
+| `gpc doctor` warns on `reports-bucket` | Service account lacks the bulk-reports grant, or the bucket name is wrong | Enable "View app information and download bulk reports (read-only)" in Play Console, or set the exact bucket with `--bucket` / `GPC_REPORTS_BUCKET` (v0.9.93+) |
+| Reports still denied right after granting the permission | Grant has not propagated, or a cached token predates it | Wait a few minutes, run `gpc auth clear-cache`, then retry (v0.9.93+) |
 | JSON output has no `suggestion` | Unexpected error type | File a bug — all errors should have suggestions |
 
 ## Related skills

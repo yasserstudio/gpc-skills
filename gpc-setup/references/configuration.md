@@ -28,6 +28,8 @@ GPC searches for configuration in this order:
 | `profile` | string | Default auth profile name | "default" |
 | `verbose` | boolean | Enable debug logging | false |
 | `quiet` | boolean | Suppress non-essential output | false |
+| `developerId` | string | Developer account ID (also derives the reports bucket) | — |
+| `reports.bucket` | string | Play bulk-reports GCS bucket (v0.9.93+) | `pubsite_prod_<developerId>` |
 
 ## Environment Variable Precedence
 
@@ -52,6 +54,7 @@ CLI flags > Environment variables > Config file > Defaults
 | `GPC_MAX_DELAY` | Max retry delay (ms) |
 | `GPC_RATE_LIMIT` | Requests per second |
 | `GPC_DEVELOPER_ID` | Developer account ID |
+| `GPC_REPORTS_BUCKET` | `reports.bucket` (v0.9.93+) |
 | `GPC_CA_CERT` | Custom CA certificate path |
 | `HTTPS_PROXY` | HTTP proxy URL |
 

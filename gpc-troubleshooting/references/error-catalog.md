@@ -97,6 +97,52 @@ All known GPC error codes with causes and fixes.
 | `TESTER_LIMIT_EXCEEDED` | Too many testers | Use Google Groups for scale |
 | `TRACK_NOT_FOUND` | Invalid track name | Use `internal`, `alpha`, `beta`, or custom |
 
+## Bulk report errors (v0.9.93+)
+
+Raised by `gpc reports list` and `gpc reports download stats|financial`, which read Play's monthly bulk-report CSVs from the developer account's Cloud Storage bucket.
+
+| Code | Exit | Message | Fix |
+|------|------|---------|-----|
+| `REPORT_ACCESS_DENIED` | 4 | Access denied reading the Play reports bucket | Enable "View app information and download bulk reports (read-only)" for the service account in Play Console → Users and permissions → Account permissions; allow a few minutes to propagate |
+| `REPORT_AUTH_REJECTED` | 3 | Authentication rejected (HTTP 401) | Verify the key with `gpc auth status` and the system clock; `gpc auth clear-cache` and retry |
+| `REPORT_BUCKET_UNKNOWN` | 2 | Cannot determine the reports bucket | Set `developerId` / `GPC_DEVELOPER_ID`, or pass `--bucket` / `GPC_REPORTS_BUCKET` / `reports.bucket` |
+| `REPORT_BUCKET_INVALID` | 2 | Configured bucket name is not valid | Copy the exact Cloud Storage URI from Play Console → Download reports |
+| `REPORT_BUCKET_NOT_FOUND` | 4 | Bucket not found | Default is `pubsite_prod_<developerId>`; override if the account's bucket differs |
+| `REPORT_OBJECT_NOT_FOUND` | 4 | No report for that type / month / dimension | Error lists available dimensions or months; a month publishes only after it ends |
+| `REPORT_LIST_FAILED` | 4 | Bucket listing call failed | Retry; check network |
+| `REPORT_DOWNLOAD_FAILED` | 4 | Object fetch failed | Retry; check network |
+| `REPORT_DECODE_FAILED` | 4 | Could not gunzip or decode UTF-16 | Retry; save the raw object with `--output-file` if it persists |
+| `REPORT_ARCHIVE_UNREADABLE` | 4 | Financial ZIP archive could not be read | Save it raw with `--output-file report.zip` |
+| `REPORT_MULTIPLE_ENTRIES` | 2 | Archive holds several CSVs | Use `--output-file report.zip` or `--json` (inlines every entry) |
+| `INVALID_REPORT_DIMENSION` | 2 | Unsupported `--dimension` | One of `overview`, `country`, `language`, `os_version`, `device`, `app_version`, `carrier`, `traffic_source` |
+| `MISSING_REQUIRED_OPTION` | 2 | Required flag omitted | Stats downloads need `--month` and `--type`; financial downloads need `--month` |
+| `INVALID_LIMIT` | 2 | `--limit` is not a positive integer | Pass a positive whole number |
+
+### `REPORT_ACCESS_DENIED`
+
+**Exit code:** 4
+
+**Cause:** The service account authenticated fine but is not authorized to read the reports bucket. This is the common first-run failure: Play grants the "download bulk reports" permission to your own user login automatically, but **never** to a service account.
+
+**Fix:** In Play Console → Users and permissions, open the service account, and under **Account permissions** enable **"View app information and download bulk reports (read-only)"**. Allow a few minutes for it to propagate, then retry.
+
+```bash
+# Confirm the grant landed
+gpc doctor            # look for the reports-bucket check
+
+# Drop cached tokens if the grant is new
+gpc auth clear-cache
+
+gpc reports list installs --app com.example.myapp --month 2026-02
+```
+
+**Notes:**
+- The grant is account-level, not per-app: one grant covers stats and financial reports.
+- Only the reports commands (and the `gpc doctor` probe) request the `devstorage.read_only` scope, and those tokens are cached separately from regular ones.
+- If the bucket name itself is wrong you get `REPORT_BUCKET_NOT_FOUND` instead; copy the exact Cloud Storage URI from Play Console → Download reports.
+
+---
+
 ## Plugin errors (exit code 10)
 
 | Code | Message | Fix |
@@ -231,3 +277,4 @@ gpc releases upload app.aab --track production
 | `GPC_DEBUG` | — | Set to `1` for verbose output |
 | `GPC_UPLOAD_TIMEOUT` | 300000 | Upload request timeout in ms (5 min) |
 | `GPC_UPLOAD_CHUNK_SIZE` | 8388608 | Upload chunk size in bytes (8 MB) |
+| `GPC_REPORTS_BUCKET` | — | Override the Play reports bucket (default `pubsite_prod_<developerId>`, v0.9.93+) |

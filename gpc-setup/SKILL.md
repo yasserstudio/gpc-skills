@@ -1,9 +1,9 @@
 ---
 name: gpc-setup
-description: "Use when setting up GPC (Google Play Console CLI): authentication with service accounts, OAuth, or Application Default Credentials; configuration files (.gpcrc.json, env vars, XDG paths); auth profiles; running gpc doctor; troubleshooting auth errors. Make sure to use this skill whenever the user mentions gpc auth, gpc setup, service account setup, gpc config, gpc doctor, GPC_SERVICE_ACCOUNT, gpc auth login, Google Play API credentials, Play Console authentication, or wants to install/configure GPC — even if they don't explicitly say 'setup.' Also trigger when someone is troubleshooting auth failures, token expiration, keychain issues, or proxy/network configuration for GPC."
-compatibility: "GPC v0.9.82+. Requires Node.js 20+, pnpm 9+ (for development). npm for installation."
+description: "Use when setting up GPC (Google Play Console CLI): authentication with service accounts, OAuth, or Application Default Credentials; configuration files (.gpcrc.json, env vars, XDG paths); auth profiles; running gpc doctor; troubleshooting auth errors. Make sure to use this skill whenever the user mentions gpc auth, gpc setup, service account setup, gpc config, gpc doctor, GPC_SERVICE_ACCOUNT, gpc auth login, gpc auth clear-cache, token cache, Google Play API credentials, Play Console authentication, download bulk reports permission, reports bucket access, GPC_REPORTS_BUCKET, or wants to install/configure GPC — even if they don't explicitly say 'setup.' Also trigger when someone is troubleshooting auth failures, token expiration, keychain issues, or proxy/network configuration for GPC."
+compatibility: "GPC v0.9.82+. Requires Node.js 20+, pnpm 9+ (for development). npm for installation. v0.9.93+ adds gpc auth clear-cache, the doctor reports-bucket check, and the bulk-reports account permission needed by gpc reports."
 metadata:
-  version: 1.6.0
+  version: 1.7.0
 ---
 
 # GPC Setup
@@ -116,6 +116,10 @@ export GPC_SERVICE_ACCOUNT=path/to/key.json
 export GPC_SERVICE_ACCOUNT='{"type":"service_account","project_id":"..."}'
 ```
 
+**Extra grant for bulk reports (v0.9.93+).** The API access grant above does not cover Play's monthly bulk reports, which are delivered as CSV files in a Cloud Storage bucket rather than through the Publisher API. Play gives that bucket to your own user login automatically but never to a service account. If you plan to use `gpc reports`, open Play Console → Users and permissions → the service account → **Account permissions** and enable **"View app information and download bulk reports (read-only)"**, then allow a few minutes for it to propagate. Without it, reports commands fail with `REPORT_ACCESS_DENIED`. Verify with the `reports-bucket` check in `gpc doctor`.
+
+Only the reports commands (and that doctor probe) request the extra `devstorage.read_only` scope, and storage-scoped tokens are cached separately, so tokens minted for every other command carry no storage access.
+
 Read:
 - `references/service-account.md`
 
@@ -197,7 +201,10 @@ gpc auth profiles              # List profiles
 gpc auth switch production     # Switch active profile
 gpc auth whoami                # Show current identity
 gpc auth status                # Show auth state details
+gpc auth clear-cache           # Drop cached tokens, keep credentials (v0.9.93+)
 ```
+
+`gpc auth clear-cache` is the light-touch counterpart to `gpc auth logout`: it deletes cached access tokens so the next command mints a fresh one, without removing the configured credentials. Use it after changing permissions in Play Console (for example the bulk-reports grant) so a cached token from before the change does not mask it.
 
 Use `--profile` flag to override per-command:
 ```bash
@@ -210,7 +217,7 @@ gpc apps list --profile staging
 gpc doctor
 ```
 
-Checks (22 total):
+Checks (23 total):
 - Node.js version (≥ 20)
 - Configuration loaded
 - Default app set and valid Android package name format
@@ -228,6 +235,7 @@ Checks (22 total):
 - API quota proximity: warns if daily or per-minute usage exceeds 80% (v0.9.71+)
 - Plugin health: verifies each configured plugin loads without errors (v0.9.71+)
 - Signing key verification: `--verify` fetches Play signing cert and compares against local keystore (v0.9.75+)
+- Reports bucket (`reports-bucket`): probes the Play bulk-reports bucket and warns when the service account lacks the "download bulk reports (read-only)" grant or the bucket name is wrong (v0.9.93+)
 
 Use `gpc doctor --fix` to auto-remediate fixable issues (version, auth, config keys).
 

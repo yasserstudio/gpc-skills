@@ -1,5 +1,33 @@
 # Changelog
 
+## v1.28.0 -- 2026-08-01
+
+Synced with GPC v0.9.93: `gpc reports` now downloads Play bulk reports for real, from the developer account's Cloud Storage bucket. Before v0.9.93 the reports commands only printed guidance about where the data lived, so every skill that mentioned them described a facade.
+
+### Updated Skills
+
+- **gpc-vitals-monitoring** (1.8.0 -> 1.9.0) -- Rewrote the Reports section around the live GCS path: the required one-time "View app information and download bulk reports (read-only)" account grant (Play never gives it to a service account automatically), bucket resolution (`pubsite_prod_<developerId>`, overridable with `--bucket` / `GPC_REPORTS_BUCKET` / `reports.bucket`), corrected `reports list <report-type>` usage (it takes a single type, not `stats`/`financial`), the `--dimension` flag and its eight values, `subscriptions` and `sales` report types, the list `--json` envelope, UTF-16 to UTF-8 decoding, ZIP unwrapping rules for financial reports, and the three download JSON envelopes. Six new failure-mode rows for the `REPORT_*` codes plus two verification steps.
+
+- **gpc-troubleshooting** (0.18.0 -> 0.19.0) -- New "Bulk report errors" section in SKILL.md and the error catalog covering all 14 new codes with exit codes (`REPORT_ACCESS_DENIED` 4, `REPORT_AUTH_REJECTED` 3, `REPORT_BUCKET_UNKNOWN`/`REPORT_BUCKET_INVALID`/`REPORT_MULTIPLE_ENTRIES`/`INVALID_REPORT_DIMENSION`/`MISSING_REQUIRED_OPTION`/`INVALID_LIMIT` 2, the rest 4), a long-form `REPORT_ACCESS_DENIED` entry, the `gpc doctor` reports-bucket probe, `gpc auth clear-cache` as the fix for a stale token after a new grant, and `GPC_REPORTS_BUCKET` in the env var table.
+
+- **gpc-setup** (1.6.0 -> 1.7.0) -- Documents the extra bulk-reports account permission (set under Users and permissions, not Settings -> API access), the `devstorage.read_only` least-privilege note (only the reports path requests it; storage-scoped tokens cache separately), `gpc auth clear-cache` alongside `gpc auth logout`, the new `reports-bucket` doctor check (22 -> 23), and `developerId` / `reports.bucket` / `GPC_REPORTS_BUCKET` in the configuration reference.
+
+- **gpc-sdk-usage** (1.8.0 -> 1.9.0) -- **Breaking:** `client.reports.list` removed from `@gpc-cli/api` (it never worked) and `downloadReport` removed from `@gpc-cli/core`. New worked example for `listReports` / `downloadStatsReport` / `downloadFinancialReport` / `resolveReportsBucket`, the `ReportsAuth` shape, and requesting `STORAGE_READ_ONLY_SCOPE` explicitly in `resolveAuth`. Three new failure-mode rows.
+
+- **README** -- Five new intent-routing rows for bulk report downloads, bucket questions, `REPORT_ACCESS_DENIED`, and granting reports access.
+
+### Marquee changes in GPC v0.9.93
+
+- `gpc reports list`, `gpc reports download stats`, and `gpc reports download financial` read live from the Play-linked GCS bucket (were dead stubs)
+- Requires a one-time "download bulk reports (read-only)" grant on the service account; `REPORT_ACCESS_DENIED` until then
+- New `gpc auth clear-cache`, new `gpc doctor` reports-bucket check, `devstorage.read_only` requested only by the reports path
+
+### Bundle
+
+19 skills. Synced to GPC v0.9.93.
+
+---
+
 ## v1.27.1 -- 2026-07-24
 
 Flag-accuracy fix for gpc-metadata-sync, from a command-reference audit against GPC v0.9.92 source.

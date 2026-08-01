@@ -32,7 +32,10 @@
 | Metadata sync | Edit store listing, Manage store presence |
 | Reviews | Reply to reviews |
 | Vitals | View app quality information |
+| Bulk reports (`gpc reports`, v0.9.93+) | Account permission: "View app information and download bulk reports (read-only)" |
 | Full access | All of the above |
+
+**The bulk-reports permission is account-level and is not granted to a service account automatically** (Play grants that Cloud Storage bucket to your own user login only). Set it under **Users and permissions → the service account → Account permissions**, not under Settings → API access, and allow a few minutes to propagate. Missing it produces `REPORT_ACCESS_DENIED`; `gpc doctor` flags it as the `reports-bucket` check.
 
 ## Security Best Practices
 
@@ -62,3 +65,4 @@ export GPC_SERVICE_ACCOUNT=$(echo '{"type":"service_account",...}' | base64)
 | `The caller does not have permission` | Service account not granted Play Console access | Add in Play Console → Settings → API access |
 | `Could not load the default credentials` | Key file not found or invalid | Check file path and JSON validity |
 | `Request had insufficient authentication scopes` | Wrong scopes | GPC handles scopes automatically — ensure the key file is valid |
+| `REPORT_ACCESS_DENIED` | Missing the bulk-reports account permission (v0.9.93+) | Enable "View app information and download bulk reports (read-only)", wait a few minutes, then `gpc auth clear-cache` |

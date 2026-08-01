@@ -1,9 +1,9 @@
 ---
 name: gpc-vitals-monitoring
-description: "Use when monitoring Android app health metrics from Google Play. Make sure to use this skill whenever the user mentions gpc vitals, gpc watch, gpc status, crash rate, ANR rate, startup time, Android vitals, crash monitoring, threshold alerting, vitals gating, rollout monitoring, auto-halt, breach notification, webhook alerting, frame rate, battery usage, memory issues, error tracking, app quality, user reviews, review replies, Play Store reviews, star rating, negative reviews, review export, financial reports, stats reports, or wants to check app health, monitor a staged rollout, respond to reviews, or download Play Console reports. Also trigger when someone asks about gating deployments on crash data, monitoring app performance after a release, watching a rollout for regressions, or tracking review sentiment — even if they don't mention GPC. For releases, see gpc-release-flow. For CI gating, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Vitals data requires the app to have sufficient install volume. v0.9.83+ adds reviews fidelity fields and the unified list envelope."
+description: "Use when monitoring Android app health metrics from Google Play. Make sure to use this skill whenever the user mentions gpc vitals, gpc watch, gpc status, crash rate, ANR rate, startup time, Android vitals, crash monitoring, threshold alerting, vitals gating, rollout monitoring, auto-halt, breach notification, webhook alerting, frame rate, battery usage, memory issues, error tracking, app quality, user reviews, review replies, Play Store reviews, star rating, negative reviews, review export, financial reports, stats reports, gpc reports, reports list, reports download, bulk reports, earnings report, sales report, play balance, installs report, subscriptions report, reports bucket, GPC_REPORTS_BUCKET, pubsite_prod, REPORT_ACCESS_DENIED, download bulk reports permission, or wants to check app health, monitor a staged rollout, respond to reviews, or download Play Console reports. Also trigger when someone asks about gating deployments on crash data, monitoring app performance after a release, watching a rollout for regressions, or tracking review sentiment — even if they don't mention GPC. For releases, see gpc-release-flow. For CI gating, see gpc-ci-integration."
+compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Vitals data requires the app to have sufficient install volume. v0.9.83+ adds reviews fidelity fields and the unified list envelope. v0.9.93+ downloads Play bulk reports live from the account's Cloud Storage bucket (needs the 'View app information and download bulk reports (read-only)' grant on the service account)."
 metadata:
-  version: 1.8.0
+  version: 1.9.0
 ---
 
 # GPC Vitals Monitoring
@@ -20,6 +20,7 @@ Use this skill when the task involves:
 - Building monitoring pipelines with GPC output
 - Comparing vitals across time periods
 - Investigating error issues and anomalies
+- Downloading Play bulk reports (installs, crashes, ratings, earnings, subscriptions) as CSV
 
 ## Inputs required
 
@@ -425,19 +426,57 @@ gpc vitals crashes --output json | jq '.data' | curl -X POST ...
 gpc vitals overview --output json >> /var/log/gpc-vitals.jsonl
 ```
 
-### 11) Reports
+### 11) Reports: bulk CSV downloads (live since v0.9.93)
+
+Play delivers monthly bulk reports as CSV files in a Google Cloud Storage bucket linked to the developer account, not through the Publisher API. Since GPC v0.9.93 `gpc reports` reads that bucket directly with the same service account; before v0.9.93 these commands only printed guidance about where the data lived.
+
+**Required one-time grant.** Play does not give a service account access to the reports bucket automatically: it grants that bucket to your own user login only. In **Play Console -> Users and permissions -> the service account -> Account permissions**, enable **"View app information and download bulk reports (read-only)"**, then allow a few minutes for it to propagate. Without it every reports command fails with `REPORT_ACCESS_DENIED` (exit 4). Check it with `gpc doctor`, which has a `reports-bucket` probe that warns when the grant is missing.
+
+**Bucket resolution.** The default is `pubsite_prod_<developerId>`, derived from the `developerId` config key or `GPC_DEVELOPER_ID`. If the account's bucket differs, copy the exact Cloud Storage URI from Play Console -> Download reports and override it:
+
+| Setting         | How to set it                                        |
+|-----------------|------------------------------------------------------|
+| Flag (wins)     | `--bucket pubsite_prod_1234567890`                   |
+| Env             | `GPC_REPORTS_BUCKET=pubsite_prod_1234567890`         |
+| Config          | `"reports": { "bucket": "pubsite_prod_1234567890" }` |
+| Derived default | `developerId` / `GPC_DEVELOPER_ID`                   |
 
 ```bash
-# List available reports
-gpc reports list financial --month 2026-02
-gpc reports list stats --month 2026-02
+# List report files for a type, optionally narrowed to one month
+gpc reports list installs --app com.example.myapp --month 2026-02
+gpc reports list earnings --month 2026-02
+gpc reports list crashes --app com.example.myapp --limit 20 --next-page <token>
 
-# Download reports
-gpc reports download financial --month 2026-02
-gpc reports download stats --month 2026-02 --type installs --output-file installs.csv
+# Stats reports (per app), decoded UTF-8 CSV on stdout
+gpc reports download stats --app com.example.myapp --month 2026-02 --type installs
+gpc reports download stats --app com.example.myapp --month 2026-02 --type crashes \
+  --dimension country --output-file crashes-2026-02.csv
+
+# Financial reports (account-level, no --app)
+gpc reports download financial --month 2026-02 --type earnings
+gpc reports download financial --month 2026-02 --type play_balance \
+  --output-file balance-2026-02.csv
 ```
 
-Report types — financial: `earnings`, `estimated_sales`, `play_balance`. Stats: `installs`, `crashes`, `ratings`, `reviews`, `store_performance`.
+`reports list <report-type>` takes a single report type (not `stats` / `financial`), and returns the same `--json` envelope as the other list commands: `{ reports, nextPageToken, meta.count, message? }`. Stats types are narrowed to the configured app; financial types are account-level.
+
+Report types. Financial: `earnings`, `sales`, `estimated_sales`, `play_balance`. Stats: `installs`, `crashes`, `ratings`, `reviews`, `store_performance`, `subscriptions`. `sales` and `estimated_sales` are two names for the same Play report and return identical data.
+
+Dimensions (`--dimension`, stats only, default `overview`): `overview`, `country`, `language`, `os_version`, `device`, `app_version`, `carrier`, `traffic_source`. Play publishes one CSV per dimension per month; reviews reports have no dimension. If the requested dimension does not exist for that month, the error lists the ones that do.
+
+Encoding and archives: Play stores these objects gzip-compressed and UTF-16 encoded. GPC decompresses and re-encodes to UTF-8 text, so output pipes straight into standard CSV tools. Financial reports arrive as ZIP archives: a single-CSV archive is unwrapped automatically; a multi-CSV archive needs `--output-file report.zip` (saves the raw archive) or `--json`, which inlines every entry.
+
+With `--json`, the download commands emit one of three envelopes:
+
+```json
+{ "objectName": "...", "csv": "..." }
+{ "objectName": "...", "outputFile": "...", "bytes": 1234 }
+{ "objectName": "...", "entries": [{ "name": "...", "csv": "..." }] }
+```
+
+Least privilege: only the reports commands (and the matching `gpc doctor` probe) request the `devstorage.read_only` scope, and storage-scoped tokens are cached separately, so no other command's token carries storage access. `gpc auth clear-cache` drops cached tokens without removing credentials if a freshly granted permission is not visible yet.
+
+Error codes specific to this path: `REPORT_ACCESS_DENIED` (4, missing grant), `REPORT_BUCKET_UNKNOWN` / `REPORT_BUCKET_INVALID` (2), `REPORT_BUCKET_NOT_FOUND` (4), `REPORT_OBJECT_NOT_FOUND` (4), `REPORT_AUTH_REJECTED` (3). Full list in gpc-troubleshooting.
 
 ## Verification
 
@@ -447,6 +486,8 @@ Report types — financial: `earnings`, `estimated_sales`, `play_balance`. Stats
 - Threshold commands return exit code 0 (OK) or 6 (breached)
 - `gpc reviews list` returns recent reviews
 - JSON output is parseable: `gpc vitals crashes --output json | jq .`
+- `gpc doctor` shows `reports-bucket` as a pass (the bulk-reports grant is in place)
+- `gpc reports list installs --month <last full month>` returns at least one object
 
 ## Failure modes / debugging
 
@@ -456,6 +497,12 @@ Report types — financial: `earnings`, `estimated_sales`, `play_balance`. Stats
 | `--threshold` always passes | Threshold too high | Check current crash rate with `gpc vitals crashes` first, then set appropriate threshold |
 | Reviews API rate limit | Too many requests | Reviews API: 200 GET/hour, 2,000 POST/day. Space out requests. |
 | Reports not found | Wrong month format | Use `YYYY-MM` format (e.g., `2026-02`) |
+| `REPORT_ACCESS_DENIED` on any reports command | The service account lacks the bulk-reports grant | Play Console -> Users and permissions -> the service account -> Account permissions -> enable "View app information and download bulk reports (read-only)", wait a few minutes, then `gpc auth clear-cache` and retry |
+| `REPORT_BUCKET_UNKNOWN` | No `developerId` and no explicit bucket | Set `developerId` / `GPC_DEVELOPER_ID`, or pass `--bucket` / `GPC_REPORTS_BUCKET` / `reports.bucket` |
+| `REPORT_BUCKET_NOT_FOUND` | Account's bucket is not `pubsite_prod_<developerId>` | Copy the exact Cloud Storage URI from Play Console -> Download reports and set it with `--bucket` |
+| `REPORT_OBJECT_NOT_FOUND` with a dimension | That dimension is not published for the month | The error lists the dimensions that exist; reviews reports have no dimension |
+| Report month returns nothing | Month is not finished | Play publishes a month's reports after it ends; use the last complete month |
+| Multi-CSV financial archive refuses to print | `REPORT_MULTIPLE_ENTRIES` | Save the archive with `--output-file report.zip`, or use `--json` to inline every entry |
 | Empty crash clusters | New release | Crash data takes time to aggregate; check again in 24-48 hours |
 
 ## Related skills

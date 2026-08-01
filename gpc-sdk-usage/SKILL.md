@@ -1,9 +1,9 @@
 ---
 name: gpc-sdk-usage
-description: "Use when building applications that programmatically interact with the Google Play Developer API using GPC's TypeScript SDK packages. Make sure to use this skill whenever the user mentions @gpc-cli/api, @gpc-cli/auth, PlayApiClient, createApiClient, resolveAuth, Google Play API client, TypeScript SDK, programmatic access, API client, HTTP client, rate limiter, pagination, edit lifecycle in code, Node.js Google Play, server-side Play Store, backend integration — even if they don't explicitly say 'SDK.' Also trigger when someone wants to build a backend service, custom dashboard, automation script, or any TypeScript/JavaScript application that interacts with Google Play programmatically rather than through the CLI. For CLI usage, see other gpc-* skills. For building plugins, see gpc-plugin-development."
-compatibility: "GPC v0.9.82+ (new APIs require v0.9.51+, typed acknowledge/revoke bodies require v0.9.55+, Play Custom App Publishing API + `createEnterpriseClient` + `HttpClient.uploadCustomApp<T>` + `ResumableUploadOptions.initialMetadata` require v0.9.56+, changelog generation exports (`generateChangelog`, `renderPlayStore`, `resolveLocales`, `buildLocaleBundle`, `PLAY_STORE_LIMIT`, `LocaleBundle`, `LocaleEntry`) require v0.9.62+, apply + bundle processing exports (`applyReleaseNotes`, `waitForBundleProcessing`, `validateBundleForApply`, `bundleToReleaseNotes`) require v0.9.64+, `inAppUpdatePriority` + `retainedVersionCodes` on upload require v0.9.70+, `SubscriptionPurchaseV2.onHoldStateContext` + `inGracePeriodStateContext` typed fields require v0.9.76+, extended `waitForBundleProcessing` Fibonacci backoff (~86s) + multi-retry guard on validate/commit require v0.9.77+, `edits.tracks.create` for custom closed testing tracks require v0.9.79+, `OfferPhaseDetails` on Orders + `download()` exponential backoff require v0.9.79+, API type alignment (canceledStateContext nested shape, signupPromotion {oneTimeCode, vanityCode}, developerAccountPermissions plural, buyOption/rentOption fields, download retry with backoff, null-safe bundles.list/tracks.list) require v0.9.80+, `VitalsThresholds` in `GpcConfig`/`ResolvedConfig` require v0.9.82+). Requires Node.js 20+, TypeScript 5+. Packages: @gpc-cli/api, @gpc-cli/auth. v0.9.83+ for correct pagination resume and the unified list envelope."
+description: "Use when building applications that programmatically interact with the Google Play Developer API using GPC's TypeScript SDK packages. Make sure to use this skill whenever the user mentions @gpc-cli/api, @gpc-cli/auth, PlayApiClient, createApiClient, resolveAuth, listReports, downloadStatsReport, downloadFinancialReport, STORAGE_READ_ONLY_SCOPE, Google Play API client, TypeScript SDK, programmatic access, API client, HTTP client, rate limiter, pagination, edit lifecycle in code, Node.js Google Play, server-side Play Store, backend integration — even if they don't explicitly say 'SDK.' Also trigger when someone wants to build a backend service, custom dashboard, automation script, or any TypeScript/JavaScript application that interacts with Google Play programmatically rather than through the CLI. For CLI usage, see other gpc-* skills. For building plugins, see gpc-plugin-development."
+compatibility: "GPC v0.9.82+ (new APIs require v0.9.51+, typed acknowledge/revoke bodies require v0.9.55+, Play Custom App Publishing API + `createEnterpriseClient` + `HttpClient.uploadCustomApp<T>` + `ResumableUploadOptions.initialMetadata` require v0.9.56+, changelog generation exports (`generateChangelog`, `renderPlayStore`, `resolveLocales`, `buildLocaleBundle`, `PLAY_STORE_LIMIT`, `LocaleBundle`, `LocaleEntry`) require v0.9.62+, apply + bundle processing exports (`applyReleaseNotes`, `waitForBundleProcessing`, `validateBundleForApply`, `bundleToReleaseNotes`) require v0.9.64+, `inAppUpdatePriority` + `retainedVersionCodes` on upload require v0.9.70+, `SubscriptionPurchaseV2.onHoldStateContext` + `inGracePeriodStateContext` typed fields require v0.9.76+, extended `waitForBundleProcessing` Fibonacci backoff (~86s) + multi-retry guard on validate/commit require v0.9.77+, `edits.tracks.create` for custom closed testing tracks require v0.9.79+, `OfferPhaseDetails` on Orders + `download()` exponential backoff require v0.9.79+, API type alignment (canceledStateContext nested shape, signupPromotion {oneTimeCode, vanityCode}, developerAccountPermissions plural, buyOption/rentOption fields, download retry with backoff, null-safe bundles.list/tracks.list) require v0.9.80+, `VitalsThresholds` in `GpcConfig`/`ResolvedConfig` require v0.9.82+). Requires Node.js 20+, TypeScript 5+. Packages: @gpc-cli/api, @gpc-cli/auth. v0.9.83+ for correct pagination resume and the unified list envelope. v0.9.93+ replaces the removed client.reports.list / downloadReport with @gpc-cli/core listReports, downloadStatsReport, downloadFinancialReport, and adds the STORAGE_READ_ONLY_SCOPE export in @gpc-cli/auth."
 metadata:
-  version: 1.8.0
+  version: 1.9.0
 ---
 
 # gpc-sdk-usage
@@ -421,6 +421,56 @@ const phase = order.offerPhaseDetails; // OfferPhaseDetails — phase type, cycl
 
 `client.download()` (used for APK/AAB binary downloads) now retries automatically with exponential backoff, matching the retry behavior of `request()`. No code changes needed — transient 5xx errors and network timeouts are retried transparently.
 
+### Bulk reports from the Play GCS bucket (v0.9.93+)
+
+Play's monthly bulk reports are CSV objects in a Cloud Storage bucket linked to the developer account, not a Publisher API resource. **Breaking in v0.9.93:** the non-functional `client.reports.list` was removed from `@gpc-cli/api`, and the old `downloadReport` export was removed from `@gpc-cli/core`. Use the three new `@gpc-cli/core` exports instead.
+
+```typescript
+import { resolveAuth, DEFAULT_SCOPES, STORAGE_READ_ONLY_SCOPE } from "@gpc-cli/auth";
+import {
+  listReports,
+  downloadStatsReport,
+  downloadFinancialReport,
+  resolveReportsBucket,
+  parseMonth,
+  type ListReportsResult,
+} from "@gpc-cli/core";
+
+// The reports path needs one extra scope. Request it only here: storage-scoped tokens are
+// cached under a separate key, so other commands' tokens never carry storage access.
+const auth = await resolveAuth({
+  serviceAccountPath: "key.json",
+  scopes: [...DEFAULT_SCOPES, STORAGE_READ_ONLY_SCOPE],
+});
+
+// pubsite_prod_<developerId>, or an explicit reports.bucket value
+const bucket = resolveReportsBucket({ developerId: "1234567890" });
+const month = parseMonth("2026-02");
+
+const { reports, nextPageToken }: ListReportsResult = await listReports(
+  auth,
+  bucket,
+  "installs",
+  { packageName: "com.example.app", month, maxResults: 50 },
+);
+
+// Stats: per app, one CSV per dimension (reviews reports have no dimension)
+const stats = await downloadStatsReport(
+  auth, bucket, "com.example.app", "installs", month, "country",
+);
+console.log(stats.objectName, stats.csv); // gunzipped, UTF-16 decoded to UTF-8
+
+// Financial: account-level, ZIP archives
+const fin = await downloadFinancialReport(auth, bucket, "earnings", month);
+if (fin.kind === "csv") {
+  console.log(fin.text);
+} else {
+  for (const entry of fin.entries) console.log(entry.name, entry.csv.length);
+}
+```
+
+`auth` only has to satisfy `ReportsAuth` (`{ getAccessToken(): Promise<string> }`), so any token source works. Failures throw `GpcError` with the `REPORT_*` codes (see gpc-troubleshooting); the first-run one is `REPORT_ACCESS_DENIED`, raised until the service account is granted "View app information and download bulk reports (read-only)" in Play Console.
+
 ### API correctness history (recent)
 
 - **v0.9.57:** `apprecovery.cancel`/`deploy` URLs now use plural `/appRecoveries/`. `dataSafety.update` is `POST`, not `PUT`. Phantom `dataSafety.get` was removed. `onetimeproducts.offers.activateOffer` / `deactivateOffer` added. New `getVitalsErrorCount` function.
@@ -444,6 +494,9 @@ const phase = order.offerPhaseDetails; // OfferPhaseDetails — phase type, cycl
 | Concurrent edit conflict | Another edit is open | Commit or delete the existing edit first |
 | `PlayApiError` with status 429 | Rate limited | Use `createRateLimiter()` with appropriate buckets |
 | Types not resolving | Wrong TypeScript config | Ensure `moduleResolution: "bundler"` or `"node16"` |
+| `client.reports.list` is not a function | Removed in v0.9.93 (it never worked) | Use `listReports` / `downloadStatsReport` / `downloadFinancialReport` from `@gpc-cli/core` |
+| `REPORT_ACCESS_DENIED` from a reports call | Service account lacks the bulk-reports grant | Enable "View app information and download bulk reports (read-only)" in Play Console, then retry |
+| Reports call returns 403 despite the grant | Token was minted without `devstorage.read_only` | Pass `scopes: [...DEFAULT_SCOPES, STORAGE_READ_ONLY_SCOPE]` to `resolveAuth` |
 
 ## Related skills
 

@@ -137,6 +137,11 @@ gpc-<skill>/
 | "Get or update Data Safety declarations" | `gpc-monetization` |
 | "Compare local signing key against Play certificate" | `gpc-setup` |
 | "Check SubscriptionPurchaseV2 hold/grace period state" | `gpc-monetization` |
+| "Download the monthly earnings or sales report" | `gpc-vitals-monitoring` |
+| "Export installs or crashes stats as CSV" | `gpc-vitals-monitoring` |
+| "Which bucket do Play bulk reports come from?" | `gpc-vitals-monitoring` |
+| "`gpc reports` fails with REPORT_ACCESS_DENIED" | `gpc-troubleshooting` |
+| "Grant a service account access to bulk reports" | `gpc-setup` |
 
 ## Reference Files Index
 
