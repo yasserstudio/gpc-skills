@@ -30,6 +30,7 @@ All known GPC error codes with causes and fixes.
 | `API_PACKAGE_NAME_MISMATCH` | 400 | Package name doesn't match | Verify applicationId matches target app |
 | `API_APP_NOT_FOUND` | 404 | App not in developer account | Verify package name and developer account |
 | `API_INSUFFICIENT_PERMISSIONS` | 403 | Service account missing permissions | Grant required roles in Play Console → Settings → API access |
+| `API_DECLARATION_REQUIRED` | 403 | A Play Console "App content" declaration is incomplete | Complete it under Policy > App content. Not a permissions problem; changing roles will not help |
 | `API_BUNDLE_TOO_LARGE` | 400 | AAB or APK exceeds size limit | AAB max 2 GB, APK max 1 GB |
 | `API_INVALID_BUNDLE` | 400 | Corrupt or improperly signed bundle | Ensure properly signed AAB/APK |
 | `API_CHANGES_NOT_SENT_FOR_REVIEW` | 400/403 | App rejected update, requires review acknowledgment | Add `--changes-not-sent-for-review` flag |
@@ -143,12 +144,38 @@ gpc reports list installs --app com.example.myapp --month 2026-02
 
 ---
 
+### `API_DECLARATION_REQUIRED`
+
+**Exit code:** 4 — added in v0.9.94
+
+**Cause:** Google Play refused the request because a **Play Console → Policy → App content** declaration is incomplete. The service account's permissions are irrelevant here; no role change will fix it.
+
+**This used to be misreported.** Before v0.9.94, GPC classified 403s by looking for the word "permission" anywhere in Google's message. The foreground service declaration reads *"You must let us know whether your app uses any Foreground Service permissions."* — so it matched, and GPC replaced Google's explanation with "The service account does not have permission for this operation" and pointed at Users and permissions. If you are on an older version and see a permissions error you cannot explain, **check App content before touching any roles.**
+
+**Fix:** read the message body. GPC now quotes Google verbatim, and Google names the specific declaration. Complete it in Play Console → your app → Policy → App content, then retry.
+
+```bash
+# Catch it before spending an upload
+gpc preflight app.aab
+# look for: policy-app-content-declaration (info)
+```
+
+**Notes:**
+- Common gates: foreground service permissions, data safety, ads, target audience, government apps.
+- The declaration lives in Play Console and cannot be read from the AAB or through the Publisher API, so preflight can only advise that one is likely required — it cannot confirm whether you have completed it.
+- Distinct from the manifest check `foreground-service-type-missing`: that one verifies `android:foregroundServiceType` in your manifest. You can have that entirely correct and still be blocked by the Console declaration.
+- v0.9.94 also stopped reporting insufficient **OAuth scope** failures as missing Play Console permissions. Those now surface Google's own wording.
+
+---
+
 ## Plugin errors (exit code 10)
 
 | Code | Message | Fix |
 |------|---------|-----|
 | `PLUGIN_INVALID_PERMISSION` | Unknown permission | Check valid permission list |
 | `PLUGIN_NOT_APPROVED` | Not in approvedPlugins | Add to `approvedPlugins` in .gpcrc.json |
+| `PLUGIN_PERMISSIONS_REQUIRED` | Third-party plugin declares no `gpc.permissions` (v0.9.94+) | Ask the author to declare the hooks it uses, then approve it again |
+| `PLUGIN_IDENTITY_MISMATCH` | Specifier claims a first-party package but resolves to a different one (v0.9.94+) | Remove the npm alias or local replacement for `@gpc-cli/plugin-ci` |
 
 ## Review-state errors (exit code 4)
 

@@ -1,9 +1,9 @@
 ---
 name: gpc-plugin-development
 description: "Use when building, extending, or debugging GPC plugins. Make sure to use this skill whenever the user mentions gpc plugins, plugin SDK, @gpc-cli/plugin-sdk, plugin hooks, plugin development, plugin scaffolding, gpc plugins init, beforeCommand, afterCommand, onError, beforeRequest, afterResponse, registerCommands, plugin permissions, plugin manifest, custom commands, plugin-ci, extend GPC, GPC addon — even if they don't explicitly say 'plugin.' Also trigger when someone wants to add custom behavior to GPC, integrate GPC with Slack or other services, build CI/CD extensions, hook into the command lifecycle, or register new CLI commands. For using the built-in CI plugin, see gpc-ci-integration."
-compatibility: "GPC v0.9.9+. Requires Node.js 20+, TypeScript 5+. Plugin SDK: @gpc-cli/plugin-sdk package."
+compatibility: "GPC v0.9.9+. Requires Node.js 20+, TypeScript 5+. Plugin SDK: @gpc-cli/plugin-sdk package. v0.9.94+ makes gpc.permissions mandatory for third-party plugins, decides first-party trust from the resolved package manifest rather than the name, and actually fires the beforeRequest/afterResponse/onError hooks."
 metadata:
-  version: 1.3.1
+  version: 1.4.0
 ---
 
 # gpc-plugin-development
@@ -153,7 +153,13 @@ Available permissions:
 | `hooks:beforeRequest` | Hook before API requests |
 | `hooks:afterResponse` | Hook after API responses |
 
-First-party plugins (`@gpc-cli/*`) are auto-trusted — no permissions needed.
+Only `@gpc-cli/plugin-ci` is treated as first party, and only when the installed package's own `package.json` name matches the specifier. Everything else needs an explicit `gpc.permissions` declaration.
+
+> **Trust is no longer granted by name (v0.9.94+).** GPC previously trusted any specifier starting with `@gpc-cli/`, without checking that the resolved package was actually first party — so an npm alias or local replacement pointing at that name inherited unrestricted access. Trust is now read from the resolved package manifest and verified **before** `import()`, so a mismatch is refused without running the plugin's module code (`PLUGIN_IDENTITY_MISMATCH`). `@gpc-cli/plugin-sdk` was also removed from the first-party list; it is a library, not a plugin.
+>
+> **Declaring permissions is now mandatory (v0.9.94+, breaking).** A third-party plugin with no `gpc.permissions` in its `package.json` is refused with `PLUGIN_PERMISSIONS_REQUIRED` (exit 10) instead of receiving broad compatibility permissions. Approvals recorded before this change are grandfathered once, with a deprecation warning telling the author what to add. Approvals stored as **relative paths** must be approved again, because the old format did not record which project they belonged to — re-run `gpc plugins approve ./path/to/plugin` from the project directory.
+>
+> **Loose plugin files are identified by path (v0.9.94+).** A plugin loaded from a bare file with no `package.json` beside it used to report the name of whichever project enclosed it. It now lists under its own file path, matching what the approval record stores. A package sitting beside the module, or one that declares `gpc.permissions`, still reports its own name.
 
 > **Trust check order (v0.9.74+):** `discoverPlugins()` calls `isPluginTrusted()` before calling `import()` on any plugin specifier. Untrusted plugins are silently skipped without their module code ever running. Previously, GPC imported first and checked approval afterward, which allowed top-level module side-effects to execute before the trust decision was made.
 

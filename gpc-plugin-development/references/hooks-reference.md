@@ -133,11 +133,40 @@ hooks.registerCommands((registry: CommandRegistry) => {
 | Hook | Error behavior |
 |------|---------------|
 | `beforeCommand` | **Propagates** — can block the command |
-| `afterCommand` | Logged, swallowed |
+| `afterCommand` | Swallowed (a failing completion hook cannot fail a successful command, v0.9.94+) |
 | `onError` | Swallowed (prevents cascading) |
 | `beforeRequest` | Swallowed (never blocks API calls) |
 | `afterResponse` | Swallowed |
 | `registerCommands` | Propagates during load |
+
+## Hooks actually fire as of v0.9.94
+
+`beforeRequest`, `afterResponse`, and `onError` existed in the SDK before v0.9.94 but were never connected to anything in the shipped CLI. A plugin could register them, see no error, and silently receive nothing. From v0.9.94 they run for real:
+
+- `beforeRequest` / `afterResponse` fire around every request attempt on GPC's API transport, including the resumable upload path. They are installed only when a plugin actually registers one, so the default path is unchanged.
+- `onError` fires when a command fails, including Commander validation failures, unknown commands, and commands that fail through a non-zero `process.exitCode`.
+- `CommandEvent.args` now carries the resolved options and positional arguments rather than an empty object.
+
+**Credentials are redacted before observers see them.** Request paths have token-bearing segments masked, and secret-bearing flags (`--service-account`, `--token`, `--key`, `--store-pass`, `--key-pass`, `--webhook-url`, and similar) are replaced with `***REDACTED***` in command metadata and webhook payloads. If your own plugin command takes a secret, mark it so GPC redacts it too:
+
+```typescript
+hooks.registerCommands((registry) => {
+  registry.add({
+    name: "notify",
+    description: "Send a release notification",
+    options: [
+      { flags: "--channel <name>", description: "Target channel" },
+      { flags: "--token <token>", description: "API token", sensitive: true },
+    ],
+    arguments: [{ name: "webhook", description: "Webhook URL", sensitive: true }],
+    async action(args, opts) {
+      /* ... */
+    },
+  });
+});
+```
+
+`sensitive` is available on both `PluginCommandOption` and `PluginCommandArgument`.
 
 ## Example: Slack notification plugin
 

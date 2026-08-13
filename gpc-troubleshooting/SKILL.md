@@ -1,9 +1,9 @@
 ---
 name: gpc-troubleshooting
-description: "Use when debugging GPC errors, failures, or unexpected behavior. Make sure to use this skill whenever the user mentions gpc error, gpc failing, exit code, AUTH_FAILED, API_FORBIDDEN, NETWORK_ERROR, CONFIG_MISSING, EDIT_CONFLICT, upload failed, permission denied, timeout, rate limit, gpc doctor failing, unexpected exit code, command not working, GPC crash, debug GPC, verbose output, --json error, threshold breach, REPORT_ACCESS_DENIED, REPORT_BUCKET_NOT_FOUND, reports bucket access, bulk reports permission denied — even if they don't explicitly say 'troubleshoot.' Also trigger when someone encounters any GPC error they don't understand, when gpc doctor reports issues, when CI pipelines fail with GPC commands, or when they need to interpret exit codes. For auth-specific setup issues, see gpc-setup. For CI-specific issues, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Covers all packages: @gpc-cli/cli, @gpc-cli/core, @gpc-cli/api, @gpc-cli/auth, @gpc-cli/config. v0.9.85+ resolves the npm global install failure. v0.9.93+ adds the REPORT_* bulk-report error codes and the doctor reports-bucket check."
+description: "Use when debugging GPC errors, failures, or unexpected behavior. Make sure to use this skill whenever the user mentions gpc error, gpc failing, exit code, AUTH_FAILED, API_FORBIDDEN, NETWORK_ERROR, CONFIG_MISSING, EDIT_CONFLICT, upload failed, permission denied, timeout, rate limit, gpc doctor failing, unexpected exit code, command not working, GPC crash, debug GPC, verbose output, --json error, threshold breach, REPORT_ACCESS_DENIED, REPORT_BUCKET_NOT_FOUND, reports bucket access, bulk reports permission denied, API_DECLARATION_REQUIRED, App content declaration, foreground service declaration, PLUGIN_PERMISSIONS_REQUIRED, PLUGIN_IDENTITY_MISMATCH — even if they don't explicitly say 'troubleshoot.' Also trigger when someone encounters any GPC error they don't understand, when gpc doctor reports issues, when CI pipelines fail with GPC commands, or when they need to interpret exit codes. For auth-specific setup issues, see gpc-setup. For CI-specific issues, see gpc-ci-integration."
+compatibility: "GPC v0.9.82+. Covers all packages: @gpc-cli/cli, @gpc-cli/core, @gpc-cli/api, @gpc-cli/auth, @gpc-cli/config. v0.9.85+ resolves the npm global install failure. v0.9.93+ adds the REPORT_* bulk-report error codes and the doctor reports-bucket check. v0.9.94+ adds API_DECLARATION_REQUIRED and stops App content declaration failures being reported as missing service account permissions."
 metadata:
-  version: 0.19.0
+  version: 0.20.0
 ---
 
 # gpc-troubleshooting
@@ -97,6 +97,7 @@ export GPC_SERVICE_ACCOUNT=$(cat ~/path/to/key.json)
 | `API_PACKAGE_NAME_MISMATCH` | 400 | applicationId doesn't match target app | Verify applicationId matches target app |
 | `API_APP_NOT_FOUND` | 404 | App not in developer account | Verify package name and developer account |
 | `API_INSUFFICIENT_PERMISSIONS` | 403 | Service account missing permissions | Grant required roles in Play Console → Settings → API access |
+| `API_DECLARATION_REQUIRED` | 403 | A Play Console "App content" declaration is incomplete | Complete it under Policy > App content. Not a permissions problem; changing roles will not help |
 | `API_CHANGES_NOT_SENT_FOR_REVIEW` | 400/403 | App has rejected update, requires review flag | Add `--changes-not-sent-for-review` flag to the command |
 | `API_CHANGES_ALREADY_IN_REVIEW` | 400 | Changes already in review, new commit would silently cancel | Use `--error-if-in-review` to prevent silent cancellation |
 | `API_EDIT_EXPIRED` | 410 | The open edit session has expired (edits expire after ~30 minutes of inactivity) | GPC now includes a clear `API_EDIT_EXPIRED` message with a suggestion to retry the command. The command will automatically create a fresh edit on retry. |
@@ -222,6 +223,8 @@ gpc vitals crashes --threshold 1.5 && gpc releases promote --from beta --to prod
 | Error | Cause | Fix |
 |-------|-------|-----|
 | `PLUGIN_INVALID_PERMISSION` | Third-party plugin declares unknown permission | Check valid permissions in plugin-sdk docs |
+| `PLUGIN_PERMISSIONS_REQUIRED` | Third-party plugin declares no `gpc.permissions` (v0.9.94+) | Ask the author to declare the hooks it uses, then approve it again |
+| `PLUGIN_IDENTITY_MISMATCH` | Specifier claims a first-party package but resolves elsewhere (v0.9.94+) | Remove the npm alias or local replacement for `@gpc-cli/plugin-ci` |
 | Plugin not loading | Not in config or not approved | Add to `plugins` and `approvedPlugins` in .gpcrc.json |
 | Plugin error in hook | Bug in plugin handler | Check plugin logs; `onError`/API hooks swallow errors |
 

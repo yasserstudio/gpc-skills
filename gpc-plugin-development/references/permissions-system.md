@@ -4,12 +4,14 @@ How GPC manages plugin trust and permissions.
 
 ## Trust model
 
-### First-party plugins (`@gpc-cli/*`)
+### First-party plugins (v0.9.94+)
 
-- Auto-trusted — no permission validation
-- Loaded automatically if installed
-- Full access to all hooks and APIs
-- Example: `@gpc-cli/plugin-ci`
+- The allowlist is exactly one package: `@gpc-cli/plugin-ci`
+- Trusted only when the **resolved package's own `package.json` name** matches the configured specifier
+- Verified before `import()`; a mismatch is refused with `PLUGIN_IDENTITY_MISMATCH` and the module never runs
+- Full access to all hooks and APIs once that check passes
+
+**Changed in v0.9.94.** Trust used to be granted on the specifier string alone — anything beginning with `@gpc-cli/` was treated as first party without checking the package was really ours, so an npm alias or a local replacement resolving to that name inherited unrestricted access. `@gpc-cli/plugin-sdk` was also removed from the list: it is a library, not a plugin.
 
 ### Third-party plugins (`gpc-plugin-*`)
 
@@ -68,26 +70,30 @@ In `.gpcrc.json`:
 ```
 
 - `plugins` — list of plugins to load
-- `approvedPlugins` — third-party plugins the user has explicitly approved
-- First-party plugins don't need to be in `approvedPlugins`
+- `approvedPlugins` — third-party plugins the user has explicitly approved. Stored as a canonical identity, so a relative path approved in one project cannot approve a different project's plugin
+- `legacyApprovedPlugins` — approvals grandfathered once when manifest permissions became mandatory in v0.9.94. User config only; not something to hand-edit
+- `@gpc-cli/plugin-ci` does not need to be in `approvedPlugins`, but it is still identity-checked against its resolved manifest
 
 ## Permission validation flow
 
 The trust check runs **before** `import()` is called on any plugin specifier. This prevents untrusted top-level module code from executing during discovery.
 
 ```
-discoverPlugins() resolves specifier
+discoverPluginEntries() resolves specifier
   │
-  ├─ Is @gpc-cli/* prefix?
-  │   └─ Yes → isPluginTrusted() = true → import() → Auto-trusted, skip permission validation
+  ├─ Is it the allowlisted first-party package (@gpc-cli/plugin-ci)?
+  │   └─ Yes → read the resolved package.json (no import() yet)
+  │         ├─ Manifest name matches the specifier? → trusted, skip permission validation
+  │         └─ Mismatch → PLUGIN_IDENTITY_MISMATCH, module never imported
   │
   ├─ Is in approvedPlugins?
-  │   └─ No → isPluginTrusted() = false → Skip (silent, no import())
+  │   └─ No → Skip (silent, no import())
   │
-  └─ Yes → isPluginTrusted() = true → import()
+  └─ Yes → read the resolved package.json (still no import())
         │
         ├─ Has gpc.permissions in package.json?
-        │   └─ No → Reject with PLUGIN_INVALID_PERMISSION
+        │   └─ No → PLUGIN_PERMISSIONS_REQUIRED (v0.9.94+), unless grandfathered once
+        │           via legacyApprovedPlugins with a deprecation warning
         │
         ├─ All permissions recognized?
         │   └─ No → Reject with PLUGIN_INVALID_PERMISSION

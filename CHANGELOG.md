@@ -1,5 +1,35 @@
 # Changelog
 
+## v1.29.0 -- 2026-08-13
+
+Synced with GPC v0.9.94. Two themes: upload failures caused by an incomplete Play Console "App content" declaration are no longer misreported as service account permission errors, and plugin trust is decided from the installed package rather than its name. The plugin change is breaking for third-party plugin authors.
+
+### Updated Skills
+
+- **gpc-plugin-development** (1.3.1 -> 1.4.0) -- Corrected the trust model, which the skill had been describing wrongly since v0.9.94 shipped: "First-party plugins (`@gpc-cli/*`) are auto-trusted" is no longer true. Only `@gpc-cli/plugin-ci` is allowlisted, and only when the resolved package's own `package.json` name matches the specifier; a mismatch is refused with `PLUGIN_IDENTITY_MISMATCH` before `import()` runs, so an npm alias or local replacement can no longer inherit unrestricted access. `@gpc-cli/plugin-sdk` removed from the first-party list (it is a library, not a plugin). Declaring `gpc.permissions` is now mandatory for third-party plugins (`PLUGIN_PERMISSIONS_REQUIRED`, exit 10); prior approvals are grandfathered once with a deprecation warning, and approvals stored as relative paths need approving again. Loose plugin files are now identified by path rather than by the enclosing project. `references/permissions-system.md` trust-model section and decision-flow diagram rewritten; `references/hooks-reference.md` gains a section documenting that `beforeRequest` / `afterResponse` / `onError` existed but were never wired until v0.9.94, plus credential redaction and the new `sensitive` flag on plugin command options and arguments.
+
+- **gpc-troubleshooting** (0.19.0 -> 0.20.0) -- New `API_DECLARATION_REQUIRED` row in SKILL.md and the error catalog, plus a long-form catalog entry explaining the misdiagnosis: Google's 403 for the foreground service gate contains the word "permissions", GPC matched a bare substring, and the real explanation was discarded. The entry tells anyone on an older version to check App content before touching roles. Added `PLUGIN_PERMISSIONS_REQUIRED` and `PLUGIN_IDENTITY_MISMATCH` to the plugin error table, and new trigger keywords so the skill fires on "App content declaration" and "foreground service declaration".
+
+- **gpc-preflight** (1.3.1 -> 1.4.0) -- New `policy-app-content-declaration` rule (info) in the rules table plus a section explaining why it can only advise: the declaration lives in Play Console and is not readable from the AAB or the Publisher API. Documents explicitly that this is **not** the same check as `foreground-service-type-missing` -- an app can have every service correctly typed and still be blocked by the missing Console declaration, which is the exact combination that motivated the rule.
+
+- **gpc-release-flow** (1.9.0 -> 1.10.0) -- Two new failure-mode rows: `API_DECLARATION_REQUIRED`, and a row for anyone on a pre-v0.9.94 build seeing an unexplained permissions error on upload, pointing them at App content before they start changing roles.
+
+- **README** -- Six new intent-routing rows for declaration failures, unexplained permission errors, pre-upload declaration checks, and third-party plugins that stopped loading after upgrading.
+
+### Marquee changes in GPC v0.9.94
+
+- `API_DECLARATION_REQUIRED` replaces the misleading permissions error and quotes Google's own message verbatim
+- Insufficient OAuth scope failures are no longer reported as missing Play Console permissions
+- `gpc preflight` advises on the App content declaration before an upload is spent
+- Plugin trust read from the resolved manifest, verified before `import()`; `gpc.permissions` mandatory for third-party plugins (breaking)
+- Plugin request, response, and command-error hooks now actually fire, with credentials redacted
+
+### Bundle
+
+19 skills. Synced to GPC v0.9.94.
+
+---
+
 ## v1.28.0 -- 2026-08-01
 
 Synced with GPC v0.9.93: `gpc reports` now downloads Play bulk reports for real, from the developer account's Cloud Storage bucket. Before v0.9.93 the reports commands only printed guidance about where the data lived, so every skill that mentioned them described a facade.

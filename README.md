@@ -142,6 +142,12 @@ gpc-<skill>/
 | "Which bucket do Play bulk reports come from?" | `gpc-vitals-monitoring` |
 | "`gpc reports` fails with REPORT_ACCESS_DENIED" | `gpc-troubleshooting` |
 | "Grant a service account access to bulk reports" | `gpc-setup` |
+| "Upload failed with API_DECLARATION_REQUIRED" | `gpc-troubleshooting` |
+| "GPC says my service account lacks permission but it does not" | `gpc-troubleshooting` |
+| "Which App content declaration is blocking my release?" | `gpc-troubleshooting` |
+| "Check foreground service declarations before uploading" | `gpc-preflight` |
+| "My third-party plugin stopped loading after upgrading" | `gpc-plugin-development` |
+| "Declare gpc.permissions for a plugin" | `gpc-plugin-development` |
 
 ## Reference Files Index
 
