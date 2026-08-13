@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.30.0 -- 2026-08-13
+
+Corrects guidance that went stale when GPC retired its AI-backed security scanner. The CI skill was telling users to add a `pnpm security:deep` step to their own pipelines; that script no longer exists.
+
+### Updated Skills
+
+- **gpc-ci-integration** (1.7.0 -> 1.8.0) -- Replaced the `pnpm security:deep` recipe with the free layers that actually cover a publishing pipeline: CodeQL (including GitHub Actions workflow files), `pnpm audit --prod --audit-level=high`, and secret scanning with push protection. Push protection is called out specifically because it blocks a leaked Play service account at `git push`, which matters more for a publishing pipeline than any post-hoc scan.
+
+- **gpc-security** (0.14.1 -> 0.15.0) -- `references/runtime-security.md` no longer describes a `deepsec:` CI job running on every push. Documents what replaced it and the shift from continuous scanning of unchanged code to a deliberate pre-release review of the release diff. The v0.9.74 and v0.9.80 audit findings and their fixes are unchanged; those were real and remain documented.
+
+### Why
+
+The scanner billed per token per file. Across GPC's ~205 scannable source files a full pass cost tens of dollars, charged on every push including documentation-only commits. A control you cannot afford to keep running is not a control.
+
+### Bundle
+
+19 skills. Synced to GPC v0.9.94.
+
+---
+
 ## v1.29.0 -- 2026-08-13
 
 Synced with GPC v0.9.94. Two themes: upload failures caused by an incomplete Play Console "App content" declaration are no longer misreported as service account permission errors, and plugin trust is decided from the installed package rather than its name. The plugin change is breaking for third-party plugin authors.

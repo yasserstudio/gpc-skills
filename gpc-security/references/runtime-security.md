@@ -293,6 +293,10 @@ All other transitive dependencies are blocked from running install lifecycle hoo
 
 Every `pnpm install` call in CI now uses both flags. `--frozen-lockfile` prevents lock file drift. `--ignore-scripts` provides a second layer of install hook suppression at the pnpm level, in addition to the `onlyBuiltDependencies` whitelist.
 
-### deepsec CI job
+### Automated CI security (deepsec retired August 2026)
 
-Added as a separate `deepsec:` job in `ci.yml`. Runs on every push. Exports findings as a JSON artifact. Does not gate the build — findings require human triage before a fix is committed.
+The `deepsec:` job that ran on every push was removed on cost: it billed per token per file, and a full pass over the codebase ran into tens of dollars per push. Its two audits (v0.9.74, v0.9.80) found real bugs and those fixes are documented above.
+
+What runs now, all free and on every push or pull request: CodeQL static analysis, Socket.dev supply-chain checks, GitHub Dependency Review, Dependabot security updates, `pnpm audit --prod --audit-level=high`, a licence check, and GitHub secret scanning with push protection.
+
+Deeper review is now deliberate rather than scheduled: before each release, the release diff is reviewed for anything crossing a trust boundary (plugin loading, credential handling, auth paths, parsing untrusted input) instead of re-scanning unchanged code.
