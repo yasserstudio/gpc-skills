@@ -73,7 +73,7 @@ gpc releases list --profile work
 # Revoke OAuth token
 gpc auth logout
 
-# Revoke a specific profile
+# Clear credentials for a specific profile (other profile settings are kept)
 gpc auth logout --profile personal
 ```
 

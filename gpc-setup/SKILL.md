@@ -3,7 +3,7 @@ name: gpc-setup
 description: "Use when setting up GPC (Google Play Console CLI): authentication with service accounts, OAuth, or Application Default Credentials; configuration files (.gpcrc.json, env vars, XDG paths); auth profiles; running gpc doctor; troubleshooting auth errors. Make sure to use this skill whenever the user mentions gpc auth, gpc setup, service account setup, gpc config, gpc doctor, GPC_SERVICE_ACCOUNT, gpc auth login, gpc auth clear-cache, token cache, Google Play API credentials, Play Console authentication, download bulk reports permission, reports bucket access, GPC_REPORTS_BUCKET, or wants to install/configure GPC — even if they don't explicitly say 'setup.' Also trigger when someone is troubleshooting auth failures, token expiration, keychain issues, or proxy/network configuration for GPC."
 compatibility: "GPC v0.9.82+. Requires Node.js 20+, pnpm 9+ (for development). npm for installation. v0.9.93+ adds gpc auth clear-cache, the doctor reports-bucket check, and the bulk-reports account permission needed by gpc reports."
 metadata:
-  version: 1.7.0
+  version: 1.7.1
 ---
 
 # GPC Setup

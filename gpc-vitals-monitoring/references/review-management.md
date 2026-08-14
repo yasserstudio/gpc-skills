@@ -71,10 +71,10 @@ Thank you for the kind review! We're glad you're enjoying the app.
 
 ```bash
 # Export to CSV
-gpc reviews export --format csv --output reviews.csv
+gpc reviews export --format csv --output-file reviews.csv
 
 # Export to JSON
-gpc reviews export --format json --output reviews.json
+gpc reviews export --format json --output-file reviews.json
 ```
 
 ## Rate Limits

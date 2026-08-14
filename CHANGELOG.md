@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.30.1 -- 2026-08-14
+
+Synced with GPC v0.9.95, which fixed subcommand flags being silently swallowed by same-named global flags and renamed the flags that never worked because of it.
+
+### Updated Skills
+
+- **gpc-vitals-monitoring** (1.9.0 -> 1.9.1) -- `gpc reviews export` examples now use `--output-file` (the renamed flag; the old `--output` spelling bound to the global format flag and never wrote a file).
+- **gpc-setup** (1.7.0 -> 1.7.1) -- `gpc auth logout --profile` is described as clearing that profile's credentials while keeping its other settings, matching the v0.9.95 behavior.
+
+### Bundle
+
+19 skills. Synced to GPC v0.9.95.
+
+---
+
 ## v1.30.0 -- 2026-08-13
 
 Corrects guidance that went stale when GPC retired its AI-backed security scanner. The CI skill was telling users to add a `pnpm security:deep` step to their own pipelines; that script no longer exists.
