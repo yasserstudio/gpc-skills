@@ -3,7 +3,7 @@ name: gpc-multi-app
 description: "Use when managing multiple Google Play apps with GPC. Make sure to use this skill whenever the user mentions multiple apps, multi-app, monorepo, white-label, batch operations, bulk upload, several apps, --app flag, app switching, profiles for different apps, fleet management, app portfolio, multiple package names — even if they don't explicitly say 'multi-app.' Also trigger when someone has more than one Android app and wants to manage them efficiently, when they need different configurations per app, when they're running the same command across multiple apps, or when they have a monorepo with multiple Android modules. For single-app setup, see gpc-setup. For CI automation, see gpc-ci-integration."
 compatibility: "GPC v0.9.9+ (--profile global flag requires v0.9.55+). Requires authenticated GPC setup (see gpc-setup skill)."
 metadata:
-  version: 1.0.1
+  version: 1.1.0
 ---
 
 # gpc-multi-app
@@ -48,11 +48,15 @@ This reports the status of every app defined in your profiles or config, without
 
 ### 2. Per-app configuration with profiles
 
-Set up named profiles for each app:
+Create a profile per app (GPC v0.9.95+; older versions silently ignored `--profile` here — use the interactive wizard instead):
 
 ```bash
-# Configure profiles in ~/.config/gpc/config.json
+gpc auth login --service-account /keys/main-sa.json --profile main
+gpc auth login --service-account /keys/main-sa.json --profile lite
+gpc auth login --service-account /keys/enterprise-sa.json --profile enterprise
 ```
+
+Then add each profile's `app` (and any per-app settings) in `~/.config/gpc/config.json` — re-running `auth login --profile` later only updates credentials and keeps these fields:
 
 ```json
 {

@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.30.2 -- 2026-08-14
+
+Profiles can now be created from the command line (GPC v0.9.95), so the skills stop teaching the hand-edit-only workflow.
+
+### Updated Skills
+
+- **gpc-setup** (1.7.1 -> 1.8.0) -- Profile management now leads with `gpc auth login --service-account key.json --profile <name>` to create a profile, documents that re-login updates credentials in place while keeping the profile's other settings (safe key rotation), and that `auth logout --profile` clears only credentials. Notes the v0.9.95+ requirement: older versions silently ignored `--profile` on login and logout.
+- **gpc-multi-app** (1.0.1 -> 1.1.0) -- The per-app profiles section creates each profile by command first, then adds the per-app `app` field in `config.json`, instead of presenting hand-editing as the only path.
+
+### Bundle
+
+19 skills. Synced to GPC v0.9.95.
+
+---
+
 ## v1.30.1 -- 2026-08-14
 
 Synced with GPC v0.9.95, which fixed subcommand flags being silently swallowed by same-named global flags and renamed the flags that never worked because of it.

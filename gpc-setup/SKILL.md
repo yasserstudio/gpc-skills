@@ -1,9 +1,9 @@
 ---
 name: gpc-setup
 description: "Use when setting up GPC (Google Play Console CLI): authentication with service accounts, OAuth, or Application Default Credentials; configuration files (.gpcrc.json, env vars, XDG paths); auth profiles; running gpc doctor; troubleshooting auth errors. Make sure to use this skill whenever the user mentions gpc auth, gpc setup, service account setup, gpc config, gpc doctor, GPC_SERVICE_ACCOUNT, gpc auth login, gpc auth clear-cache, token cache, Google Play API credentials, Play Console authentication, download bulk reports permission, reports bucket access, GPC_REPORTS_BUCKET, or wants to install/configure GPC — even if they don't explicitly say 'setup.' Also trigger when someone is troubleshooting auth failures, token expiration, keychain issues, or proxy/network configuration for GPC."
-compatibility: "GPC v0.9.82+. Requires Node.js 20+, pnpm 9+ (for development). npm for installation. v0.9.93+ adds gpc auth clear-cache, the doctor reports-bucket check, and the bulk-reports account permission needed by gpc reports."
+compatibility: "GPC v0.9.82+. Requires Node.js 20+, pnpm 9+ (for development). npm for installation. v0.9.93+ adds gpc auth clear-cache, the doctor reports-bucket check, and the bulk-reports account permission needed by gpc reports. v0.9.95+ creates and updates profiles via auth login --profile (previously silently ignored)."
 metadata:
-  version: 1.7.1
+  version: 1.8.0
 ---
 
 # GPC Setup
@@ -197,12 +197,15 @@ Read:
 For managing multiple Google Play accounts:
 
 ```bash
+gpc auth login --service-account key.json --profile production   # Create a profile (v0.9.95+)
 gpc auth profiles              # List profiles
 gpc auth switch production     # Switch active profile
 gpc auth whoami                # Show current identity
 gpc auth status                # Show auth state details
 gpc auth clear-cache           # Drop cached tokens, keep credentials (v0.9.93+)
 ```
+
+Re-running `auth login --profile <name>` updates that profile's credentials in place and keeps its other settings (`app`, `developerId`, `reports`), so key rotation is safe. `gpc auth logout --profile <name>` clears only that profile's credentials. Both need GPC v0.9.95+; on older versions the `--profile` flag on login/logout was silently ignored — create profiles through the interactive `gpc auth login` wizard instead.
 
 `gpc auth clear-cache` is the light-touch counterpart to `gpc auth logout`: it deletes cached access tokens so the next command mints a fresh one, without removing the configured credentials. Use it after changing permissions in Play Console (for example the bulk-reports grant) so a cached token from before the change does not mask it.
 
