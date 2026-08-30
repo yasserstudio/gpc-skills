@@ -1,6 +1,6 @@
 # API Client Reference
 
-Complete reference for the PlayApiClient returned by `createApiClient()`. Covers all 217 endpoints.
+Complete reference for the PlayApiClient returned by `createApiClient()`. Covers all 230 endpoints.
 
 ## Contributor rules (v0.9.74+)
 

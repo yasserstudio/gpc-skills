@@ -3,7 +3,7 @@ name: gpc-sdk-usage
 description: "Use when building applications that programmatically interact with the Google Play Developer API using GPC's TypeScript SDK packages. Make sure to use this skill whenever the user mentions @gpc-cli/api, @gpc-cli/auth, PlayApiClient, createApiClient, resolveAuth, listReports, downloadStatsReport, downloadFinancialReport, STORAGE_READ_ONLY_SCOPE, Google Play API client, TypeScript SDK, programmatic access, API client, HTTP client, rate limiter, pagination, edit lifecycle in code, Node.js Google Play, server-side Play Store, backend integration — even if they don't explicitly say 'SDK.' Also trigger when someone wants to build a backend service, custom dashboard, automation script, or any TypeScript/JavaScript application that interacts with Google Play programmatically rather than through the CLI. For CLI usage, see other gpc-* skills. For building plugins, see gpc-plugin-development."
 compatibility: "GPC v0.9.82+ (new APIs require v0.9.51+, typed acknowledge/revoke bodies require v0.9.55+, Play Custom App Publishing API + `createEnterpriseClient` + `HttpClient.uploadCustomApp<T>` + `ResumableUploadOptions.initialMetadata` require v0.9.56+, changelog generation exports (`generateChangelog`, `renderPlayStore`, `resolveLocales`, `buildLocaleBundle`, `PLAY_STORE_LIMIT`, `LocaleBundle`, `LocaleEntry`) require v0.9.62+, apply + bundle processing exports (`applyReleaseNotes`, `waitForBundleProcessing`, `validateBundleForApply`, `bundleToReleaseNotes`) require v0.9.64+, `inAppUpdatePriority` + `retainedVersionCodes` on upload require v0.9.70+, `SubscriptionPurchaseV2.onHoldStateContext` + `inGracePeriodStateContext` typed fields require v0.9.76+, extended `waitForBundleProcessing` Fibonacci backoff (~86s) + multi-retry guard on validate/commit require v0.9.77+, `edits.tracks.create` for custom closed testing tracks require v0.9.79+, `OfferPhaseDetails` on Orders + `download()` exponential backoff require v0.9.79+, API type alignment (canceledStateContext nested shape, signupPromotion {oneTimeCode, vanityCode}, developerAccountPermissions plural, buyOption/rentOption fields, download retry with backoff, null-safe bundles.list/tracks.list) require v0.9.80+, `VitalsThresholds` in `GpcConfig`/`ResolvedConfig` require v0.9.82+). Requires Node.js 20+, TypeScript 5+. Packages: @gpc-cli/api, @gpc-cli/auth. v0.9.83+ for correct pagination resume and the unified list envelope. v0.9.93+ replaces the removed client.reports.list / downloadReport with @gpc-cli/core listReports, downloadStatsReport, downloadFinancialReport, and adds the STORAGE_READ_ONLY_SCOPE export in @gpc-cli/auth."
 metadata:
-  version: 1.9.0
+  version: 1.9.1
 ---
 
 # gpc-sdk-usage
@@ -67,7 +67,7 @@ const client = createApiClient({
 });
 ```
 
-The client provides typed access to all 217 Google Play Developer API endpoints across the Android Publisher v3, Play Developer Reporting v1beta1, and (new in v0.9.56) Play Custom App Publishing v1 APIs.
+The client provides typed access to all 230 Google Play Developer API endpoints across the Android Publisher v3, Play Developer Reporting v1beta1, Play Custom App Publishing v1 (v0.9.56+), and Games Configuration v1configuration (v0.9.86+) APIs.
 
 ### 2a. Create the Enterprise client (v0.9.56+)
 

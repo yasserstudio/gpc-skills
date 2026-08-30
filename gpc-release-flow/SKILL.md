@@ -1,9 +1,9 @@
 ---
 name: gpc-release-flow
 description: "Use when uploading, releasing, promoting, or managing rollouts on Google Play. Make sure to use this skill whenever the user mentions gpc releases, upload AAB, upload APK, staged rollout, promote to production, halt rollout, gpc publish, release notes, track management, internal testing, beta release, production rollout, version code, rollout percentage, or wants to ship an Android app to any Play Store track. Also trigger when someone asks about the Google Play edit lifecycle, release validation, or how to do a phased rollout — even if they don't mention GPC by name. For metadata and listings, see gpc-metadata-sync. For CI/CD integration, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). For private-app publishing to Managed Google Play, see gpc-enterprise (v0.9.56+). v0.9.87+ returns a consistent list --json envelope on tracks list. v0.9.94+ reports incomplete App content declarations as API_DECLARATION_REQUIRED instead of a permissions error."
+compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). For private-app publishing to Managed Google Play, see gpc-enterprise (v0.9.56+). v0.9.87+ returns a consistent list --json envelope on tracks list. v0.9.94+ reports incomplete App content declarations as API_DECLARATION_REQUIRED instead of a permissions error. v0.9.96+ adds device-tiers create --allow-unknown-devices."
 metadata:
-  version: 1.10.0
+  version: 1.11.0
 ---
 
 # GPC Release Flow
@@ -129,7 +129,7 @@ gpc releases upload app.aab --track production --error-if-in-review
 | Flag | Values | Description |
 |------|--------|-------------|
 | `--mapping-type` | `proguard` (default), `nativeCode` | Specifies the type of debug symbols to upload alongside the bundle. Use `nativeCode` when shipping native (C/C++) libraries |
-| `--device-tier-config` | numeric ID or `LATEST` | Applies a device tier targeting configuration so different APKs are served to different device classes |
+| `--device-tier-config` | numeric ID or `LATEST` | Applies a device tier targeting configuration so different APKs are served to different device classes. Create the configuration with `gpc device-tiers create --file tiers.json`; add `--allow-unknown-devices` (v0.9.96+) when your selectors name devices Play has not catalogued yet, such as a model that has just launched, otherwise Play rejects the configuration |
 | `--changes-not-sent-for-review` | boolean flag | Commits the edit without sending changes for review. Required when a previous submission was rejected and you are not yet ready for re-review |
 | `--error-if-in-review` | boolean flag | Causes the command to exit with a non-zero code if there are already changes in review, instead of silently overwriting them |
 | `--validate-only` | boolean flag | Runs the full upload and validation pipeline but stops before `edits.commit`. The edit is deleted after validation. Useful for CI pre-merge checks (v0.9.68+) |

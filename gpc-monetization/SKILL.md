@@ -1,9 +1,9 @@
 ---
 name: gpc-monetization
-description: "Use when managing in-app purchases, subscriptions, pricing, or Real-Time Developer Notifications in Google Play. Make sure to use this skill whenever the user mentions gpc subscriptions, gpc iap, gpc purchases, gpc pricing, gpc rtdn, in-app products, base plans, subscription offers, one-time products, consumable products, purchase verification, purchase acknowledgement, purchase token, subscription cancellation, subscription deferral, voided purchases, refunds, regional pricing, currency conversion, price migration, SKU management, monetization, revenue, billing, subscription analytics, churn, trial conversion, subscriber count, RTDN, Real-Time Developer Notifications, Pub/Sub notifications, subscription events, purchase events — even if they don't explicitly say 'monetization.' Also trigger when someone wants to create or update subscriptions, manage base plan lifecycle (activate/deactivate), set up introductory offers, verify server-side purchases, handle refunds, convert prices across regions, sync IAP products from files, migrate subscribers to new prices, view subscription analytics, decode Pub/Sub notification payloads, or check RTDN topic configuration. For release management, see gpc-release-flow. For CI automation, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Subscriptions and IAP require products configured in Google Play Console. v0.9.84+ sends --regions-version to the API on subscription/OTP writes."
+description: "Use when managing in-app purchases, subscriptions, pricing, or Real-Time Developer Notifications in Google Play. Make sure to use this skill whenever the user mentions gpc subscriptions, gpc iap, gpc purchases, gpc pricing, gpc rtdn, in-app products, base plans, subscription offers, one-time products, consumable products, purchase verification, purchase acknowledgement, purchase token, subscription cancellation, subscription deferral, voided purchases, refunds, regional pricing, currency conversion, price migration, SKU management, monetization, revenue, billing, subscription analytics, churn, trial conversion, subscriber count, RTDN, Real-Time Developer Notifications, Pub/Sub notifications, subscription events, purchase events — even if they don't explicitly say 'monetization.' Also trigger when someone wants to create or update subscriptions, manage base plan lifecycle (activate/deactivate), set up introductory offers, verify server-side purchases, handle refunds, convert prices across regions, sync IAP products from files, migrate subscribers to new prices, view subscription analytics, decode Pub/Sub notification payloads, respond to a chargeback dispute (chargeback, pending refund review, pendingRefundReviewNotification, pendingRefundToken, gpc purchases orders review-refund), or check RTDN topic configuration. For release management, see gpc-release-flow. For CI automation, see gpc-ci-integration."
+compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Subscriptions and IAP require products configured in Google Play Console. v0.9.84+ sends --regions-version to the API on subscription/OTP writes. v0.9.96+ fixes one-time-products create/update and the four single-offer commands (which now require --purchase-option), and adds gpc purchases orders review-refund for chargeback disputes."
 metadata:
-  version: 0.16.0
+  version: 0.17.0
 ---
 
 # gpc-monetization
@@ -233,6 +233,24 @@ gpc iap sync --dir products/
 
 Each JSON file in the directory represents one product. GPC compares local files against the Play Store and creates, updates, or deletes as needed.
 
+### One-time product offers -- single-offer commands (v0.9.96)
+
+Google Play publishes only **batch** endpoints for one-time product offers, so `otp offers get`, `create`, `update`, and `delete` are sent as single-item batch requests and **require `--purchase-option`**. Omitting it fails immediately as a missing-option error, before any API call. The `-` wildcard works only with `offers list` -- run that first if you do not know which purchase option an offer belongs to.
+
+```bash
+# Find the purchase option an offer belongs to
+gpc otp offers list premium_upgrade
+
+gpc otp offers get premium_upgrade launch_discount --purchase-option buy_once
+gpc otp offers create premium_upgrade --file offer.json --purchase-option buy_once
+gpc otp offers update premium_upgrade launch_discount --file offer-update.json --purchase-option buy_once
+gpc otp offers delete premium_upgrade launch_discount --purchase-option buy_once
+```
+
+`offers create` probes for the offer ID first and refuses with `API_ALREADY_EXISTS` (409) rather than overwriting -- the underlying batch endpoint is an upsert. Use `offers update` to change an existing offer.
+
+> **Fixed in v0.9.96:** `gpc one-time-products create` / `update` and the four single-offer commands above previously failed with a route-not-found error (Play serves the write route under a different spelling than the read routes). Requires v0.9.96+.
+
 ### Activating/deactivating OTP offers (v0.9.57+)
 
 One-time product offers support explicit activation/deactivation:
@@ -364,6 +382,55 @@ All write operations support `--dry-run`.
 
 `Read:` `references/purchase-verification.md` for server-side verification patterns and best practices.
 
+#### F. Chargeback disputes -- `purchases orders review-refund` (v0.9.96+)
+
+When a user disputes a charge with their bank, Play sends a `pendingRefundReviewNotification` RTDN carrying a `pendingRefundToken` and the disputed `orderId`. You have **24 hours** to answer. Play decides the outcome; your preference and evidence are inputs to that decision, not the decision itself.
+
+```bash
+# 1. Pull the token out of the notification (full token only in JSON output)
+TOKEN=$(gpc rtdn decode "<base64-payload>" --output json \
+  | jq -r .pendingRefundReviewNotification.pendingRefundToken)
+
+# 2. Answer the dispute
+gpc purchases orders review-refund "GPA.1234-5678-9012-34567" \
+  --app com.example.app \
+  --pending-refund-token "$TOKEN" \
+  --preference decline \
+  --sample-content-provided \
+  --consumption-percent 82 \
+  --usage-events-file ./usage-events.json
+
+# Take no side, no evidence
+gpc purchases orders review-refund "GPA.1234-5678-9012-34567" \
+  --pending-refund-token "$TOKEN" \
+  --preference neutral \
+  --no-sample-content-provided
+```
+
+| Flag | Required | Notes |
+|------|----------|-------|
+| `--pending-refund-token` | yes | Token from the `pendingRefundReviewNotification` |
+| `--preference` | yes | `approve`, `decline`, or `neutral` |
+| `--sample-content-provided` / `--no-sample-content-provided` | yes (exactly one) | Whether a free sample, trial, or functionality info was offered before purchase. Google has no default, so GPC makes you state it |
+| `--consumption-percent` | no | How much was consumed, 0-100, decimals allowed (sent as milliunits) |
+| `--usage-events-file` | no | JSON **array** of consumption usage events, max 1,000 |
+
+`usage-events.json` uses RFC 3339 timestamps, and `location.regionCode` is a required CLDR region code whenever a location is supplied:
+
+```json
+[
+  {
+    "consumptionTime": "2026-08-30T10:15:00Z",
+    "consumptionItemDescription": "Opened chapter 4",
+    "obfuscatedAccountId": "user-account-id",
+    "ipAddress": "203.0.113.10",
+    "location": { "regionCode": "US" }
+  }
+]
+```
+
+Bad input is rejected locally as `ORDER_REVIEW_REFUND_INVALID` (exit 2) before anything is sent. An empty or whitespace-only `--consumption-percent` counts as not provided, so a typo never claims "0% consumed" on your behalf. `--dry-run` previews the request.
+
 ### 6. Real-Time Developer Notifications (RTDN)
 
 RTDN delivers Pub/Sub messages when subscription and purchase events occur. GPC can decode and inspect these notifications.
@@ -382,6 +449,8 @@ gpc rtdn test
 Notification types include: `SUBSCRIPTION_PURCHASED`, `SUBSCRIPTION_CANCELED`, `SUBSCRIPTION_RENEWED`, `SUBSCRIPTION_REVOKED`, `SUBSCRIPTION_EXPIRED`, `ONE_TIME_PRODUCT_PURCHASED`, `VOIDED_PURCHASE`, and more.
 
 > **New in v0.9.47:** RTDN commands help debug subscription lifecycle events. Set up a Pub/Sub topic in GCP, configure it in Play Console > Monetization setup, and use `gpc rtdn decode` to inspect payloads.
+
+> **New in v0.9.96:** `gpc rtdn decode` recognises `pendingRefundReviewNotification` (a chargeback sent for your review) and surfaces its `orderId` and `pendingRefundToken` -- the full token is printed only with `--output json`. It also no longer crashes on a partial chargeback notification. Answer within 24 hours with `gpc purchases orders review-refund` (section 5F).
 
 ### 7. Subscription analytics
 
@@ -460,6 +529,9 @@ gpc data-safety update --file safety.csv
 | `PERMISSION_DENIED` on purchases | Service account lacks financial permissions | Grant "View financial data" and "Manage orders" in Play Console |
 | `--update-mask` error | Invalid field path in update mask | Check API docs for valid field names; omit flag to replace all fields |
 | `iap sync` deletes unexpected products | Directory missing some product files | Use `--dry-run` first; sync deletes products not in the directory |
+| Missing `--purchase-option` on `otp offers get/create/update/delete` | v0.9.96 routes these through Play's batch offer endpoints, which need a concrete purchase option | Run `gpc otp offers list <product-id>` to find it; `-` works only on `list` |
+| `API_ALREADY_EXISTS` on `otp offers create` | That offer ID already exists; the batch endpoint is an upsert, so GPC probes and refuses rather than overwriting | Use `gpc otp offers update` instead |
+| `ORDER_REVIEW_REFUND_INVALID` | `--sample-content-provided` unanswered, `--consumption-percent` outside 0-100, or `--usage-events-file` is not a JSON array of objects | Pass one of `--sample-content-provided` / `--no-sample-content-provided`, use a plain decimal, and make the file an array |
 
 ## Related skills
 

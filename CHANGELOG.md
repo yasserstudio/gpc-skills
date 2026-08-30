@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.31.0 -- 2026-08-30
+
+Synced with GPC v0.9.96. One-time product writes reach Google again, chargebacks can be answered from the terminal, and Play App Signing with a self-hosted Cloud KMS key is now a documented path.
+
+### Updated Skills
+
+- **gpc-monetization** (0.16.0 -> 0.17.0) -- New section on the one-time product single-offer commands: Google publishes only batch endpoints for OTP offers, so `otp offers get/create/update/delete` are sent as single-item batch requests and now **require `--purchase-option`** (the `-` wildcard works only on `offers list`). `offers create` probes first and refuses an existing offer id with `API_ALREADY_EXISTS` rather than silently overwriting, since the underlying batch endpoint is an upsert. Notes that `one-time-products create` / `update` and those four commands failed with a route-not-found error before v0.9.96. New section 5F for `gpc purchases orders review-refund`: the 24-hour chargeback response window, the required `--pending-refund-token` / `--preference` / one of `--sample-content-provided` / `--no-sample-content-provided`, optional `--consumption-percent` and `--usage-events-file`, and the usage-event JSON shape (RFC 3339 timestamps, CLDR `location.regionCode`, max 1,000 events). RTDN section records that `gpc rtdn decode` now surfaces `pendingRefundReviewNotification` and prints the full token only with `--output json`. Three new failure-mode rows.
+- **gpc-security** (0.15.0 -> 0.16.0) -- New section 12 on `gpc app-signing enroll` and `gpc app-signing rotate`. Leads with what these are not: standard Play App Signing with a Google-generated or Google-managed key cannot be set up through the API and stays in Play Console. Documents the security properties that matter: `--cert` / `--upload-cert` take PEM certificates only and a private key is refused as a usage error before anything is sent, Play needs Decrypt and Sign IAM grants on the key version first, `rotate` needs an `apksigner rotate` lineage file and applies only to self-hosted enrollments, `--reason` rejects the unspecified value locally, and **there is no confirmation prompt in CI** so a pipeline has to gate it itself. Verification section now points at the 11-item `gpc verify checklist`.
+- **gpc-metadata-sync** (1.5.1 -> 1.6.0) -- `--ai-generated` on `listings images upload` and `listings images sync` records Google Play's AI-generated image attestation. Notes that on `sync` the flag applies to every image the run uploads, so an AI-generated set should be synced separately rather than attesting a mixed directory.
+- **gpc-setup** (1.8.0 -> 1.9.0) -- `gpc verify checklist` now documented in full: 11 readiness items, every one of them promptable as of v0.9.96, including the new February 2027 memory and DEX optimization requirements and the April 2027 Zero-Tap Sign-In requirement (Android Restore Credentials API, games currently exempt). Manual items stay at `?` under `--no-interactive`, `--json`, or CI.
+- **gpc-troubleshooting** (0.20.0 -> 0.21.0) -- Three new codes in both the SKILL table and `references/error-catalog.md`: `API_ALREADY_EXISTS` (409, use `update` instead of `create`), `API_ENDPOINT_RETIRED` (404, Google removed the endpoint, do it in Play Console), and `ORDER_REVIEW_REFUND_INVALID` (exit 2, validated locally so a bad command never burns part of the 24-hour chargeback window).
+- **gpc-games** (1.0.0 -> 1.1.0) -- Documents directory `push`/`pull` and `set-icon`, with the caveat that icon upload rides the `imageConfigurations` resource Google removed from its published API (discovery revision 20260820). If the route is off, the command reports `API_ENDPOINT_RETIRED` with Google's own message as of v0.9.96 instead of a bare 404; set the icon in Play Console. Every other `games` command, `push` and `pull` included, is unaffected.
+- **gpc-release-flow** (1.10.0 -> 1.11.0) -- The `--device-tier-config` row now says where the configuration comes from and covers `gpc device-tiers create --allow-unknown-devices`, for selectors naming devices Play has not catalogued yet.
+- **gpc-sdk-usage** (1.9.0 -> 1.9.1) -- Endpoint count corrected to 230, and the API list now includes Games Configuration v1configuration alongside Android Publisher v3, Play Developer Reporting v1beta1, and Play Custom App Publishing v1.
+- **README** -- 8 new routing rows (chargeback disputes, `--purchase-option`, app signing enroll/rotate, AI-generated attestation, unknown devices, retired icon endpoint), refreshed gpc-monetization / gpc-security / gpc-games descriptions, and a v0.9.96 requirements line.
+
+### Bundle
+
+19 skills. Synced to GPC v0.9.96.
+
+---
+
 ## v1.30.2 -- 2026-08-14
 
 Profiles can now be created from the command line (GPC v0.9.95), so the skills stop teaching the hand-edit-only workflow.

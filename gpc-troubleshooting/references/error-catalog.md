@@ -31,6 +31,8 @@ All known GPC error codes with causes and fixes.
 | `API_APP_NOT_FOUND` | 404 | App not in developer account | Verify package name and developer account |
 | `API_INSUFFICIENT_PERMISSIONS` | 403 | Service account missing permissions | Grant required roles in Play Console → Settings → API access |
 | `API_DECLARATION_REQUIRED` | 403 | A Play Console "App content" declaration is incomplete | Complete it under Policy > App content. Not a permissions problem; changing roles will not help |
+| `API_ALREADY_EXISTS` | 409 | The resource you tried to create is already there | Use the matching `update` command instead of `create` |
+| `API_ENDPOINT_RETIRED` | 404 | Google removed the endpoint from its published API | Do the task in Play Console. Currently affects `gpc games ... set-icon` (the `imageConfigurations` route) |
 | `API_BUNDLE_TOO_LARGE` | 400 | AAB or APK exceeds size limit | AAB max 2 GB, APK max 1 GB |
 | `API_INVALID_BUNDLE` | 400 | Corrupt or improperly signed bundle | Ensure properly signed AAB/APK |
 | `API_CHANGES_NOT_SENT_FOR_REVIEW` | 400/403 | App rejected update, requires review acknowledgment | Add `--changes-not-sent-for-review` flag |
@@ -87,6 +89,16 @@ All known GPC error codes with causes and fixes.
 | `INVALID_PURCHASE_TOKEN` | Token invalid or expired | Check token matches app/product |
 | `PURCHASE_NOT_ACKNOWLEDGED` | Purchase not ack'd in 3 days | Auto-refunded; acknowledge immediately next time |
 | `SUBSCRIPTION_NOT_FOUND` | Wrong subscription ID | Use `gpc purchases subscription get` |
+
+## Order refund review errors (exit code 2, v0.9.96+)
+
+Emitted by `gpc purchases orders review-refund`, which answers a chargeback dispute within Google's 24-hour window.
+
+| Code | Message | Fix |
+|------|---------|-----|
+| `ORDER_REVIEW_REFUND_INVALID` | Invalid refund review input | Pass exactly one of `--sample-content-provided` / `--no-sample-content-provided`, keep `--consumption-percent` a plain 0-100 decimal, and make `--usage-events-file` a JSON array of objects (max 1,000) |
+
+Validated locally before the request is sent. An empty or whitespace-only `--consumption-percent` is treated as not provided, so a typo never claims "0% consumed" on your behalf.
 
 ## User and tester errors (exit code 4)
 

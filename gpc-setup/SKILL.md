@@ -1,9 +1,9 @@
 ---
 name: gpc-setup
 description: "Use when setting up GPC (Google Play Console CLI): authentication with service accounts, OAuth, or Application Default Credentials; configuration files (.gpcrc.json, env vars, XDG paths); auth profiles; running gpc doctor; troubleshooting auth errors. Make sure to use this skill whenever the user mentions gpc auth, gpc setup, service account setup, gpc config, gpc doctor, GPC_SERVICE_ACCOUNT, gpc auth login, gpc auth clear-cache, token cache, Google Play API credentials, Play Console authentication, download bulk reports permission, reports bucket access, GPC_REPORTS_BUCKET, or wants to install/configure GPC — even if they don't explicitly say 'setup.' Also trigger when someone is troubleshooting auth failures, token expiration, keychain issues, or proxy/network configuration for GPC."
-compatibility: "GPC v0.9.82+. Requires Node.js 20+, pnpm 9+ (for development). npm for installation. v0.9.93+ adds gpc auth clear-cache, the doctor reports-bucket check, and the bulk-reports account permission needed by gpc reports. v0.9.95+ creates and updates profiles via auth login --profile (previously silently ignored)."
+compatibility: "GPC v0.9.82+. Requires Node.js 20+, pnpm 9+ (for development). npm for installation. v0.9.93+ adds gpc auth clear-cache, the doctor reports-bucket check, and the bulk-reports account permission needed by gpc reports. v0.9.95+ creates and updates profiles via auth login --profile (previously silently ignored). v0.9.96+ grows gpc verify checklist to 11 items and makes every item promptable."
 metadata:
-  version: 1.8.0
+  version: 1.9.0
 ---
 
 # GPC Setup
@@ -261,9 +261,22 @@ Environment variable alternatives: `GPC_KEYSTORE_PATH` and `GPC_STORE_PASSWORD`.
 ```bash
 gpc verify              # Status, deadlines, resources
 gpc verify --open       # Open verification page in browser
+gpc verify checklist    # Interactive readiness walkthrough
 ```
 
 Google's Android developer verification enforcement begins September 2026 for BR, ID, SG, TH. `gpc doctor` includes this as check #20.
+
+`gpc verify checklist` scores 11 readiness items (v0.9.96+): 4 auto-detected from the account and the app (Play Console account active, app reachable via the API, at least one bundle uploaded, Play App Signing enrolled), and 7 that GPC cannot detect. As of v0.9.96 **every one of those 7 is answerable at the prompt**:
+
+- Identity verification completed in Play Console
+- The September 30, 2026 enforcement timeline reviewed (Brazil, Indonesia, Singapore, Thailand)
+- Auto-registration results reviewed
+- Every app on the account registered in Play Console (the July 15, 2026 mandate)
+- The **February 2027 memory and DEX optimization quality requirements** reviewed (new in v0.9.96)
+- **Zero-Tap Sign-In** implemented via the Android Restore Credentials API, required **April 2027**; games are currently exempt (new in v0.9.96)
+- Additional signing keys used outside Play registered
+
+Each item reports `✓` (done), `✗` (action needed), or `?` (not auto-detectable and unanswered). A manual item only becomes `✓` or `✗` once you answer its prompt, so under `--no-interactive`, `--json`, or CI all 7 stay at `?` -- run it interactively when you want a real score.
 
 ### 5b) Browse documentation from CLI (v0.9.64+ embedded docs)
 

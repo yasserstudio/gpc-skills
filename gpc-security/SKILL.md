@@ -1,9 +1,9 @@
 ---
 name: gpc-security
-description: "Use when dealing with GPC credential security, secret management, audit logging, or access control. Make sure to use this skill whenever the user mentions credentials, service account key, secret rotation, key rotation, credential storage, audit log, audit trail, security best practices, .gpcrc.json security, secrets in CI, GPC_SERVICE_ACCOUNT safety, keychain, token cache, credential leak, key compromise, secure deployment — even if they don't explicitly say 'security.' Also trigger when someone asks about where GPC stores credentials, how to rotate service account keys, how to audit who did what with GPC, how to securely pass credentials in CI/CD, or how to handle a compromised service account key. For auth setup, see gpc-setup. For CI configuration, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Covers credential storage, audit logging, supply chain hardening, and security patterns across all packages."
+description: "Use when dealing with GPC credential security, secret management, audit logging, or access control. Make sure to use this skill whenever the user mentions credentials, service account key, secret rotation, key rotation, credential storage, audit log, audit trail, security best practices, .gpcrc.json security, secrets in CI, GPC_SERVICE_ACCOUNT safety, keychain, token cache, credential leak, key compromise, secure deployment — even if they don't explicitly say 'security.' Also trigger when someone asks about where GPC stores credentials, how to rotate service account keys, how to audit who did what with GPC, how to securely pass credentials in CI/CD, or how to handle a compromised service account key. Also trigger on app signing key custody: app-signing enroll, app-signing rotate, Play App Signing, self-hosted Cloud KMS key, cryptoKeyVersion, signing certificate lineage, signing key rotation. For auth setup, see gpc-setup. For CI configuration, see gpc-ci-integration."
+compatibility: "GPC v0.9.82+. Covers credential storage, audit logging, supply chain hardening, and security patterns across all packages. v0.9.96+ adds gpc app-signing enroll/rotate for self-hosted Google Cloud KMS signing keys."
 metadata:
-  version: 0.15.0
+  version: 0.16.0
 ---
 
 # gpc-security
@@ -307,7 +307,7 @@ gpc verify --open       # Open verification page in browser
 gpc verify --json       # Machine-readable output
 ```
 
-`gpc doctor` includes a verification check. `gpc status` shows a footer reminder. `gpc preflight` shows a post-scan reminder.
+`gpc verify checklist` walks the full readiness list (11 items as of v0.9.96, every one of them promptable) -- see `gpc-setup`. `gpc doctor` includes a verification check. `gpc status` shows a footer reminder. `gpc preflight` shows a post-scan reminder.
 
 ### 11. Signing key verification (v0.9.75+)
 
@@ -319,6 +319,45 @@ gpc doctor --verify --keystore release.keystore --store-pass $PW  # Compare loca
 ```
 
 If fingerprints don't match, you're distributing with a different key than Play uses. Register it in Play Console to avoid installation blocks after September 30, 2026.
+
+### 12. Play App Signing with a self-hosted Cloud KMS key (v0.9.96+)
+
+`gpc app-signing enroll` and `gpc app-signing rotate` cover the only Play App Signing path Google exposes through the API: enrollment with a **self-hosted Google Cloud KMS key**, and rotation of that key.
+
+**This is not the normal path.** Standard Play App Signing with a Google-generated or Google-managed key cannot be set up through the API at all -- do it in Play Console. Reach for these commands only when a compliance, regulatory, or policy requirement forces you to keep key custody in your own Cloud KMS instance.
+
+```bash
+# Enroll an app already published to Open testing or Production
+gpc app-signing enroll \
+  --app com.example.app \
+  --existing-app \
+  --kms-key projects/acme/locations/global/keyRings/play/cryptoKeys/signing/cryptoKeyVersions/1
+
+# Enroll an app not yet published (Google requires the certificate here)
+gpc app-signing enroll \
+  --app com.example.app \
+  --new-app \
+  --kms-key projects/acme/locations/global/keyRings/play/cryptoKeys/signing/cryptoKeyVersions/1 \
+  --cert ./signing-cert.pem \
+  --upload-cert ./upload-cert.pem
+
+# Rotate to a new Cloud KMS key
+gpc app-signing rotate \
+  --app com.example.app \
+  --kms-key projects/acme/locations/global/keyRings/play/cryptoKeys/signing/cryptoKeyVersions/2 \
+  --cert ./new-signing-cert.pem \
+  --lineage ./lineage.bin \
+  --reason ROUTINE_KEY_UPGRADE
+```
+
+Security properties to know before running either:
+
+- **`--cert` and `--upload-cert` take PEM certificates only.** A private key handed to any file flag is a usage error (exit 2) and nothing is sent. Private keys never leave your machine, and the signing key itself stays in Cloud KMS -- it is never uploaded.
+- Grant Play the **Decrypt** and **Sign** IAM permissions on the key version *before* calling either subcommand. Google validates this server-side; without it the call fails with a Play API error (exit 4).
+- `enroll` takes exactly one of `--new-app` / `--existing-app`; neither or both is a usage error. `--new-app` also requires `--cert`.
+- `rotate` applies only to apps already enrolled with a self-hosted key (Google-managed rotation goes through Play Console) and needs a **signing certificate lineage** file as proof of rotation, produced with `apksigner rotate`.
+- `--reason` is required and rejects `KEY_ROTATION_REASON_UNSPECIFIED` locally. Accepted: `COMPROMISED_KEY`, `USE_STRONGER_KEY`, `USE_SAME_KEY_FOR_MULTIPLE_APPS`, `ROUTINE_KEY_UPGRADE`, `OTHER`.
+- **There is no confirmation prompt in CI.** Both commands print the warning and prompt only in an interactive terminal; under CI, a non-TTY, `--no-interactive`, `GPC_NO_INTERACTIVE`, or the global `--yes` they proceed. Gate them in the pipeline yourself if you want a human in the loop. `--dry-run` previews the request without sending it.
 
 ## Verification
 

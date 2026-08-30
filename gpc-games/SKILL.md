@@ -1,9 +1,9 @@
 ---
 name: gpc-games
-description: "Use when managing Google Play Games Services achievement and leaderboard configurations with GPC. Make sure to use this skill whenever the user mentions gpc games, games achievements, games leaderboards, achievement config, leaderboard config, Play Games, Play Games Services, gamesconfiguration, achievement CRUD, leaderboard CRUD, points value, incremental achievement, stepsToUnlock, score order, score format, --game-id, GPC_GAME_ID, games.applicationId, or wants to create, update, delete, list, or diff achievement and leaderboard definitions for a game. Also trigger when someone wants to sync local achievement/leaderboard JSON against the remote Play Games configuration, read the runtime (player-facing) leaderboards or achievements, or find a game's numeric application ID. For app releases and tracks, see gpc-release-flow. For in-app purchases and subscriptions, see gpc-monetization."
-compatibility: "GPC v0.9.86+ (Games Configuration API: gpc games achievements/leaderboards CRUD + diff, gpc games runtime). Requires authenticated GPC setup (see gpc-setup) and a numeric game application ID. Breaking in v0.9.86: gpc games events removed; runtime list commands moved under gpc games runtime."
+description: "Use when managing Google Play Games Services achievement and leaderboard configurations with GPC. Make sure to use this skill whenever the user mentions gpc games, games achievements, games leaderboards, achievement config, leaderboard config, Play Games, Play Games Services, gamesconfiguration, achievement CRUD, leaderboard CRUD, points value, incremental achievement, stepsToUnlock, score order, score format, --game-id, GPC_GAME_ID, games.applicationId, or wants to create, update, delete, list, diff, push, pull, or set the icon of achievement and leaderboard definitions for a game (games set-icon, API_ENDPOINT_RETIRED, imageConfigurations). Also trigger when someone wants to sync local achievement/leaderboard JSON against the remote Play Games configuration, read the runtime (player-facing) leaderboards or achievements, or find a game's numeric application ID. For app releases and tracks, see gpc-release-flow. For in-app purchases and subscriptions, see gpc-monetization."
+compatibility: "GPC v0.9.86+ (Games Configuration API: gpc games achievements/leaderboards CRUD + diff, gpc games runtime). Requires authenticated GPC setup (see gpc-setup) and a numeric game application ID. Breaking in v0.9.86: gpc games events removed; runtime list commands moved under gpc games runtime. v0.9.90+ adds set-icon and directory push/pull. v0.9.96+ reports the retired icon-upload endpoint as API_ENDPOINT_RETIRED."
 metadata:
-  version: 1.0.0
+  version: 1.1.0
 ---
 
 # gpc-games
@@ -101,6 +101,24 @@ gpc games leaderboards diff CgkI9876543210 --file leaderboard.json
 
 Pattern: keep each achievement/leaderboard as a versioned JSON file in the repo, `diff` in CI to detect config drift, then `update --file` to apply.
 
+`push` and `pull` bulk-sync a whole directory (v0.9.90+):
+
+```sh
+gpc games achievements push ./game-config/achievements   # creates files without an id, updates those with one
+gpc games achievements pull ./game-config/achievements   # writes every config to <id>.json
+gpc games leaderboards push ./game-config/leaderboards
+gpc games leaderboards pull ./game-config/leaderboards
+```
+
+`set-icon` uploads a 512x512 PNG or JPG for a single achievement or leaderboard (content type inferred from the extension, honors `--dry-run`):
+
+```sh
+gpc games achievements set-icon CgkI1234567890 ./icons/first-win.png
+gpc games leaderboards set-icon CgkI9876543210 ./icons/high-scores.png
+```
+
+> **`set-icon` depends on an endpoint Google has retired.** Icon upload uses the Games Configuration API's `imageConfigurations` resource, which Google removed from its published API (discovery revision 20260820). If the route has been switched off the command fails with `API_ENDPOINT_RETIRED` -- as of v0.9.96 that is reported with Google's own message and a pointer to the Play Console, instead of a bare 404. Set the icon in Play Console in that case. Every other `games` command, `push` and `pull` included, is unaffected.
+
 ### 5. Runtime (read-only)
 
 The runtime commands read the player-facing definitions for a published game. They are read-only and keyed by the app package, not the game ID:
@@ -121,6 +139,7 @@ gpc games runtime achievements --app com.example.mygame
 - "No game ID" / missing application ID: set `--game-id`, `GPC_GAME_ID`, or `games.applicationId` (step 1). Remember it is the numeric Play Games ID, not the package name.
 - `gpc games events` no longer exists (removed in v0.9.86) — events are configured in the Play Console UI only.
 - Runtime commands moved under `gpc games runtime` in v0.9.86; the old top-level runtime list commands are gone.
+- `API_ENDPOINT_RETIRED` on `set-icon`: Google removed the `imageConfigurations` icon-upload route from its published API. Not a fixable configuration problem -- upload the icon in Play Console. `push`/`pull` and every other `games` command still work.
 - Permission errors: the service account needs access to the game in Play Games Services; see `gpc-troubleshooting` for the error catalog.
 
 ## Related skills

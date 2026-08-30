@@ -1,9 +1,9 @@
 ---
 name: gpc-troubleshooting
-description: "Use when debugging GPC errors, failures, or unexpected behavior. Make sure to use this skill whenever the user mentions gpc error, gpc failing, exit code, AUTH_FAILED, API_FORBIDDEN, NETWORK_ERROR, CONFIG_MISSING, EDIT_CONFLICT, upload failed, permission denied, timeout, rate limit, gpc doctor failing, unexpected exit code, command not working, GPC crash, debug GPC, verbose output, --json error, threshold breach, REPORT_ACCESS_DENIED, REPORT_BUCKET_NOT_FOUND, reports bucket access, bulk reports permission denied, API_DECLARATION_REQUIRED, App content declaration, foreground service declaration, PLUGIN_PERMISSIONS_REQUIRED, PLUGIN_IDENTITY_MISMATCH — even if they don't explicitly say 'troubleshoot.' Also trigger when someone encounters any GPC error they don't understand, when gpc doctor reports issues, when CI pipelines fail with GPC commands, or when they need to interpret exit codes. For auth-specific setup issues, see gpc-setup. For CI-specific issues, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Covers all packages: @gpc-cli/cli, @gpc-cli/core, @gpc-cli/api, @gpc-cli/auth, @gpc-cli/config. v0.9.85+ resolves the npm global install failure. v0.9.93+ adds the REPORT_* bulk-report error codes and the doctor reports-bucket check. v0.9.94+ adds API_DECLARATION_REQUIRED and stops App content declaration failures being reported as missing service account permissions."
+description: "Use when debugging GPC errors, failures, or unexpected behavior. Make sure to use this skill whenever the user mentions gpc error, gpc failing, exit code, AUTH_FAILED, API_FORBIDDEN, NETWORK_ERROR, CONFIG_MISSING, EDIT_CONFLICT, upload failed, permission denied, timeout, rate limit, gpc doctor failing, unexpected exit code, command not working, GPC crash, debug GPC, verbose output, --json error, threshold breach, REPORT_ACCESS_DENIED, REPORT_BUCKET_NOT_FOUND, reports bucket access, bulk reports permission denied, API_DECLARATION_REQUIRED, App content declaration, foreground service declaration, API_ALREADY_EXISTS, API_ENDPOINT_RETIRED, ORDER_REVIEW_REFUND_INVALID, PLUGIN_PERMISSIONS_REQUIRED, PLUGIN_IDENTITY_MISMATCH — even if they don't explicitly say 'troubleshoot.' Also trigger when someone encounters any GPC error they don't understand, when gpc doctor reports issues, when CI pipelines fail with GPC commands, or when they need to interpret exit codes. For auth-specific setup issues, see gpc-setup. For CI-specific issues, see gpc-ci-integration."
+compatibility: "GPC v0.9.82+. Covers all packages: @gpc-cli/cli, @gpc-cli/core, @gpc-cli/api, @gpc-cli/auth, @gpc-cli/config. v0.9.85+ resolves the npm global install failure. v0.9.93+ adds the REPORT_* bulk-report error codes and the doctor reports-bucket check. v0.9.94+ adds API_DECLARATION_REQUIRED and stops App content declaration failures being reported as missing service account permissions. v0.9.96+ adds API_ALREADY_EXISTS, API_ENDPOINT_RETIRED, and ORDER_REVIEW_REFUND_INVALID."
 metadata:
-  version: 0.20.0
+  version: 0.21.0
 ---
 
 # gpc-troubleshooting
@@ -98,6 +98,8 @@ export GPC_SERVICE_ACCOUNT=$(cat ~/path/to/key.json)
 | `API_APP_NOT_FOUND` | 404 | App not in developer account | Verify package name and developer account |
 | `API_INSUFFICIENT_PERMISSIONS` | 403 | Service account missing permissions | Grant required roles in Play Console → Settings → API access |
 | `API_DECLARATION_REQUIRED` | 403 | A Play Console "App content" declaration is incomplete | Complete it under Policy > App content. Not a permissions problem; changing roles will not help |
+| `API_ALREADY_EXISTS` | 409 | The resource you tried to create is already there | Use the matching `update` command instead of `create` (e.g. `gpc otp offers update`) |
+| `API_ENDPOINT_RETIRED` | 404 | Google removed the endpoint from its published API | Not fixable from the CLI -- do the task in Play Console. Currently affects `gpc games ... set-icon` |
 | `API_CHANGES_NOT_SENT_FOR_REVIEW` | 400/403 | App has rejected update, requires review flag | Add `--changes-not-sent-for-review` flag to the command |
 | `API_CHANGES_ALREADY_IN_REVIEW` | 400 | Changes already in review, new commit would silently cancel | Use `--error-if-in-review` to prevent silent cancellation |
 | `API_EDIT_EXPIRED` | 410 | The open edit session has expired (edits expire after ~30 minutes of inactivity) | GPC now includes a clear `API_EDIT_EXPIRED` message with a suggestion to retry the command. The command will automatically create a fresh edit on retry. |
@@ -217,6 +219,14 @@ gpc vitals crashes --json | jq '.crashRate'
 # In CI, use exit code to gate promotion
 gpc vitals crashes --threshold 1.5 && gpc releases promote --from beta --to production
 ```
+
+### 7a. Order refund review errors (exit code 2, v0.9.96+)
+
+| Code | Meaning | Fix |
+|------|---------|-----|
+| `ORDER_REVIEW_REFUND_INVALID` | `gpc purchases orders review-refund` was given invalid input: `--sample-content-provided` unanswered, `--consumption-percent` outside 0-100, or `--usage-events-file` that is not a JSON array of objects | Pass exactly one of `--sample-content-provided` / `--no-sample-content-provided`, use a plain decimal such as `--consumption-percent 45.2`, and make the file an array like `[{ "consumptionTime": "2026-08-30T10:15:00Z" }]` |
+
+Rejected locally before anything is sent, so a bad command never burns part of Google's 24-hour response window. An empty or whitespace-only `--consumption-percent` counts as not provided rather than as 0%.
 
 ### 8. Plugin errors (exit code 10)
 
