@@ -1,9 +1,9 @@
 ---
 name: gpc-user-management
 description: "Use when managing Google Play developer account users, permissions, grants, or testers. Make sure to use this skill whenever the user mentions gpc users, gpc testers, gpc grants, developer account permissions, user roles, invite user, remove user, permission grants, per-app permissions, per-app grants, standalone grants, tester groups, beta testers, internal testers, alpha testers, Google Group testers, tester CSV import, team management, access control, user audit — even if they don't explicitly say 'user management.' Also trigger when someone wants to invite team members to their Play Console, update permissions for existing users, manage per-app grants independently from users, manage who can test their app, import testers from a CSV file, or audit who has access to their developer account. For authentication setup, see gpc-setup. For release track management, see gpc-release-flow."
-compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). User commands require developer account ID. Tester commands require an app with testing tracks configured. v0.9.87+ returns a consistent list --json envelope on grants/testers."
+compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). User commands require developer account ID. Tester commands require an app with testing tracks configured. v0.9.87+ returns a consistent list --json envelope on grants/testers. v0.9.98+ required for users list/get (Google now rejects paginated users requests)."
 metadata:
-  version: 0.12.0
+  version: 0.13.0
 ---
 
 # gpc-user-management
@@ -56,6 +56,8 @@ gpc users get user@example.com --developer-id 1234567890
 # JSON output for scripting
 gpc users list --developer-id 1234567890 --json
 ```
+
+> **Fixed in v0.9.98:** `users list` and `users get` failed on older versions with "Pagination is not currently available" because Google now requires an unpaginated request. Upgrade to v0.9.98+. Google returns every user in one response, so `--limit` trims that response locally, `nextPageToken` is always `null`, and `--next-page` has no effect for users.
 
 ### 2. Users — invite
 

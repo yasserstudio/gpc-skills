@@ -3,7 +3,7 @@ name: gpc-troubleshooting
 description: "Use when debugging GPC errors, failures, or unexpected behavior. Make sure to use this skill whenever the user mentions gpc error, gpc failing, exit code, AUTH_FAILED, API_FORBIDDEN, NETWORK_ERROR, CONFIG_MISSING, EDIT_CONFLICT, upload failed, permission denied, timeout, rate limit, gpc doctor failing, unexpected exit code, command not working, GPC crash, debug GPC, verbose output, --json error, threshold breach, REPORT_ACCESS_DENIED, REPORT_BUCKET_NOT_FOUND, reports bucket access, bulk reports permission denied, API_DECLARATION_REQUIRED, App content declaration, foreground service declaration, API_ALREADY_EXISTS, API_ENDPOINT_RETIRED, ORDER_REVIEW_REFUND_INVALID, PLUGIN_PERMISSIONS_REQUIRED, PLUGIN_IDENTITY_MISMATCH — even if they don't explicitly say 'troubleshoot.' Also trigger when someone encounters any GPC error they don't understand, when gpc doctor reports issues, when CI pipelines fail with GPC commands, or when they need to interpret exit codes. For auth-specific setup issues, see gpc-setup. For CI-specific issues, see gpc-ci-integration."
 compatibility: "GPC v0.9.82+. Covers all packages: @gpc-cli/cli, @gpc-cli/core, @gpc-cli/api, @gpc-cli/auth, @gpc-cli/config. v0.9.85+ resolves the npm global install failure. v0.9.93+ adds the REPORT_* bulk-report error codes and the doctor reports-bucket check. v0.9.94+ adds API_DECLARATION_REQUIRED and stops App content declaration failures being reported as missing service account permissions. v0.9.96+ adds API_ALREADY_EXISTS, API_ENDPOINT_RETIRED, and ORDER_REVIEW_REFUND_INVALID."
 metadata:
-  version: 0.21.0
+  version: 0.22.0
 ---
 
 # gpc-troubleshooting
@@ -325,6 +325,9 @@ export GPC_UPLOAD_TIMEOUT=300000  # Upload timeout in ms (5 min)
 | `gpc doctor` plugin error | A configured plugin fails to load | Check plugin package version, reinstall, or remove from config (v0.9.71+) |
 | `gpc doctor --verify` mismatch | Local keystore differs from Play signing cert | Register local key in Play Console or use Play App Signing (v0.9.75+) |
 | All commands timeout | Network/proxy issue | Check `HTTPS_PROXY`, `GPC_CA_CERT`, `GPC_TIMEOUT` |
+| `NETWORK_ERROR`: "A proxy is configured ... could not route requests through it" | `HTTPS_PROXY` / `HTTP_PROXY` is malformed (v0.9.98+ fails closed instead of connecting directly) | Fix the URL (e.g. `http://proxy.example.com:8080`) or unset the variable; use `NO_PROXY` for hosts that should bypass it |
+| `users list` / `users get`: "Pagination is not currently available" | Google now rejects paginated users requests (GPC before v0.9.98) | Upgrade to v0.9.98+ |
+| `gpc doctor` warns "Unknown config keys: legacyApprovedPlugins, pluginApprovalPolicyVersion" (or `vitals`/`games`/`reports`) | Stale known-keys list (before v0.9.98); these keys are valid | Upgrade to v0.9.98+; no config change needed |
 | Commands work locally, fail in CI | Missing env vars in CI | Set `GPC_SERVICE_ACCOUNT` and `GPC_APP` in CI secrets; run `gpc setup --auto` (v0.9.68+) |
 | Env vars `GPC_SERVICE_ACCOUNT` / `GPC_APP` seem to be ignored | Active profile overriding env vars (pre-v0.9.81 bug) | Upgrade to v0.9.81+. Check active profile with `gpc config list`; env vars and flags now correctly override the profile. |
 | `npm install -g @gpc-cli/cli` fails with `EUNSUPPORTEDPROTOCOL` | `workspace:*` specifiers leaked into published manifests (v0.9.77-v0.9.83) | Reinstall on v0.9.84+ or v0.9.85+: `npm install -g @gpc-cli/cli@latest`. Fixed in v0.9.84 (cli+core) and fully resolved in v0.9.85 (api package re-published). |

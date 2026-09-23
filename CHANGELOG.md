@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.31.2 -- 2026-09-23
+
+Synced with GPC v0.9.98. Users commands work against the live API again, and proxy handling is hardened.
+
+### Updated Skills
+
+- **gpc-user-management** (0.12.0 -> 0.13.0) -- `users list` / `users get` need v0.9.98+: Google now rejects paginated users requests ("Pagination is not currently available"). Google returns every user in one response, so `--limit` trims locally, `nextPageToken` is always `null`, and `--next-page` has no effect for users.
+- **gpc-setup** (1.9.0 -> 1.10.0) -- Network section documents `NO_PROXY`, that proxies are environment-only (no config-file key), and v0.9.98's fail-closed behaviour: an unusable proxy stops the command with `NETWORK_ERROR` (exit 5) instead of connecting directly, and an empty `https_proxy=` no longer hides `HTTPS_PROXY`.
+- **gpc-security** (0.16.0 -> 0.17.0) -- `references/runtime-security.md`: invalid proxy URLs are no longer echoed by `gpc doctor`, plus a new F-05b entry on the proxy fail-open that v0.9.98 closed (OAuth-bearing requests sent around a configured proxy).
+- **gpc-troubleshooting** (0.21.0 -> 0.22.0) -- Three new rows: the proxy `NETWORK_ERROR`, the users "Pagination is not currently available" error, and the stale doctor "Unknown config keys" warning.
+- **gpc-sdk-usage** (1.9.2 -> 1.9.3) -- `client.users.list()` always sends `pageSize=-1`; a caller `pageSize` is ignored and deprecated.
+- **README** -- v0.9.98 requirements line.
+
+### Bundle
+
+19 skills. Synced to GPC v0.9.98.
+
+---
+
 ## v1.31.1 -- 2026-09-23
 
 Synced with GPC v0.9.97. Memory usage vitals for Google Play's February 2027 quality requirements.

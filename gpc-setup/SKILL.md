@@ -1,9 +1,9 @@
 ---
 name: gpc-setup
 description: "Use when setting up GPC (Google Play Console CLI): authentication with service accounts, OAuth, or Application Default Credentials; configuration files (.gpcrc.json, env vars, XDG paths); auth profiles; running gpc doctor; troubleshooting auth errors. Make sure to use this skill whenever the user mentions gpc auth, gpc setup, service account setup, gpc config, gpc doctor, GPC_SERVICE_ACCOUNT, gpc auth login, gpc auth clear-cache, token cache, Google Play API credentials, Play Console authentication, download bulk reports permission, reports bucket access, GPC_REPORTS_BUCKET, or wants to install/configure GPC — even if they don't explicitly say 'setup.' Also trigger when someone is troubleshooting auth failures, token expiration, keychain issues, or proxy/network configuration for GPC."
-compatibility: "GPC v0.9.82+. Requires Node.js 20+, pnpm 9+ (for development). npm for installation. v0.9.93+ adds gpc auth clear-cache, the doctor reports-bucket check, and the bulk-reports account permission needed by gpc reports. v0.9.95+ creates and updates profiles via auth login --profile (previously silently ignored). v0.9.96+ grows gpc verify checklist to 11 items and makes every item promptable."
+compatibility: "GPC v0.9.82+. Requires Node.js 20+, pnpm 9+ (for development). npm for installation. v0.9.93+ adds gpc auth clear-cache, the doctor reports-bucket check, and the bulk-reports account permission needed by gpc reports. v0.9.95+ creates and updates profiles via auth login --profile (previously silently ignored). v0.9.96+ grows gpc verify checklist to 11 items and makes every item promptable. v0.9.98+ honors NO_PROXY and fails closed when a configured proxy cannot be applied."
 metadata:
-  version: 1.9.0
+  version: 1.10.0
 ---
 
 # GPC Setup
@@ -299,8 +299,11 @@ For corporate proxies or custom CA certificates:
 
 ```bash
 export HTTPS_PROXY=http://proxy.example.com:8080
+export NO_PROXY=localhost,.internal.example.com   # optional: hosts to reach directly
 export GPC_CA_CERT=/path/to/ca-bundle.crt
 ```
+
+Proxies are configured only through these environment variables (either case); there is no config-file proxy key. As of v0.9.98, a proxy that is set but cannot be applied (for example, a malformed URL) stops the command with `NETWORK_ERROR` (exit 5) before any request, instead of connecting directly around it. An empty lowercase variable such as `https_proxy=` no longer hides a set `HTTPS_PROXY`.
 
 Retry configuration:
 ```bash

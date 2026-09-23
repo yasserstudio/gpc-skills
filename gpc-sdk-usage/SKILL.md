@@ -3,7 +3,7 @@ name: gpc-sdk-usage
 description: "Use when building applications that programmatically interact with the Google Play Developer API using GPC's TypeScript SDK packages. Make sure to use this skill whenever the user mentions @gpc-cli/api, @gpc-cli/auth, PlayApiClient, createApiClient, resolveAuth, listReports, downloadStatsReport, downloadFinancialReport, STORAGE_READ_ONLY_SCOPE, Google Play API client, TypeScript SDK, programmatic access, API client, HTTP client, rate limiter, pagination, edit lifecycle in code, Node.js Google Play, server-side Play Store, backend integration — even if they don't explicitly say 'SDK.' Also trigger when someone wants to build a backend service, custom dashboard, automation script, or any TypeScript/JavaScript application that interacts with Google Play programmatically rather than through the CLI. For CLI usage, see other gpc-* skills. For building plugins, see gpc-plugin-development."
 compatibility: "GPC v0.9.82+ (new APIs require v0.9.51+, typed acknowledge/revoke bodies require v0.9.55+, Play Custom App Publishing API + `createEnterpriseClient` + `HttpClient.uploadCustomApp<T>` + `ResumableUploadOptions.initialMetadata` require v0.9.56+, changelog generation exports (`generateChangelog`, `renderPlayStore`, `resolveLocales`, `buildLocaleBundle`, `PLAY_STORE_LIMIT`, `LocaleBundle`, `LocaleEntry`) require v0.9.62+, apply + bundle processing exports (`applyReleaseNotes`, `waitForBundleProcessing`, `validateBundleForApply`, `bundleToReleaseNotes`) require v0.9.64+, `inAppUpdatePriority` + `retainedVersionCodes` on upload require v0.9.70+, `SubscriptionPurchaseV2.onHoldStateContext` + `inGracePeriodStateContext` typed fields require v0.9.76+, extended `waitForBundleProcessing` Fibonacci backoff (~86s) + multi-retry guard on validate/commit require v0.9.77+, `edits.tracks.create` for custom closed testing tracks require v0.9.79+, `OfferPhaseDetails` on Orders + `download()` exponential backoff require v0.9.79+, API type alignment (canceledStateContext nested shape, signupPromotion {oneTimeCode, vanityCode}, developerAccountPermissions plural, buyOption/rentOption fields, download retry with backoff, null-safe bundles.list/tracks.list) require v0.9.80+, `VitalsThresholds` in `GpcConfig`/`ResolvedConfig` require v0.9.82+). Requires Node.js 20+, TypeScript 5+. Packages: @gpc-cli/api, @gpc-cli/auth. v0.9.83+ for correct pagination resume and the unified list envelope. v0.9.93+ replaces the removed client.reports.list / downloadReport with @gpc-cli/core listReports, downloadStatsReport, downloadFinancialReport, and adds the STORAGE_READ_ONLY_SCOPE export in @gpc-cli/auth."
 metadata:
-  version: 1.9.2
+  version: 1.9.3
 ---
 
 # gpc-sdk-usage
@@ -278,6 +278,8 @@ const all = await paginateAll(
 ```
 
 > **New in v0.9.83:** `paginateAll` now returns a real continuation token, so `--limit` + `--next-page` correctly resumes across reviews, users, purchases, IAP, and subscriptions. Every CLI list command also shares the unified `{ <key>, nextPageToken, meta.count, message? }` JSON envelope (extended to grants, testers, and tracks in v0.9.87). Scripts reading a bare array from list commands will break — update to destructure the keyed field.
+
+> **v0.9.98:** `client.users.list()` always sends `pageSize=-1`, the only value Google accepts ("Pagination is not currently available"). A caller-supplied `pageSize` is ignored and deprecated in the types; the whole list comes back in one response.
 
 ### 6. Rate limiting
 

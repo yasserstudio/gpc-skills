@@ -149,6 +149,14 @@ const content = await readFile(filePath, "utf-8");
 const safeUrl = `${parsed.protocol}//${parsed.host}${parsed.pathname}`;
 ```
 
+**v0.9.98:** an *invalid* proxy URL is no longer echoed either (it was printed verbatim, credentials included), and proxy setup errors report only the error type, never the URL.
+
+### F-05b: Proxy fail-open (fixed in v0.9.98)
+
+**Threat:** When `HTTPS_PROXY` was set but could not be applied, GPC printed a warning and sent Play API requests, carrying the OAuth bearer token, directly, outside a mandated or inspected egress path. An empty lowercase `https_proxy=` could also hide a set `HTTPS_PROXY` and send traffic direct while the token request still went through the proxy.
+
+**Fix:** undici is a declared dependency and `EnvHttpProxyAgent` handles `NO_PROXY`. Proxy variables are resolved lowercase-first with empty values treated as unset. A proxy that cannot be applied stops the command with `NETWORK_ERROR` (exit 5) before any request. On npm installs, the standalone-binary switch is compiled out, so an environment variable cannot skip proxy setup.
+
 ---
 
 ### F-06: Skills installer env passthrough

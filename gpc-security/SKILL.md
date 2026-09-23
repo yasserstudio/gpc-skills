@@ -1,9 +1,9 @@
 ---
 name: gpc-security
 description: "Use when dealing with GPC credential security, secret management, audit logging, or access control. Make sure to use this skill whenever the user mentions credentials, service account key, secret rotation, key rotation, credential storage, audit log, audit trail, security best practices, .gpcrc.json security, secrets in CI, GPC_SERVICE_ACCOUNT safety, keychain, token cache, credential leak, key compromise, secure deployment — even if they don't explicitly say 'security.' Also trigger when someone asks about where GPC stores credentials, how to rotate service account keys, how to audit who did what with GPC, how to securely pass credentials in CI/CD, or how to handle a compromised service account key. Also trigger on app signing key custody: app-signing enroll, app-signing rotate, Play App Signing, self-hosted Cloud KMS key, cryptoKeyVersion, signing certificate lineage, signing key rotation. For auth setup, see gpc-setup. For CI configuration, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Covers credential storage, audit logging, supply chain hardening, and security patterns across all packages. v0.9.96+ adds gpc app-signing enroll/rotate for self-hosted Google Cloud KMS signing keys."
+compatibility: "GPC v0.9.82+. Covers credential storage, audit logging, supply chain hardening, and security patterns across all packages. v0.9.96+ adds gpc app-signing enroll/rotate for self-hosted Google Cloud KMS signing keys. v0.9.98+ fails closed on an unusable proxy and never prints proxy URLs."
 metadata:
-  version: 0.16.0
+  version: 0.17.0
 ---
 
 # gpc-security
