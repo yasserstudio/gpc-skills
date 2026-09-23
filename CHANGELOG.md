@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.31.4 -- 2026-09-23
+
+### Updated Skills
+
+- **gpc-ci-integration** (1.9.0 -> 1.9.1) -- The GPC Action is listed on the GitHub Marketplace again (as "GPC - Publish to Google Play"), so the skill links the correct Marketplace listing alongside the source repository.
+
+### Bundle
+
+19 skills. Synced to GPC v0.9.98 and gpc-action v1.1.0.
+
+---
+
 ## v1.31.3 -- 2026-09-23
 
 Corrects the GPC GitHub Action guidance and records gpc-action v1.1.0 (default GPC 0.9.98).

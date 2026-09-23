@@ -3,7 +3,7 @@ name: gpc-ci-integration
 description: "Use when integrating GPC into CI/CD pipelines. Make sure to use this skill whenever the user mentions GitHub Actions, GitLab CI, Bitbucket Pipelines, CircleCI, CI/CD, automated release, pipeline, GPC_SERVICE_ACCOUNT, JSON output, CSV output, TSV output, exit codes, gpc in CI, automate Play Store deployment, release workflow, deploy to Play Store from CI, automated rollout, step summary, bundle wait, wait for bundle processing, or wants to set up any kind of automated Google Play deployment pipeline. Also trigger when someone asks about running GPC in a headless environment, parsing GPC output in scripts, using GPC exit codes for conditional logic, or configuring retries and timeouts for CI — even if they don't mention a specific CI platform. For local setup, see gpc-setup. For release commands, see gpc-release-flow."
 compatibility: "GPC v0.9.82+. Works with any CI platform that supports Node.js 24+ (recommended), 22+, or 20+, or standalone binary."
 metadata:
-  version: 1.9.0
+  version: 1.9.1
 ---
 
 # GPC CI Integration
@@ -34,7 +34,7 @@ Use this skill when the task involves:
 
 For GitHub Actions users, the GPC GitHub Action is the fastest way to publish to the Play Store. No Node.js setup step, no manual install, no wrapper script.
 
-Source and full input list: [yasserstudio/gpc-action](https://github.com/yasserstudio/gpc-action).
+Available on the [GitHub Marketplace](https://github.com/marketplace/actions/gpc-publish-to-google-play). Source and full input list: [yasserstudio/gpc-action](https://github.com/yasserstudio/gpc-action).
 
 **Minimal usage:**
 
