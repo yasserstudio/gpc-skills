@@ -3,7 +3,7 @@ name: gpc-security
 description: "Use when dealing with GPC credential security, secret management, audit logging, or access control. Make sure to use this skill whenever the user mentions credentials, service account key, secret rotation, key rotation, credential storage, audit log, audit trail, security best practices, .gpcrc.json security, secrets in CI, GPC_SERVICE_ACCOUNT safety, keychain, token cache, credential leak, key compromise, secure deployment — even if they don't explicitly say 'security.' Also trigger when someone asks about where GPC stores credentials, how to rotate service account keys, how to audit who did what with GPC, how to securely pass credentials in CI/CD, or how to handle a compromised service account key. Also trigger on app signing key custody: app-signing enroll, app-signing rotate, Play App Signing, self-hosted Cloud KMS key, cryptoKeyVersion, signing certificate lineage, signing key rotation. For auth setup, see gpc-setup. For CI configuration, see gpc-ci-integration."
 compatibility: "GPC v0.9.82+. Covers credential storage, audit logging, supply chain hardening, and security patterns across all packages. v0.9.96+ adds gpc app-signing enroll/rotate for self-hosted Google Cloud KMS signing keys. v0.9.98+ fails closed on an unusable proxy and never prints proxy URLs."
 metadata:
-  version: 0.17.0
+  version: 0.17.1
 ---
 
 # gpc-security
@@ -280,20 +280,20 @@ Configuration: `socket.yml` at repo root controls Socket.dev alert rules. `.npmr
 
 ### 9a. GPC GitHub Action security
 
-The GPC GitHub Action (`yasserstudio/gpc-action`) is a TypeScript action running on Node 24 with the following security properties:
+The GPC GitHub Action (`yasserstudio/gpc-action`) is a TypeScript action running on Node 24 with these security properties:
 
-- **OIDC auth**: The action authenticates to Google Play using OIDC token exchange. No long-lived secrets are stored in the action itself.
-- **Built-in preflight gate**: The action runs `gpc preflight` before upload. A failing preflight scan blocks the publish step.
-- **No stored NPM token**: The action uses Trusted Publisher (OIDC) for any npm operations. No `NPM_TOKEN` is stored in GitHub secrets.
-- **Node 24 runtime**: Matches the current GPC CLI CI matrix for consistency.
+- **Verified binary**: it downloads the standalone `gpc` binary from the GPC GitHub release and checks its SHA-256 on every run (cache hits included) against checksums committed in the action itself, not only the release's mutable `checksums.txt`. The default GPC version is pinned: 0.9.98 as of action v1.1.0. `gpc-version: latest` or an unpinned version falls back to the release checksums with a warning.
+- **Credentials**: authentication uses the service account JSON key passed in `service-account-json`. Store it as an encrypted secret; there is no OIDC or keyless option yet.
+- **Built-in preflight gate**: the action runs `gpc preflight` before upload, and a failing scan blocks the publish (`preflight: false` skips it).
+- **Node 24 runtime**: matches the current GPC CLI CI matrix.
 
 Usage:
 ```yaml
 - uses: yasserstudio/gpc-action@v1
   with:
-    service-account: ${{ secrets.PLAY_SA_KEY }}
+    service-account-json: ${{ secrets.GPC_SERVICE_ACCOUNT }}
     package-name: com.example.app
-    aab: app/build/outputs/bundle/release/app-release.aab
+    release-files: app/build/outputs/bundle/release/app-release.aab
     track: beta
 ```
 

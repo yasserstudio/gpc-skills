@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.31.3 -- 2026-09-23
+
+Corrects the GPC GitHub Action guidance and records gpc-action v1.1.0 (default GPC 0.9.98).
+
+### Updated Skills
+
+- **gpc-ci-integration** (1.8.0 -> 1.9.0) -- The action example used a non-existent `release-file` input; the real input is `release-files` (camelCase `releaseFile`/`releaseFiles` remain as r0adkll aliases). New note on which GPC the action runs: a checksum-verified standalone binary, default 0.9.98 as of action v1.1.0, pinnable with `gpc-version`, and that the action always uploads and does not put `gpc` on the PATH. The Marketplace link (which 404s) is replaced with the action repository.
+- **gpc-security** (0.17.0 -> 0.17.1) -- Section 9a rewritten to match the action. It authenticates with a service account JSON key, not OIDC. The npm-token point did not apply, since the action does not use npm. The real integrity property is now documented: SHA-256 checksums committed in the action for the pinned default. The usage example used non-existent `service-account`/`aab` inputs and now uses `service-account-json`/`release-files`.
+
+### Bundle
+
+19 skills. Synced to GPC v0.9.98 and gpc-action v1.1.0.
+
+---
+
 ## v1.31.2 -- 2026-09-23
 
 Synced with GPC v0.9.98. Users commands work against the live API again, and proxy handling is hardened.
