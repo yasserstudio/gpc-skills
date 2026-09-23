@@ -18,7 +18,7 @@ npx skills add yasserstudio/gpc-skills
 | **gpc-onboarding** | First-run guided setup, `gpc quickstart`, `gpc init`, `gpc auth` wizard |
 | **gpc-release-flow** | Upload AAB/APK, create releases, draft releases, promote tracks, staged rollouts, `gpc publish`, `gpc diff`, `gpc bundles list/find/wait` |
 | **gpc-metadata-sync** | Store listings, screenshots, images, image sync with dedup (`gpc listings images sync`), Fastlane metadata compatibility, pull/push |
-| **gpc-vitals-monitoring** | Real-time rollout monitoring (`gpc watch`), crash rates, ANR, startup, LMK, vitals thresholds, reviews, reports |
+| **gpc-vitals-monitoring** | Real-time rollout monitoring (`gpc watch`), crash rates, ANR, startup, LMK, memory usage (P90), vitals thresholds, reviews, reports |
 | **gpc-ci-integration** | GitHub Actions, GitLab CI, Bitbucket, CircleCI, JSON output, exit codes |
 | **gpc-monetization** | Subscriptions, IAP, one-time products, RTDN notifications, voided purchases, chargeback replies (`gpc purchases orders review-refund`), pricing, regional conversion |
 | **gpc-user-management** | Developer account users, permissions, grants, testers, CSV import |
@@ -67,6 +67,7 @@ gpc-<skill>/
 | "Auto-halt rollout if crash rate spikes" | `gpc-vitals-monitoring` |
 | "Send Slack webhook on vitals breach" | `gpc-vitals-monitoring` |
 | "Check crash rate before promoting" | `gpc-vitals-monitoring` |
+| "Check memory usage against the Feb 2027 requirement" | `gpc-vitals-monitoring` |
 | "Reply to negative reviews" | `gpc-vitals-monitoring` |
 | "Fetch all reviews with auto-pagination" | `gpc-vitals-monitoring` |
 | "Set up GPC in GitHub Actions" | `gpc-ci-integration` |
@@ -282,6 +283,7 @@ gpc-<skill>/
 - GPC v0.9.86+ required for `gpc-games` (Play Games Configuration API: achievement and leaderboard CRUD)
 - GPC v0.9.87+ recommended: consistent `list --json` envelope across grants, testers, and tracks (referenced by `gpc-user-management`, `gpc-release-flow`, `gpc-sdk-usage`)
 - GPC v0.9.96+ required for `gpc purchases orders review-refund`, `gpc app-signing enroll/rotate`, `--ai-generated` on listings images, `device-tiers create --allow-unknown-devices`, and working `one-time-products create/update` plus the single-offer commands (which now require `--purchase-option`)
+- GPC v0.9.97+ required for `gpc vitals memory-rss` and `gpc vitals memory-bitmap` (P50-P99 memory usage, `--threshold` on P90)
 - Node.js 20+ (or standalone binary)
 - Google Play Developer API access (service account)
 - For `gpc-enterprise`: an additional "create and publish private apps" permission granted to the service account in Play Console

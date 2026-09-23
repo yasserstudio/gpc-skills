@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.31.1 -- 2026-09-23
+
+Synced with GPC v0.9.97. Memory usage vitals for Google Play's February 2027 quality requirements.
+
+### Updated Skills
+
+- **gpc-vitals-monitoring** (1.9.1 -> 1.10.0) -- New section on `gpc vitals memory-rss` (anonymous RSS plus swap) and `gpc vitals memory-bitmap`: P50-P99 percentiles, hardware and app-state dimensions (`--dim deviceRamBucket`, `--dim appState`, `--dim deviceModel`), daily aggregation only, and `--threshold` evaluated on P90, the percentile Google's requirement uses. Corrects the performance-metrics block, which described `gpc vitals memory` as the low-memory-killer rate and `gpc vitals wakeup` as an LMK metric: `memory` is the stuck-wakelock metric set and `wakeup` is the excessive-wakeup rate.
+- **gpc-sdk-usage** (1.9.1 -> 1.9.2) -- Endpoint count updated to 234, matching GPC's v0.9.97 coverage audit.
+- **README** -- Memory-usage routing row, vitals description mentions memory usage, and a v0.9.97 requirements line.
+
+### Bundle
+
+19 skills. Synced to GPC v0.9.97.
+
+---
+
 ## v1.31.0 -- 2026-08-30
 
 Synced with GPC v0.9.96. One-time product writes reach Google again, chargebacks can be answered from the terminal, and Play App Signing with a self-hosted Cloud KMS key is now a documented path.

@@ -1,9 +1,9 @@
 ---
 name: gpc-vitals-monitoring
 description: "Use when monitoring Android app health metrics from Google Play. Make sure to use this skill whenever the user mentions gpc vitals, gpc watch, gpc status, crash rate, ANR rate, startup time, Android vitals, crash monitoring, threshold alerting, vitals gating, rollout monitoring, auto-halt, breach notification, webhook alerting, frame rate, battery usage, memory issues, error tracking, app quality, user reviews, review replies, Play Store reviews, star rating, negative reviews, review export, financial reports, stats reports, gpc reports, reports list, reports download, bulk reports, earnings report, sales report, play balance, installs report, subscriptions report, reports bucket, GPC_REPORTS_BUCKET, pubsite_prod, REPORT_ACCESS_DENIED, download bulk reports permission, or wants to check app health, monitor a staged rollout, respond to reviews, or download Play Console reports. Also trigger when someone asks about gating deployments on crash data, monitoring app performance after a release, watching a rollout for regressions, or tracking review sentiment — even if they don't mention GPC. For releases, see gpc-release-flow. For CI gating, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Vitals data requires the app to have sufficient install volume. v0.9.83+ adds reviews fidelity fields and the unified list envelope. v0.9.93+ downloads Play bulk reports live from the account's Cloud Storage bucket (needs the 'View app information and download bulk reports (read-only)' grant on the service account)."
+compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Vitals data requires the app to have sufficient install volume. v0.9.83+ adds reviews fidelity fields and the unified list envelope. v0.9.97+ adds memory-rss/memory-bitmap P50-P99 memory usage (Feb 2027 P90 requirement). v0.9.93+ downloads Play bulk reports live from the account's Cloud Storage bucket (needs the 'View app information and download bulk reports (read-only)' grant on the service account)."
 metadata:
-  version: 1.9.1
+  version: 1.10.0
 ---
 
 # GPC Vitals Monitoring
@@ -109,17 +109,38 @@ gpc vitals rendering
 # Battery usage
 gpc vitals battery
 
-# Low memory killer rate
+# Stuck background wakelocks (despite the name, not a memory-usage metric)
 gpc vitals memory
 
-# Wakeup time metric (low-memory killer)
+# Excessive wakeup rate
 gpc vitals wakeup
 
-# Low memory killer stats (LMK)
+# Low memory killer rate (LMK)
 gpc vitals lmk
+
+# Memory usage percentiles (v0.9.97+)
+gpc vitals memory-rss
+gpc vitals memory-bitmap
 ```
 
-`gpc vitals wakeup` shows the wakeup rate from low-memory kills (LMK events). Supports the same flags as other vitals subcommands: `--days <n>`, `--threshold <value>`, `--json`.
+`gpc vitals memory` is the stuck-wakelock metric set (kept under that name for compatibility) and `gpc vitals wakeup` is the excessive-wakeup rate. For actual memory usage, use `memory-rss` / `memory-bitmap` below. All support the same flags as other vitals subcommands: `--days <n>`, `--threshold <value>`, `--json`.
+
+### Memory usage percentiles (`gpc vitals memory-rss` / `memory-bitmap`, v0.9.97+)
+
+Google Play's February 2027 quality requirements judge dynamic memory at **P90**. These two commands query the Play Developer Reporting memory metric sets at P50, P75, P90, P95, and P99:
+
+- `gpc vitals memory-rss` -- anonymous RSS plus swap usage
+- `gpc vitals memory-bitmap` -- bitmap memory usage
+
+```bash
+gpc vitals memory-rss --app com.example.app --days 30
+gpc vitals memory-rss --app com.example.app --dim deviceRamBucket   # hardware dimension
+gpc vitals memory-rss --app com.example.app --dim appState          # foreground vs background
+gpc vitals memory-bitmap --app com.example.app --dim deviceModel
+gpc vitals memory-rss --app com.example.app --threshold <value>     # gates on P90, exit 6 on breach
+```
+
+The Reporting API only serves these at daily aggregation, which GPC enforces. `--threshold` is evaluated against P90 (`anonRssAndSwapMemoryUsageP90` / `bitmapMemoryUsageP90`), the same percentile Google's requirement uses. `gpc verify checklist` tracks the requirement itself; there is no preflight rule until Google publishes the thresholds.
 
 ### Low-Memory-Killer rate (`gpc vitals lmk`, v0.9.58+, corrected in v0.9.59)
 
