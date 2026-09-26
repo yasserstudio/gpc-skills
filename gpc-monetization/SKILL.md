@@ -1,9 +1,9 @@
 ---
 name: gpc-monetization
 description: "Use when managing in-app purchases, subscriptions, pricing, or Real-Time Developer Notifications in Google Play. Make sure to use this skill whenever the user mentions gpc subscriptions, gpc iap, gpc purchases, gpc pricing, gpc rtdn, in-app products, base plans, subscription offers, one-time products, consumable products, purchase verification, purchase acknowledgement, purchase token, subscription cancellation, subscription deferral, voided purchases, refunds, regional pricing, currency conversion, price migration, SKU management, monetization, revenue, billing, subscription analytics, churn, trial conversion, subscriber count, RTDN, Real-Time Developer Notifications, Pub/Sub notifications, subscription events, purchase events — even if they don't explicitly say 'monetization.' Also trigger when someone wants to create or update subscriptions, manage base plan lifecycle (activate/deactivate), set up introductory offers, verify server-side purchases, handle refunds, convert prices across regions, sync IAP products from files, migrate subscribers to new prices, view subscription analytics, decode Pub/Sub notification payloads, respond to a chargeback dispute (chargeback, pending refund review, pendingRefundReviewNotification, pendingRefundToken, gpc purchases orders review-refund), or check RTDN topic configuration. For release management, see gpc-release-flow. For CI automation, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Subscriptions and IAP require products configured in Google Play Console. v0.9.84+ sends --regions-version to the API on subscription/OTP writes. v0.9.96+ fixes one-time-products create/update and the four single-offer commands (which now require --purchase-option), and adds gpc purchases orders review-refund for chargeback disputes."
+compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Subscriptions and IAP require products configured in Google Play Console. v0.9.84+ sends --regions-version to the API on subscription/OTP writes. v0.9.96+ fixes one-time-products create/update and the four single-offer commands (which now require --purchase-option), and adds gpc purchases orders review-refund for chargeback disputes. v0.9.99+ for external transaction refunds (required refund time/ID) and typed game reward / external content link fields."
 metadata:
-  version: 0.17.0
+  version: 0.18.0
 ---
 
 # gpc-monetization
@@ -250,6 +250,35 @@ gpc otp offers delete premium_upgrade launch_discount --purchase-option buy_once
 `offers create` probes for the offer ID first and refuses with `API_ALREADY_EXISTS` (409) rather than overwriting -- the underlying batch endpoint is an upsert. Use `offers update` to change an existing offer.
 
 > **Fixed in v0.9.96:** `gpc one-time-products create` / `update` and the four single-offer commands above previously failed with a route-not-found error (Play serves the write route under a different spelling than the read routes). Requires v0.9.96+.
+
+### One-time product offer payload (Google's schema)
+
+An offer file is a Google Play `OneTimeProductOffer`: one of `discountedOffer`, `preOrderOffer` or `gameRewardOffer`, plus `regionalPricingAndAvailabilityConfigs` as a **list** of `{ regionCode, availability, relativeDiscount | absoluteDiscount | noOverride }`. `relativeDiscount` is the fraction the user pays (`0.7` = 30% off); prices themselves live on the purchase option. Do not use subscription fields (`pricingPhases`, a `regionalConfigs` map, `newSubscriberAvailability`) -- Google rejects them, and GPC docs before v0.9.99 showed that wrong shape.
+
+```json
+{
+  "offerId": "launch-discount",
+  "discountedOffer": { "startTime": "2026-10-01T00:00:00Z", "endTime": "2026-10-31T23:59:59Z", "redemptionLimit": "1000" },
+  "regionalPricingAndAvailabilityConfigs": [
+    { "regionCode": "US", "availability": "AVAILABLE", "relativeDiscount": 0.7 }
+  ]
+}
+```
+
+**Play Games Rewards** (v0.9.99+ typed/documented): `"gameRewardOffer": { "redemptionLimit": "1" }` (`"1"`-`"50"`, `"0"`/unset = unlimited). Google's guide creates rewards offers in Play Console; GPC lists, reads and updates them.
+
+### External transactions (alternative billing, US programs)
+
+```bash
+gpc ext-txn create --file txn.json --transaction-id order-1001    # body sent as-is
+gpc ext-txn get order-1001
+gpc ext-txn refund order-1001 --full
+gpc ext-txn refund order-1001 --partial-amount 4990000 --currency EUR --refund-id order-1001-r1
+```
+
+- Refunds need GPC v0.9.99+: earlier versions never sent Google's required `refundTime` (and partial `refundId`), so Google rejected them. `--refund-time <RFC 3339 with zone>` overrides "now"; future times are refused. Bad options exit 2 with `EXT_TXN_REFUND_INVALID` before anything is sent, and the prompt states the amount.
+- `--partial-amount` is pre-tax **micros** (4990000 = 4.99), not major units.
+- US **external content links** program: add `externalContentLinkDetails { linkType: LINK_TO_DIGITAL_CONTENT_OFFER | LINK_TO_APP_DOWNLOAD, installedAppPackage, externalAppCategory: APP | GAME }` to the create file (separate from the older `externalOfferDetails`). Google requires reporting purchases from Oct 1 2026 and app downloads by Dec 1 2026.
 
 ### Activating/deactivating OTP offers (v0.9.57+)
 

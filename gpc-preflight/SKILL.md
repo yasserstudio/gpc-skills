@@ -1,9 +1,9 @@
 ---
 name: gpc-preflight
 description: "Use when scanning an AAB or APK for Google Play policy compliance before submission, or checking signing key consistency across releases. Trigger when the user mentions preflight, compliance check, policy scan, pre-submission check, signing key consistency, certificate mismatch, or wants to verify their AAB/APK meets Google Play requirements. Also trigger for questions about restricted permissions, target SDK requirements, 64-bit compliance, hardcoded secrets detection, Data Safety form reminders, foreground service declarations, or App content declarations."
-compatibility: "GPC v0.9.82+. v0.9.94+ adds the App content declaration advisory. v0.9.66+ for signing consistency. v0.9.65+ for April 2026 policy rules. APK support added in v0.9.47. AAB/APK scans are entirely offline; signing consistency requires auth."
+compatibility: "GPC v0.9.82+. v0.9.99+ estimates the per-device download of an AAB (default threshold 200 MB) and reports foreground-service-type-missing once as a warning; manifest checks run on AABs only (APK manifests are binary XML, GH #117). v0.9.94+ adds the App content declaration advisory. v0.9.66+ for signing consistency. v0.9.65+ for April 2026 policy rules. APK support added in v0.9.47. AAB/APK scans are entirely offline; signing consistency requires auth."
 metadata:
-  version: 1.4.0
+  version: 1.5.0
 ---
 
 # GPC Preflight Scanner
@@ -53,7 +53,7 @@ gpc preflight app.aab --fail-on error --json
 | billing | Stripe, Braintree, PayPal, Razorpay SDK detection | warning |
 | privacy | Tracking SDKs, Advertising ID, data collection cross-reference | warning/info |
 | policy | Families/COPPA, financial, health, UGC, overlay | warning/info |
-| size | Download size, large native libs, large assets | warning/info |
+| size | Estimated per-device download (AAB: largest ABI only, no bundle metadata or on-demand/fast-follow modules; APK: whole file), large native libs, large assets | warning/info |
 
 ## Configuration (.preflightrc.json)
 
@@ -61,7 +61,7 @@ gpc preflight app.aab --fail-on error --json
 {
   "failOn": "error",
   "targetSdkMinimum": 36,
-  "maxDownloadSizeMb": 150,
+  "maxDownloadSizeMb": 200,
   "allowedPermissions": ["android.permission.READ_SMS"],
   "disabledRules": ["cleartext-traffic"],
   "severityOverrides": { "billing-stripe-sdk": "info" }
@@ -69,6 +69,14 @@ gpc preflight app.aab --fail-on error --json
 ```
 
 API level 36 (Android 16) is required by August 31, 2026 for all new apps and updates on Google Play. The `targetSdkMinimum` default in GPC preflight was updated to 36 in v0.9.79 to reflect this deadline.
+
+## Download size (v0.9.99+)
+
+For an AAB, `size-over-limit` estimates what **one device** downloads, the way Google Play serves the bundle: only the largest ABI's native libraries, no `BUNDLE-METADATA/` (debug symbols, R8 mapping) or bundle signature, and no on-demand or fast-follow modules or asset packs. Every density and language is still counted, so it errs high. For an APK the whole file counts. The default `maxDownloadSizeMb` is 200, the size at which Play shows users on mobile data a large-download dialog. Before v0.9.99 the whole `.aab` was summed, so multi-ABI Flutter/React Native bundles were flagged at 3-4x their real download (GH #116); if a user on an older version hits that, upgrade, or add `"disabledRules": ["size-over-limit"]`. For an exact figure, `bundletool get-size total` on the bundle.
+
+`native-libs-large` (native-libs scanner) and `size-large-native` likewise measure the largest single ABI for an AAB.
+
+**APK scans:** manifest checks (manifest, permissions, policy, privacy scanners) currently run on AABs only. An APK's binary-XML manifest is not decoded yet (GH #117), so an APK scan reports "Manifest could not be fully parsed" and runs the rest. Scan the AAB you upload for full coverage.
 
 ## Exit codes
 
@@ -85,7 +93,7 @@ API level 36 (Android 16) is required by August 31, 2026 for all new apps and up
 | testOnly-true | critical | android:testOnly="true" |
 | missing-arm64 | critical | 32-bit ARM without 64-bit |
 | missing-exported | error | Component with intent-filter but no exported attr |
-| foreground-service-type-missing | error | Service without foregroundServiceType (API 34+) |
+| foreground-service-type-missing | warning | App requests FOREGROUND_SERVICE but no service declares foregroundServiceType (API 34+); reported once (v0.9.99+, was one error per service) |
 | secret-aws-key | critical | AWS access key in source |
 | secret-stripe-key | critical | Stripe secret key in source |
 | contacts-permission-broad | warning | READ_CONTACTS / WRITE_CONTACTS (v0.9.65+, April 2026 policy) |
@@ -136,7 +144,7 @@ Three rules added for Google Play's April 15, 2026 policy batch. Compliance dead
 
 Why it can only advise: the declaration is stored in Play Console and is not exposed through the Publisher API or readable from the bundle. Preflight can see that your app requests the permissions; it cannot see whether you filled in the form. It therefore never fails a run, regardless of `--fail-on`.
 
-**This is not the same check as `foreground-service-type-missing`.** That one verifies `android:foregroundServiceType` is present on your `<service>` elements, which is a manifest requirement. You can have every service correctly typed and still be blocked at upload by the missing Console declaration — that combination is exactly what motivated this rule.
+**This is not the same check as `foreground-service-type-missing`.** That one looks at `android:foregroundServiceType` on your `<service>` elements, which is a manifest requirement for services that call `startForeground()`. You can have every service correctly typed and still be blocked at upload by the missing Console declaration — that combination is exactly what motivated this rule.
 
 If the declaration is incomplete, the upload fails with `API_DECLARATION_REQUIRED` (v0.9.94+). Before v0.9.94 the same failure was reported as a service account permission problem, which sent people to Users and permissions instead of App content.
 

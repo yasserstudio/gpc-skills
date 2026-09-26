@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.31.5 -- 2026-09-26
+
+Synced to GPC v0.9.99.
+
+### Updated Skills
+
+- **gpc-preflight** (1.4.0 -> 1.5.0) -- Preflight now estimates the per-device download of an App Bundle (largest ABI only, no bundle metadata or on-demand/fast-follow modules) and the default `maxDownloadSizeMb` is 200, Play's mobile-data dialog size; new "Download size" section, with the pre-v0.9.99 workaround. `foreground-service-type-missing` is a single warning now, raised only when no service declares a type. Notes that manifest checks run on AABs only until APK binary-XML manifests are decoded (GPC #117).
+- **gpc-monetization** (0.17.0 -> 0.18.0) -- New sections: the real one-time product offer payload (Google's schema, not the subscription-style shape older docs showed) including Play Games Rewards offers, and external transactions (create/get/refund, v0.9.99 refund fix with `--refund-id`/`--refund-time`, micros amounts, US external content links fields and reporting deadlines).
+- **gpc-release-flow** (1.11.0 -> 1.11.1) -- The APK preflight example notes that manifest checks run on AABs only.
+
+### Bundle
+
+19 skills. Synced to GPC v0.9.99 and gpc-action v1.1.0.
+
+---
+
 ## v1.31.4 -- 2026-09-23
 
 ### Updated Skills
