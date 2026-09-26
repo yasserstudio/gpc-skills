@@ -3,7 +3,7 @@ name: gpc-release-flow
 description: "Use when uploading, releasing, promoting, or managing rollouts on Google Play. Make sure to use this skill whenever the user mentions gpc releases, upload AAB, upload APK, staged rollout, promote to production, halt rollout, gpc publish, release notes, track management, internal testing, beta release, production rollout, version code, rollout percentage, or wants to ship an Android app to any Play Store track. Also trigger when someone asks about the Google Play edit lifecycle, release validation, or how to do a phased rollout — even if they don't mention GPC by name. For metadata and listings, see gpc-metadata-sync. For CI/CD integration, see gpc-ci-integration."
 compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). For private-app publishing to Managed Google Play, see gpc-enterprise (v0.9.56+). v0.9.87+ returns a consistent list --json envelope on tracks list. v0.9.94+ reports incomplete App content declarations as API_DECLARATION_REQUIRED instead of a permissions error. v0.9.96+ adds device-tiers create --allow-unknown-devices."
 metadata:
-  version: 1.11.1
+  version: 1.11.2
 ---
 
 # GPC Release Flow
@@ -42,7 +42,7 @@ Before uploading, run the preflight compliance scanner and validate the bundle:
 ```bash
 # Policy compliance scan (offline -- checks manifest, permissions, 64-bit, secrets)
 gpc preflight app-release.aab --fail-on error
-gpc preflight app-release.apk --fail-on error  # APK: manifest checks run on AABs only (GH #117)
+gpc preflight app-release.apk --fail-on error  # APK: manifest checks run on AABs only
 
 # File format and track validation
 gpc validate app-release.aab

@@ -1,9 +1,9 @@
 ---
 name: gpc-preflight
 description: "Use when scanning an AAB or APK for Google Play policy compliance before submission, or checking signing key consistency across releases. Trigger when the user mentions preflight, compliance check, policy scan, pre-submission check, signing key consistency, certificate mismatch, or wants to verify their AAB/APK meets Google Play requirements. Also trigger for questions about restricted permissions, target SDK requirements, 64-bit compliance, hardcoded secrets detection, Data Safety form reminders, foreground service declarations, or App content declarations."
-compatibility: "GPC v0.9.82+. v0.9.99+ estimates the per-device download of an AAB (default threshold 200 MB) and reports foreground-service-type-missing once as a warning; manifest checks run on AABs only (APK manifests are binary XML, GH #117). v0.9.94+ adds the App content declaration advisory. v0.9.66+ for signing consistency. v0.9.65+ for April 2026 policy rules. APK support added in v0.9.47. AAB/APK scans are entirely offline; signing consistency requires auth."
+compatibility: "GPC v0.9.82+. v0.9.99+ estimates the per-device download of an AAB (default threshold 200 MB) and reports foreground-service-type-missing once as a warning; manifest checks run on AABs only (APK manifests are binary XML). v0.9.94+ adds the App content declaration advisory. v0.9.66+ for signing consistency. v0.9.65+ for April 2026 policy rules. APK support added in v0.9.47. AAB/APK scans are entirely offline; signing consistency requires auth."
 metadata:
-  version: 1.5.0
+  version: 1.5.1
 ---
 
 # GPC Preflight Scanner
@@ -76,7 +76,7 @@ For an AAB, `size-over-limit` estimates what **one device** downloads, the way G
 
 `native-libs-large` (native-libs scanner) and `size-large-native` likewise measure the largest single ABI for an AAB.
 
-**APK scans:** manifest checks (manifest, permissions, policy, privacy scanners) currently run on AABs only. An APK's binary-XML manifest is not decoded yet (GH #117), so an APK scan reports "Manifest could not be fully parsed" and runs the rest. Scan the AAB you upload for full coverage.
+**APK scans:** manifest checks (manifest, permissions, policy, privacy scanners) currently run on AABs only. An APK's binary-XML manifest is not decoded yet, so an APK scan reports "Manifest could not be fully parsed" and runs the rest. Scan the AAB you upload for full coverage.
 
 ## Exit codes
 
