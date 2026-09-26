@@ -3,7 +3,7 @@ name: gpc-ci-integration
 description: "Use when integrating GPC into CI/CD pipelines. Make sure to use this skill whenever the user mentions GitHub Actions, GitLab CI, Bitbucket Pipelines, CircleCI, CI/CD, automated release, pipeline, GPC_SERVICE_ACCOUNT, JSON output, CSV output, TSV output, exit codes, gpc in CI, automate Play Store deployment, release workflow, deploy to Play Store from CI, automated rollout, step summary, bundle wait, wait for bundle processing, or wants to set up any kind of automated Google Play deployment pipeline. Also trigger when someone asks about running GPC in a headless environment, parsing GPC output in scripts, using GPC exit codes for conditional logic, or configuring retries and timeouts for CI — even if they don't mention a specific CI platform. For local setup, see gpc-setup. For release commands, see gpc-release-flow."
 compatibility: "GPC v0.9.82+. Works with any CI platform that supports Node.js 24+ (recommended), 22+, or 20+, or standalone binary."
 metadata:
-  version: 1.9.1
+  version: 1.9.2
 ---
 
 # GPC CI Integration
@@ -61,7 +61,7 @@ One step replaces the full install + run + cleanup sequence. The action runs a b
 
 The action is a TypeScript action running on Node 24. No additional configuration is required for the migration.
 
-**Which GPC it runs:** the action downloads the standalone `gpc` binary from the GPC GitHub release and verifies its SHA-256 against checksums committed in the action. As of action v1.1.0 (2026-09-23) the default is GPC **0.9.98** (v1.0.0 defaulted to 0.9.80). `@v1` follows the latest v1.x. Pin a GPC version with `gpc-version: 0.9.98`, or use `gpc-version: latest` (verified only against the release's own checksums.txt, lower assurance). The action does not put `gpc` on the PATH for later steps, and it always runs an upload (`release-files` and `package-name` are required); for other commands use its `args` input or install the CLI (`npm install -g @gpc-cli/cli`).
+**Which GPC it runs:** the action downloads the standalone `gpc` binary from the GPC GitHub release and verifies its SHA-256 against checksums committed in the action. As of action v1.1.1 (2026-09-26) the default is GPC **0.9.99** (v1.0.0 defaulted to 0.9.80). `@v1` follows the latest v1.x. Pin a GPC version with `gpc-version: 0.9.98`, or use `gpc-version: latest` (verified only against the release's own checksums.txt, lower assurance). The action does not put `gpc` on the PATH for later steps, and it always runs an upload (`release-files` and `package-name` are required); for other commands use its `args` input or install the CLI (`npm install -g @gpc-cli/cli`).
 
 For advanced pipelines (multi-step, vitals gating, changelog generation), continue with the manual workflow patterns below.
 

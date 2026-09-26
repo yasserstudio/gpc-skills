@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.31.6 -- 2026-09-26
+
+### Updated Skills
+
+- **gpc-ci-integration** (1.9.1 -> 1.9.2) -- The GPC Action now runs GPC 0.9.99 by default (action v1.1.1).
+- **gpc-security** (0.17.1 -> 0.17.2) -- Same default-version note in the action section.
+
+### Bundle
+
+19 skills. Synced to GPC v0.9.99 and gpc-action v1.1.1.
+
+---
+
 ## v1.31.5 -- 2026-09-26
 
 Synced to GPC v0.9.99.
