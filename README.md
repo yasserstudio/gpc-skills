@@ -285,6 +285,7 @@ gpc-<skill>/
 - GPC v0.9.96+ required for `gpc purchases orders review-refund`, `gpc app-signing enroll/rotate`, `--ai-generated` on listings images, `device-tiers create --allow-unknown-devices`, and working `one-time-products create/update` plus the single-offer commands (which now require `--purchase-option`)
 - GPC v0.9.97+ required for `gpc vitals memory-rss` and `gpc vitals memory-bitmap` (P50-P99 memory usage, `--threshold` on P90)
 - GPC v0.9.98+ required for `gpc users list` / `users get` against the live API (Google now rejects paginated users requests); v0.9.98+ also honors `NO_PROXY` and fails closed on an unusable proxy
+- GPC v0.9.99+ recommended for `gpc preflight` on App Bundles (per-device download estimate, 200 MB default, one `foreground-service-type-missing` warning instead of an error per library service) and required for `gpc external-transactions refund` (sends the refund time and ID Google requires)
 - Node.js 20+ (or standalone binary)
 - Google Play Developer API access (service account)
 - For `gpc-enterprise`: an additional "create and publish private apps" permission granted to the service account in Play Console

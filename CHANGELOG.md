@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.31.8 -- 2026-09-26
+
+### Bundle
+
+README requirements list adds the GPC v0.9.99 line (preflight per-device size and foreground-service rule, external transaction refunds). No skill content changes. 19 skills. Synced to GPC v0.9.99 and gpc-action v1.1.2.
+
+---
+
 ## v1.31.7 -- 2026-09-26
 
 ### Updated Skills
