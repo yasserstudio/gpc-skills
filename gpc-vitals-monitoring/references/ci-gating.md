@@ -25,7 +25,10 @@ gpc vitals anr --threshold 0.47
 
 Exit codes:
 - `0` — Below threshold (safe to proceed)
-- `6` — Threshold breached (block promotion)
+- `4` — Vitals could not be read at all: the Play Developer Reporting API is disabled for the project, or the service account has no access to this app (v1.0.0-rc.1+; it printed "no data" and exited 0 before)
+- `6` — Threshold breached (block promotion), or no metric value came back to compare against (`THRESHOLD_NO_DATA`, v1.0.0-rc.1+)
+
+A gate that cannot read a number must not pass. A wrong `--app`, Play's 1-2 day data lag, or an app with too little traffic all produce `THRESHOLD_NO_DATA` rather than a silent success, so the pipeline stops instead of promoting on no evidence. Widen `--days` for a low-traffic app, or drop `--threshold` for that run.
 
 ## GitHub Actions Pattern
 
@@ -134,6 +137,6 @@ Use `--vitals-gate` for rollout safety. Use standalone `--threshold` for post-de
 ## Considerations
 
 - **Data lag:** Vitals data may be delayed by 24-48 hours
-- **Volume requirements:** Small apps may not have enough data for meaningful metrics
+- **Volume requirements:** Small apps may not have enough data for meaningful metrics, and from v1.0.0-rc.1 a `--threshold` run with no data fails the job rather than passing it
 - **New releases:** Crash data for a new version takes time to accumulate
 - **False positives:** A single bad device/OS can spike crash rates temporarily

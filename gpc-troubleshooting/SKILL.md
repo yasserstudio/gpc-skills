@@ -1,9 +1,9 @@
 ---
 name: gpc-troubleshooting
-description: "Use when debugging GPC errors, failures, or unexpected behavior. Make sure to use this skill whenever the user mentions gpc error, gpc failing, exit code, AUTH_FAILED, API_FORBIDDEN, NETWORK_ERROR, CONFIG_MISSING, EDIT_CONFLICT, upload failed, permission denied, timeout, rate limit, gpc doctor failing, unexpected exit code, command not working, GPC crash, debug GPC, verbose output, --json error, threshold breach, REPORT_ACCESS_DENIED, REPORT_BUCKET_NOT_FOUND, reports bucket access, bulk reports permission denied, API_DECLARATION_REQUIRED, App content declaration, foreground service declaration, API_ALREADY_EXISTS, API_ENDPOINT_RETIRED, ORDER_REVIEW_REFUND_INVALID, PLUGIN_PERMISSIONS_REQUIRED, PLUGIN_IDENTITY_MISMATCH — even if they don't explicitly say 'troubleshoot.' Also trigger when someone encounters any GPC error they don't understand, when gpc doctor reports issues, when CI pipelines fail with GPC commands, or when they need to interpret exit codes. For auth-specific setup issues, see gpc-setup. For CI-specific issues, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Covers all packages: @gpc-cli/cli, @gpc-cli/core, @gpc-cli/api, @gpc-cli/auth, @gpc-cli/config. v0.9.85+ resolves the npm global install failure. v0.9.93+ adds the REPORT_* bulk-report error codes and the doctor reports-bucket check. v0.9.94+ adds API_DECLARATION_REQUIRED and stops App content declaration failures being reported as missing service account permissions. v0.9.96+ adds API_ALREADY_EXISTS, API_ENDPOINT_RETIRED, and ORDER_REVIEW_REFUND_INVALID."
+description: "Use when debugging GPC errors, failures, or unexpected behavior. Make sure to use this skill whenever the user mentions gpc error, gpc failing, exit code, AUTH_FAILED, API_FORBIDDEN, NETWORK_ERROR, CONFIG_MISSING, EDIT_CONFLICT, upload failed, permission denied, timeout, rate limit, gpc doctor failing, unexpected exit code, command not working, GPC crash, debug GPC, verbose output, --json error, threshold breach, REPORT_ACCESS_DENIED, REPORT_BUCKET_NOT_FOUND, reports bucket access, bulk reports permission denied, API_DECLARATION_REQUIRED, App content declaration, foreground service declaration, API_ALREADY_EXISTS, API_ENDPOINT_RETIRED, ORDER_REVIEW_REFUND_INVALID, PLUGIN_PERMISSIONS_REQUIRED, PLUGIN_IDENTITY_MISMATCH, CONFIRMATION_REQUIRED, IMAGE_SYNC_DIR_UNREADABLE, THRESHOLD_NO_DATA — even if they don't explicitly say 'troubleshoot.' Also trigger when someone encounters any GPC error they don't understand, when gpc doctor reports issues, when CI pipelines fail with GPC commands, or when they need to interpret exit codes. For auth-specific setup issues, see gpc-setup. For CI-specific issues, see gpc-ci-integration."
+compatibility: "GPC v0.9.82+. Covers all packages: @gpc-cli/cli, @gpc-cli/core, @gpc-cli/api, @gpc-cli/auth, @gpc-cli/config. v0.9.85+ resolves the npm global install failure. v0.9.93+ adds the REPORT_* bulk-report error codes and the doctor reports-bucket check. v0.9.94+ adds API_DECLARATION_REQUIRED and stops App content declaration failures being reported as missing service account permissions. v0.9.96+ adds API_ALREADY_EXISTS, API_ENDPOINT_RETIRED, and ORDER_REVIEW_REFUND_INVALID. v1.0.0-rc.1+ adds CONFIRMATION_REQUIRED, IMAGE_SYNC_DIR_UNREADABLE, and THRESHOLD_NO_DATA, exits 2 on usage mistakes, and exits 4 on a vitals 403."
 metadata:
-  version: 0.22.0
+  version: 0.23.0
 ---
 
 # gpc-troubleshooting
@@ -55,8 +55,16 @@ gpc <failing-command> --json
 | 3 | Auth | Authentication failure (expired token, invalid key, no credentials) |
 | 4 | API | Google Play API error (403, 404, 408, 409, rate limit) |
 | 5 | Network | Connection failure, DNS error, timeout |
-| 6 | Threshold | Vitals threshold breached (used in CI gating) |
+| 6 | Threshold | Vitals threshold breached, or no value came back to compare (used in CI gating) |
 | 10 | Plugin | Plugin permission validation error |
+
+**Changed in v1.0.0-rc.1.** Usage mistakes (unknown option, missing argument) now exit 2 as this table has always said; they exited 1 before. A vitals or anomalies 403 now exits 4 instead of printing "no data" and exiting 0. A refund or revocation with no terminal and no `--yes` exits 2 with `CONFIRMATION_REQUIRED`. Check any CI job that branches on a specific code.
+
+| Code | Exit | When | Fix |
+|------|------|------|-----|
+| `CONFIRMATION_REQUIRED` | 2 | `purchases orders refund` / `orders review-refund` / `purchases subscription revoke` / `external-transactions refund` ran non-interactively (CI, piped stdin, `--no-interactive`) without `--yes` | Add `--yes` once you are sure, or preview with `--dry-run`, which never needs it |
+| `IMAGE_SYNC_DIR_UNREADABLE` | 1 | `listings images sync` could not read a local image directory | Fix its permissions (and volume ownership in CI). Nothing was changed on Google Play |
+| `THRESHOLD_NO_DATA` | 6 | `vitals ... --threshold` got no metric value back (wrong `--app`, data lag, no traffic) | Check `--app`, widen `--days`, or drop `--threshold` for that run |
 
 ### 2. Authentication errors (exit code 3)
 

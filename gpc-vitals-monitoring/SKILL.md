@@ -1,9 +1,9 @@
 ---
 name: gpc-vitals-monitoring
 description: "Use when monitoring Android app health metrics from Google Play. Make sure to use this skill whenever the user mentions gpc vitals, gpc watch, gpc status, crash rate, ANR rate, startup time, Android vitals, crash monitoring, threshold alerting, vitals gating, rollout monitoring, auto-halt, breach notification, webhook alerting, frame rate, battery usage, memory issues, error tracking, app quality, user reviews, review replies, Play Store reviews, star rating, negative reviews, review export, financial reports, stats reports, gpc reports, reports list, reports download, bulk reports, earnings report, sales report, play balance, installs report, subscriptions report, reports bucket, GPC_REPORTS_BUCKET, pubsite_prod, REPORT_ACCESS_DENIED, download bulk reports permission, or wants to check app health, monitor a staged rollout, respond to reviews, or download Play Console reports. Also trigger when someone asks about gating deployments on crash data, monitoring app performance after a release, watching a rollout for regressions, or tracking review sentiment — even if they don't mention GPC. For releases, see gpc-release-flow. For CI gating, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Vitals data requires the app to have sufficient install volume. v0.9.83+ adds reviews fidelity fields and the unified list envelope. v0.9.97+ adds memory-rss/memory-bitmap P50-P99 memory usage (Feb 2027 P90 requirement). v0.9.93+ downloads Play bulk reports live from the account's Cloud Storage bucket (needs the 'View app information and download bulk reports (read-only)' grant on the service account)."
+compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Vitals data requires the app to have sufficient install volume. v0.9.83+ adds reviews fidelity fields and the unified list envelope. v0.9.97+ adds memory-rss/memory-bitmap P50-P99 memory usage (Feb 2027 P90 requirement). v0.9.93+ downloads Play bulk reports live from the account's Cloud Storage bucket (needs the 'View app information and download bulk reports (read-only)' grant on the service account). v1.0.0-rc.1+ fails vitals and anomalies with exit 4 on a Reporting API 403 and exits 6 with THRESHOLD_NO_DATA when a --threshold run gets no value."
 metadata:
-  version: 1.10.0
+  version: 1.11.0
 ---
 
 # GPC Vitals Monitoring
@@ -260,7 +260,7 @@ gpc vitals anomalies
 gpc vitals errors search
 ```
 
-> **New in v0.9.47:** If the Reporting API is not enabled for your GCP project, vitals and anomalies commands now show a helpful message with the enable URL instead of a raw 403 error. Non-vitals commands continue to work normally.
+> **Changed in v1.0.0-rc.1:** if the Play Developer Reporting API is disabled for the project, or the service account cannot read this app's vitals, `gpc vitals` and `gpc anomalies list` **fail with exit 4**. Human output still explains the cause and prints the enable URL on stderr; `--json` carries the code and Google's message. Between v0.9.47 and v0.9.99 they printed that message and exited 0, which meant a `--threshold` gate in CI could pass without ever reading a metric. Non-vitals commands are unaffected.
 
 ### 6) Review sentiment analysis
 
@@ -348,6 +348,8 @@ gpc vitals crashes --threshold 2.0 && \
 gpc vitals anr --threshold 0.47 && \
 echo "Vitals OK — safe to promote"
 ```
+
+**A gate never passes blind (v1.0.0-rc.1+).** If a `--threshold` run gets no metric value back, it exits 6 with `THRESHOLD_NO_DATA` instead of exiting 0. The usual causes are a wrong `--app`, Play's 1-2 day data lag, and an app with too little traffic. Check `--app`, widen `--days`, or drop `--threshold` for that run. A 403 on the same command exits 4.
 
 In CI, use exit code 6 to block promotion:
 ```yaml
@@ -515,6 +517,8 @@ Error codes specific to this path: `REPORT_ACCESS_DENIED` (4, missing grant), `R
 | Symptom | Likely Cause | Fix |
 |---------|-------------|-----|
 | No vitals data | App has insufficient installs | Vitals require significant install volume; small apps may not have data |
+| `THRESHOLD_NO_DATA` (exit 6) | `--threshold` set but no metric value came back | Wrong `--app`, data lag, or no traffic. Check `--app`, widen `--days`, or drop `--threshold` for that run (v1.0.0-rc.1+) |
+| Exit 4 with the Reporting API enable link | Reporting API disabled, or the service account cannot read this app | Enable the Play Developer Reporting API for the project and grant the service account access. It exited 0 before v1.0.0-rc.1 |
 | `--threshold` always passes | Threshold too high | Check current crash rate with `gpc vitals crashes` first, then set appropriate threshold |
 | Reviews API rate limit | Too many requests | Reviews API: 200 GET/hour, 2,000 POST/day. Space out requests. |
 | Reports not found | Wrong month format | Use `YYYY-MM` format (e.g., `2026-02`) |

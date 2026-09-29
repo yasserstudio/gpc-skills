@@ -12,8 +12,10 @@ Complete reference for all GPC exit codes and their meaning.
 | 3 | Auth | `AuthError` | Bad credentials, expired token, no auth configured |
 | 4 | API | `PlayApiError` | Google Play API returned an error (4xx, 5xx) |
 | 5 | Network | `NetworkError` | Connection failed, timeout, DNS error, SSL error |
-| 6 | Threshold | — | Vitals metric exceeded `--threshold` value |
+| 6 | Threshold | — | Vitals metric exceeded `--threshold` value, or no value came back to compare (`THRESHOLD_NO_DATA`, v1.0.0-rc.1+) |
 | 10 | Plugin | — | Plugin permission validation failed |
+
+Since v1.0.0-rc.1, a usage mistake such as an unknown option or a missing argument exits 2, as this table has always said. Those exited 1 before, so a CI job that branched on `1` for config problems may now see `2` instead. Two other changes in the same release affect scripted exits: a vitals or anomalies 403 exits 4 instead of printing "no data" and exiting 0, and a refund or revocation run without a terminal and without `--yes` exits 2 with `CONFIRMATION_REQUIRED`.
 
 ## Using exit codes in scripts
 

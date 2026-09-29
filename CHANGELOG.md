@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.32.0 -- 2026-09-29
+
+Synced to GPC v1.0.0-rc.1 and gpc-action v1.1.3. Minor rather than patch: the release changes what several commands do in CI, so the guidance changes with it.
+
+### Updated Skills
+
+- **gpc-troubleshooting** (0.22.0 -> 0.23.0) -- Three new codes in the catalog and the SKILL table: `CONFIRMATION_REQUIRED` (exit 2, a refund or revocation with no terminal and no `--yes`), `IMAGE_SYNC_DIR_UNREADABLE` (exit 1), `THRESHOLD_NO_DATA` (exit 6), each with cause and fix. Usage mistakes (unknown option, missing argument) now exit 2 where they exited 1, and a vitals or anomalies 403 exits 4 instead of exiting 0 on an empty result.
+- **gpc-monetization** (0.18.0 -> 0.19.0) -- Removed the `--full-refund` / `--prorated-refund` flags from `purchases orders refund`; neither ever existed. The real surface is `orders refund <order-id> [--revoke]` (Google's `orders.refund` is a full refund) with partial subscription refunds via `purchases subscription revoke --refund-type prorated|full|item [--product-id]`. New section on the `--yes` requirement for the four money commands in non-interactive runs, with `--dry-run` exempt.
+- **gpc-vitals-monitoring** (1.10.0 -> 1.11.0) -- A Reporting API 403 now fails with exit 4 rather than printing a message and exiting 0, and a `--threshold` run with no metric value exits 6 with `THRESHOLD_NO_DATA`. The CI gating reference and the failure-mode table carry both, so a gate is never described as passing on no data.
+- **gpc-ci-integration** (1.9.2 -> 1.10.0) -- Exit-code table annotated with the v1.0.0-rc.1 changes and a note for jobs that branch on a specific code. Money commands need `--yes` in CI. The GPC Action default is GPC 1.0.0-rc.1 as of action v1.1.3.
+- **gpc-metadata-sync** (1.6.0 -> 1.7.0) -- `listings images sync --delete` stops with `IMAGE_SYNC_DIR_UNREADABLE` on a local image directory it cannot read, instead of treating it as empty and deleting the matching remote images. An absent directory is still skipped.
+- **gpc-preflight** (1.5.1 -> 1.6.0) -- New `native-libs-16kb-unchecked` warning: the reader buffers at most 512 native library headers, so a bundle with more than that gets a warning naming how many were skipped rather than a clean alignment result.
+- **gpc-security** (0.17.2 -> 0.18.0) -- The `--pending-refund-token` is kept out of `--notify` webhook messages and plugin hook data, and the action's pinned default GPC version is 1.0.0-rc.1.
+
+### Bundle
+
+README requirements list adds the GPC v1.0.0-rc.1 line and the action default. 19 skills. Synced to GPC v1.0.0-rc.1 and gpc-action v1.1.3.
+
+---
+
 ## v1.31.8 -- 2026-09-26
 
 ### Bundle

@@ -38,6 +38,8 @@ All known GPC error codes with causes and fixes.
 | `API_CHANGES_NOT_SENT_FOR_REVIEW` | 400/403 | App rejected update, requires review acknowledgment | Add `--changes-not-sent-for-review` flag |
 | `API_CHANGES_ALREADY_IN_REVIEW` | 400 | Changes already in review | Use `--error-if-in-review` to prevent silent cancellation |
 
+A 403 on `gpc vitals` or `gpc anomalies list` means the Play Developer Reporting API is disabled for the project or the service account cannot read this app's vitals. Since v1.0.0-rc.1 that fails with exit 4 and the enable link on stderr. It used to print "no data" and exit 0, which let a `--threshold` gate pass without reading a metric.
+
 ## Network errors (exit code 5)
 
 | Code | Message | Fix |
@@ -99,6 +101,52 @@ Emitted by `gpc purchases orders review-refund`, which answers a chargeback disp
 | `ORDER_REVIEW_REFUND_INVALID` | Invalid refund review input | Pass exactly one of `--sample-content-provided` / `--no-sample-content-provided`, keep `--consumption-percent` a plain 0-100 decimal, and make `--usage-events-file` a JSON array of objects (max 1,000) |
 
 Validated locally before the request is sent. An empty or whitespace-only `--consumption-percent` is treated as not provided, so a typo never claims "0% consumed" on your behalf.
+
+## Safety-gate errors (v1.0.0-rc.1+)
+
+Three codes added in v1.0.0-rc.1 so a silent success can no longer stand in for a real result.
+
+| Code | Exit | Message | Fix |
+|------|------|---------|-----|
+| `CONFIRMATION_REQUIRED` | 2 | A money command ran non-interactively without `--yes` | Add `--yes` once you are sure, or preview with `--dry-run` (which never needs it) |
+| `IMAGE_SYNC_DIR_UNREADABLE` | 1 | `listings images sync` cannot read a local image directory | Fix the directory's permissions (and container volume ownership in CI). Nothing was changed on Google Play |
+| `THRESHOLD_NO_DATA` | 6 | `--threshold` was set but the query returned no metric value | Check `--app` and widen `--days`. Vitals lag 1-2 days and a low-traffic app may have none; drop `--threshold` for that run |
+
+### `CONFIRMATION_REQUIRED`
+
+**Exit code:** 2 — added in v1.0.0-rc.1
+
+**Cause:** `gpc purchases orders refund`, `gpc purchases orders review-refund`, `gpc purchases subscription revoke` and `gpc external-transactions refund` move money and cannot be undone. Before v1.0.0-rc.1 a run without a terminal (CI, piped stdin, `--no-interactive`) confirmed them automatically. They now stop unless `--yes` is passed.
+
+**Fix:**
+
+```bash
+# Preview first. --dry-run sends nothing and is exempt from the gate.
+gpc purchases orders refund GPA.1234-5678-9012-34567 --dry-run
+
+# Then confirm explicitly
+gpc purchases orders refund GPA.1234-5678-9012-34567 --yes
+```
+
+**Notes:**
+- Only those four commands are gated. Every other destructive command keeps the old behaviour and proceeds without `--yes` when there is no terminal.
+- In an interactive shell nothing changes: you still get the prompt, and the external transactions prompt states the refund amount.
+
+### `IMAGE_SYNC_DIR_UNREADABLE`
+
+**Exit code:** 1 — added in v1.0.0-rc.1
+
+**Cause:** `gpc listings images sync --delete` found a local image directory it could not read (permissions, or volume ownership in a CI container). Treating it as empty would have deleted the matching images on Google Play, so GPC stops instead.
+
+**Fix:** correct the directory's permissions and re-run. A directory that simply does not exist is still "not managed here" and is skipped, as before; only a real read failure raises this.
+
+### `THRESHOLD_NO_DATA`
+
+**Exit code:** 6 — added in v1.0.0-rc.1
+
+**Cause:** a `gpc vitals ... --threshold` run got no metric value back, usually a wrong `--app`, Play's 1-2 day data lag, or an app with too little traffic. It used to exit 0, so a CI gate passed without reading a single metric.
+
+**Fix:** check `--app`, widen `--days`, or drop `--threshold` for that run. Read `gpc vitals crashes --json` first if you are unsure whether the app reports any data at all.
 
 ## User and tester errors (exit code 4)
 

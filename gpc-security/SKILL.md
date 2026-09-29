@@ -1,9 +1,9 @@
 ---
 name: gpc-security
 description: "Use when dealing with GPC credential security, secret management, audit logging, or access control. Make sure to use this skill whenever the user mentions credentials, service account key, secret rotation, key rotation, credential storage, audit log, audit trail, security best practices, .gpcrc.json security, secrets in CI, GPC_SERVICE_ACCOUNT safety, keychain, token cache, credential leak, key compromise, secure deployment — even if they don't explicitly say 'security.' Also trigger when someone asks about where GPC stores credentials, how to rotate service account keys, how to audit who did what with GPC, how to securely pass credentials in CI/CD, or how to handle a compromised service account key. Also trigger on app signing key custody: app-signing enroll, app-signing rotate, Play App Signing, self-hosted Cloud KMS key, cryptoKeyVersion, signing certificate lineage, signing key rotation. For auth setup, see gpc-setup. For CI configuration, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Covers credential storage, audit logging, supply chain hardening, and security patterns across all packages. v0.9.96+ adds gpc app-signing enroll/rotate for self-hosted Google Cloud KMS signing keys. v0.9.98+ fails closed on an unusable proxy and never prints proxy URLs."
+compatibility: "GPC v0.9.82+. Covers credential storage, audit logging, supply chain hardening, and security patterns across all packages. v0.9.96+ adds gpc app-signing enroll/rotate for self-hosted Google Cloud KMS signing keys. v0.9.98+ fails closed on an unusable proxy and never prints proxy URLs. v1.0.0-rc.1+ keeps the refund-review token out of webhook and plugin payloads and requires --yes for money commands in non-interactive runs."
 metadata:
-  version: 0.17.2
+  version: 0.18.0
 ---
 
 # gpc-security
@@ -142,6 +142,7 @@ GPC automatically redacts sensitive data in all output:
 - `--json` output redacts credential fields
 - Webhook payloads are redacted via `redactSensitive()` before dispatch to Slack/Discord/custom endpoints (v0.9.80+)
 - Auth error messages redact long inputs that look like pasted credentials (v0.9.80+)
+- The `--pending-refund-token` passed to `gpc purchases orders review-refund` is kept out of `--notify` webhook messages and plugin hook data (v1.0.0-rc.1+)
 - ADC token cache uses hash-based keys per credential source to prevent multi-account confusion (v0.9.80+)
 - Project `.gpcrc.json` cannot self-approve plugins -- `approvedPlugins` is only trusted from user config (v0.9.80+)
 
@@ -282,7 +283,7 @@ Configuration: `socket.yml` at repo root controls Socket.dev alert rules. `.npmr
 
 The GPC GitHub Action (`yasserstudio/gpc-action`) is a TypeScript action running on Node 24 with these security properties:
 
-- **Verified binary**: it downloads the standalone `gpc` binary from the GPC GitHub release and checks its SHA-256 on every run (cache hits included) against checksums committed in the action itself, not only the release's mutable `checksums.txt`. The default GPC version is pinned: 0.9.99 as of action v1.1.1. `gpc-version: latest` or an unpinned version falls back to the release checksums with a warning.
+- **Verified binary**: it downloads the standalone `gpc` binary from the GPC GitHub release and checks its SHA-256 on every run (cache hits included) against checksums committed in the action itself, not only the release's mutable `checksums.txt`. The default GPC version is pinned: 1.0.0-rc.1 as of action v1.1.3. `gpc-version: latest` or an unpinned version falls back to the release checksums with a warning.
 - **Credentials**: authentication uses the service account JSON key passed in `service-account-json`. Store it as an encrypted secret; there is no OIDC or keyless option yet.
 - **Built-in preflight gate**: the action runs `gpc preflight` before upload, and a failing scan blocks the publish (`preflight: false` skips it).
 - **Node 24 runtime**: matches the current GPC CLI CI matrix.

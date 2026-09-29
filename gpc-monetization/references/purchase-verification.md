@@ -147,17 +147,31 @@ gpc purchases orders batch-get --ids "GPA.1234,GPA.5678"
 Google recommends using the Orders API for refunds (the v1 `subscriptions.refund` endpoint is deprecated):
 
 ```bash
-# Full refund
-gpc purchases orders refund <order-id> --full-refund
+# Preview first: --dry-run sends nothing and never needs --yes
+gpc purchases orders refund <order-id> --dry-run
 
-# Prorated refund (for subscriptions)
-gpc purchases orders refund <order-id> --prorated-refund
+# Full refund (Google's orders.refund has no partial form)
+gpc purchases orders refund <order-id> --yes
 
-# Preview
-gpc purchases orders refund <order-id> --full-refund --dry-run
+# Full refund and remove the entitlement
+gpc purchases orders refund <order-id> --revoke --yes
 ```
 
-For subscription refunds, use `gpc purchases subscription get <token> --json` to find the `latestSuccessfulOrderId`, then refund via `gpc purchases orders refund`.
+`--revoke` is the command's only option. There is no `--full-refund` or `--prorated-refund`; older docs listed both and neither ever existed.
+
+For a partial subscription refund, revoke through the v2 API instead:
+
+```bash
+gpc purchases subscription revoke <token> --refund-type prorated --yes
+gpc purchases subscription revoke <token> --refund-type full --yes
+gpc purchases subscription revoke <token> --refund-type item --product-id <id> --yes
+```
+
+`--refund-type` defaults to `prorated`. To refund a subscription in full through the Orders API instead, use `gpc purchases subscription get <token> --json` to find the `latestSuccessfulOrderId`, then pass it to `gpc purchases orders refund`.
+
+### `--yes` is required without a terminal (v1.0.0-rc.1+)
+
+`orders refund`, `orders review-refund`, `subscription revoke` and `external-transactions refund` fail with `CONFIRMATION_REQUIRED` (exit 2) when they run in CI, with piped stdin, or under `--no-interactive` and no `--yes` was passed. They used to confirm themselves. `--dry-run` is exempt.
 
 ## CI/CD integration
 

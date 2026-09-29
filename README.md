@@ -286,6 +286,8 @@ gpc-<skill>/
 - GPC v0.9.97+ required for `gpc vitals memory-rss` and `gpc vitals memory-bitmap` (P50-P99 memory usage, `--threshold` on P90)
 - GPC v0.9.98+ required for `gpc users list` / `users get` against the live API (Google now rejects paginated users requests); v0.9.98+ also honors `NO_PROXY` and fails closed on an unusable proxy
 - GPC v0.9.99+ recommended for `gpc preflight` on App Bundles (per-device download estimate, 200 MB default, one `foreground-service-type-missing` warning instead of an error per library service) and required for `gpc external-transactions refund` (sends the refund time and ID Google requires)
+- GPC v1.0.0-rc.1+ is what this bundle is synced to. It changes several scripted exits: a refund or revocation with no terminal needs `--yes` (`CONFIRMATION_REQUIRED`, exit 2), usage mistakes exit 2 rather than 1, a vitals or anomalies 403 exits 4 rather than printing "no data" and exiting 0, and a `--threshold` run with no metric value exits 6 (`THRESHOLD_NO_DATA`). `listings images sync --delete` also stops on an unreadable local image directory (`IMAGE_SYNC_DIR_UNREADABLE`) instead of deleting the matching remote images
+- The GPC GitHub Action `yasserstudio/gpc-action@v1` (v1.1.3+) runs GPC 1.0.0-rc.1 by default
 - Node.js 20+ (or standalone binary)
 - Google Play Developer API access (service account)
 - For `gpc-enterprise`: an additional "create and publish private apps" permission granted to the service account in Play Console

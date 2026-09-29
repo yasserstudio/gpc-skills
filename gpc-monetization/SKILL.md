@@ -1,9 +1,9 @@
 ---
 name: gpc-monetization
 description: "Use when managing in-app purchases, subscriptions, pricing, or Real-Time Developer Notifications in Google Play. Make sure to use this skill whenever the user mentions gpc subscriptions, gpc iap, gpc purchases, gpc pricing, gpc rtdn, in-app products, base plans, subscription offers, one-time products, consumable products, purchase verification, purchase acknowledgement, purchase token, subscription cancellation, subscription deferral, voided purchases, refunds, regional pricing, currency conversion, price migration, SKU management, monetization, revenue, billing, subscription analytics, churn, trial conversion, subscriber count, RTDN, Real-Time Developer Notifications, Pub/Sub notifications, subscription events, purchase events — even if they don't explicitly say 'monetization.' Also trigger when someone wants to create or update subscriptions, manage base plan lifecycle (activate/deactivate), set up introductory offers, verify server-side purchases, handle refunds, convert prices across regions, sync IAP products from files, migrate subscribers to new prices, view subscription analytics, decode Pub/Sub notification payloads, respond to a chargeback dispute (chargeback, pending refund review, pendingRefundReviewNotification, pendingRefundToken, gpc purchases orders review-refund), or check RTDN topic configuration. For release management, see gpc-release-flow. For CI automation, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Subscriptions and IAP require products configured in Google Play Console. v0.9.84+ sends --regions-version to the API on subscription/OTP writes. v0.9.96+ fixes one-time-products create/update and the four single-offer commands (which now require --purchase-option), and adds gpc purchases orders review-refund for chargeback disputes. v0.9.99+ for external transaction refunds (required refund time/ID) and typed game reward / external content link fields."
+compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Subscriptions and IAP require products configured in Google Play Console. v0.9.84+ sends --regions-version to the API on subscription/OTP writes. v0.9.96+ fixes one-time-products create/update and the four single-offer commands (which now require --purchase-option), and adds gpc purchases orders review-refund for chargeback disputes. v0.9.99+ for external transaction refunds (required refund time/ID) and typed game reward / external content link fields. v1.0.0-rc.1+ requires --yes for refunds and revocations in non-interactive runs (CONFIRMATION_REQUIRED, exit 2)."
 metadata:
-  version: 0.18.0
+  version: 0.19.0
 ---
 
 # gpc-monetization
@@ -278,6 +278,7 @@ gpc ext-txn refund order-1001 --partial-amount 4990000 --currency EUR --refund-i
 
 - Refunds need GPC v0.9.99+: earlier versions never sent Google's required `refundTime` (and partial `refundId`), so Google rejected them. `--refund-time <RFC 3339 with zone>` overrides "now"; future times are refused. Bad options exit 2 with `EXT_TXN_REFUND_INVALID` before anything is sent, and the prompt states the amount.
 - `--partial-amount` is pre-tax **micros** (4990000 = 4.99), not major units.
+- From v1.0.0-rc.1 a refund without a terminal needs `--yes`, or it exits 2 with `CONFIRMATION_REQUIRED`.
 - US **external content links** program: add `externalContentLinkDetails { linkType: LINK_TO_DIGITAL_CONTENT_OFFER | LINK_TO_APP_DOWNLOAD, installedAppPackage, externalAppCategory: APP | GAME }` to the create file (separate from the older `externalOfferDetails`). Google requires reporting purchases from Oct 1 2026 and app downloads by Dec 1 2026.
 
 ### Activating/deactivating OTP offers (v0.9.57+)
@@ -400,14 +401,23 @@ gpc purchases voided --type 1
 # Include quantity-based partial refunds
 gpc purchases voided --include-partial-refunds
 
-# Refund an order
-gpc purchases orders refund <order-id> --full-refund
-gpc purchases orders refund <order-id> --prorated-refund
+# Refund an order (always a full refund; --revoke also removes the entitlement)
+gpc purchases orders refund <order-id> --yes
+gpc purchases orders refund <order-id> --revoke --yes
+
+# Partial subscription refunds go through the v2 revoke instead
+gpc purchases subscription revoke <token> --refund-type prorated --yes
 ```
+
+`orders refund` takes only `--revoke`: Google's `orders.refund` is a full refund and has no partial or prorated form. `purchases subscription revoke` is where the choice lives, via `--refund-type full|prorated|item` (default `prorated`); `--refund-type item` also needs `--product-id`.
 
 > **New in v0.9.47:** `--type 0` (default) returns only in-app purchase voids. `--type 1` includes subscription voids. `--include-partial-refunds` includes quantity-based partial refunds.
 
 All write operations support `--dry-run`.
+
+### Money commands need `--yes` in CI (v1.0.0-rc.1+)
+
+`purchases orders refund`, `purchases orders review-refund`, `purchases subscription revoke` and `external-transactions refund` move money and cannot be undone. When they run without a terminal (CI, piped stdin, `--no-interactive`) they now stop with `CONFIRMATION_REQUIRED` (exit 2) unless `--yes` is passed. Earlier versions confirmed them automatically, so a pipeline could issue a refund by default. `--dry-run` sends nothing and is exempt. In an interactive shell the prompt is unchanged.
 
 `Read:` `references/purchase-verification.md` for server-side verification patterns and best practices.
 

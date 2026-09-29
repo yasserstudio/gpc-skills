@@ -1,9 +1,9 @@
 ---
 name: gpc-metadata-sync
 description: "Use when managing Google Play store listings, metadata, screenshots, or images. Make sure to use this skill whenever the user mentions gpc listings, store listing, metadata sync, screenshots, Fastlane metadata, localization, app description, pull listings, push listings, feature graphic, Play Store images, app title, short description, full description, changelogs, image sync, image dedup, listings images sync, save quota, publish quota exceeded, too many API saves, screenshot display order, AI-generated image attestation, --ai-generated, or wants to update any text or visual content on their Play Store page. Also trigger when someone asks about migrating from Fastlane supply, syncing metadata to/from local files, managing multi-language listings, or bulk-updating store content — even if they don't mention GPC explicitly. For releases and uploads, see gpc-release-flow."
-compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). v0.9.96+ adds --ai-generated on listings images upload and sync."
+compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). v0.9.96+ adds --ai-generated on listings images upload and sync. v1.0.0-rc.1+ stops listings images sync --delete on an unreadable local directory (IMAGE_SYNC_DIR_UNREADABLE, exit 1) instead of treating it as empty."
 metadata:
-  version: 1.6.0
+  version: 1.7.0
 ---
 
 # GPC Metadata Sync
@@ -236,6 +236,7 @@ gpc listings images sync --dir ./images --delete --dry-run
 - `--delete` removes remote images that have no matching local file. Without this flag, extra remote images are left in place.
 - **Display order guaranteed with `--delete` (v0.9.92+):** the Play API has no reorder endpoint and keeps upload order, so a hash-only partial update would leave screenshots out of order (unchanged image keeps its slot, changed one is appended). When a locale/type differs from local in content *or* order, `--delete` clears that combo in one call and re-uploads local files in sorted filename order (`1.png`, `2.png`, ...); a combo already in order is skipped. Name files to sort in display order; zero-pad (`01.png`) near a per-type cap.
 - **Absent-directory safety (v0.9.92+):** a type directory that is absent locally is left untouched, so syncing only screenshots never wipes a remote icon or feature graphic. A present-but-empty directory is an explicit "clear this type."
+- **Unreadable-directory safety (v1.0.0-rc.1+):** a local image directory that exists but cannot be read (permissions, or volume ownership in a CI container) stops the sync with `IMAGE_SYNC_DIR_UNREADABLE` (exit 1) and changes nothing on Google Play. Earlier versions read it as empty, so `--delete` could wipe the matching remote images. Only a real read failure raises this; a directory that is simply absent is still skipped.
 - `--dry-run` prints a diff table (`add / skip / delete`) without making any API calls.
 - Supports the same image types as `gpc listings images upload`: `phoneScreenshots`, `sevenInchScreenshots`, `tenInchScreenshots`, `tvScreenshots`, `wearScreenshots`, `icon`, `featureGraphic`, `tvBanner`, `promoGraphic`.
 
@@ -307,6 +308,7 @@ If you process the CSV programmatically, strip the leading `'` from string value
 | `LISTING_NOT_FOUND` | Language not set up in Play Console | Add the language in Console first, then push |
 | Daily save/publish quota exceeded after a few runs | Looping per-image `upload`/`delete` (one committed edit = one save each) | Switch to `gpc listings images sync --dir ... --delete` (one save for the whole run) and `gpc listings push --dir` for text. See the save-quota rule in section 4. |
 | Screenshots out of display order after a partial update | Older GPC, or per-image upload appends changed images last | Upgrade to v0.9.92+ and use `sync --delete` (guarantees order); name files `1.png`, `2.png`, ... |
+| `IMAGE_SYNC_DIR_UNREADABLE` (exit 1) | A local image directory exists but cannot be read (permissions, CI volume ownership) | Fix the directory's permissions and re-run. Nothing was changed on Google Play (v1.0.0-rc.1+) |
 | Image upload fails | Wrong format or size | Check Google's image requirements (PNG/JPEG, size limits per type) |
 | Truncated description | Exceeds character limit | Title: 30 chars, short desc: 80 chars, full desc: 4000 chars |
 | Push shows no changes | Local files match remote | Confirm edits are saved in the correct file paths |
