@@ -1,9 +1,9 @@
 ---
 name: gpc-troubleshooting
-description: "Use when debugging GPC errors, failures, or unexpected behavior. Make sure to use this skill whenever the user mentions gpc error, gpc failing, exit code, AUTH_FAILED, API_FORBIDDEN, NETWORK_ERROR, CONFIG_MISSING, EDIT_CONFLICT, upload failed, permission denied, timeout, rate limit, gpc doctor failing, unexpected exit code, command not working, GPC crash, debug GPC, verbose output, --json error, threshold breach, REPORT_ACCESS_DENIED, REPORT_BUCKET_NOT_FOUND, reports bucket access, bulk reports permission denied, API_DECLARATION_REQUIRED, App content declaration, foreground service declaration, API_ALREADY_EXISTS, API_ENDPOINT_RETIRED, ORDER_REVIEW_REFUND_INVALID, PLUGIN_PERMISSIONS_REQUIRED, PLUGIN_IDENTITY_MISMATCH, CONFIRMATION_REQUIRED, IMAGE_SYNC_DIR_UNREADABLE, THRESHOLD_NO_DATA — even if they don't explicitly say 'troubleshoot.' Also trigger when someone encounters any GPC error they don't understand, when gpc doctor reports issues, when CI pipelines fail with GPC commands, or when they need to interpret exit codes. For auth-specific setup issues, see gpc-setup. For CI-specific issues, see gpc-ci-integration."
+description: "Use when debugging GPC errors, failures, or unexpected behavior. Make sure to use this skill whenever the user mentions gpc error, gpc failing, exit code, AUTH_FAILED, API_FORBIDDEN, NETWORK_ERROR, CONFIG_MISSING, EDIT_CONFLICT, upload failed, permission denied, timeout, rate limit, gpc doctor failing, unexpected exit code, command not working, GPC crash, debug GPC, verbose output, --json error, threshold breach, REPORT_ACCESS_DENIED, REPORT_BUCKET_NOT_FOUND, reports bucket access, bulk reports permission denied, API_DECLARATION_REQUIRED, App content declaration, foreground service declaration, API_ALREADY_EXISTS, API_ENDPOINT_RETIRED, ORDER_REVIEW_REFUND_INVALID, PLUGIN_PERMISSIONS_REQUIRED, PLUGIN_IDENTITY_MISMATCH, CONFIRMATION_REQUIRED, IMAGE_SYNC_DIR_UNREADABLE, THRESHOLD_NO_DATA, THRESHOLD_INVALID, TRAIN_GATE_NO_DATA, API_METRIC_GAMES_ONLY, INVALID_PACKAGE_NAME — even if they don't explicitly say 'troubleshoot.' Also trigger when someone encounters any GPC error they don't understand, when gpc doctor reports issues, when CI pipelines fail with GPC commands, or when they need to interpret exit codes. For auth-specific setup issues, see gpc-setup. For CI-specific issues, see gpc-ci-integration."
 compatibility: "GPC v0.9.82+. Covers all packages: @gpc-cli/cli, @gpc-cli/core, @gpc-cli/api, @gpc-cli/auth, @gpc-cli/config. v0.9.85+ resolves the npm global install failure. v0.9.93+ adds the REPORT_* bulk-report error codes and the doctor reports-bucket check. v0.9.94+ adds API_DECLARATION_REQUIRED and stops App content declaration failures being reported as missing service account permissions. v0.9.96+ adds API_ALREADY_EXISTS, API_ENDPOINT_RETIRED, and ORDER_REVIEW_REFUND_INVALID. v1.0.0-rc.1+ adds CONFIRMATION_REQUIRED, IMAGE_SYNC_DIR_UNREADABLE, and THRESHOLD_NO_DATA, exits 2 on usage mistakes, and exits 4 on a vitals 403."
 metadata:
-  version: 0.23.0
+  version: 0.24.0
 ---
 
 # gpc-troubleshooting
@@ -65,6 +65,10 @@ gpc <failing-command> --json
 | `CONFIRMATION_REQUIRED` | 2 | `purchases orders refund` / `orders review-refund` / `purchases subscription revoke` / `external-transactions refund` ran non-interactively (CI, piped stdin, `--no-interactive`) without `--yes` | Add `--yes` once you are sure, or preview with `--dry-run`, which never needs it |
 | `IMAGE_SYNC_DIR_UNREADABLE` | 1 | `listings images sync` could not read a local image directory | Fix its permissions (and volume ownership in CI). Nothing was changed on Google Play |
 | `THRESHOLD_NO_DATA` | 6 | `vitals ... --threshold` got no metric value back (wrong `--app`, data lag, no traffic) | Check `--app`, widen `--days`, or drop `--threshold` for that run |
+| `THRESHOLD_INVALID` | 2 | A rate threshold of 1 or more (v1.0.0-rc.2+): rates are fractions | `--threshold 0.02` means 2%; fix `vitals.thresholds.*` too |
+| `TRAIN_GATE_NO_DATA` | 6 | `gpc train advance` had no gate data and stayed on its stage (v1.0.0-rc.2+) | Vitals lag 2-4 days; run it again later |
+| `API_METRIC_GAMES_ONLY` | 4 | `vitals rendering` on a non-game app (v1.0.0-rc.2+) | Expected; slow rendering is games-only. Not a credentials problem |
+| `INVALID_PACKAGE_NAME` | 2 | Malformed `--app` / `GPC_APP` (v1.0.0-rc.2+) | `--app com.example.app` or `-a com.example.app` |
 
 ### 2. Authentication errors (exit code 3)
 
@@ -176,7 +180,7 @@ gpc config list
 | `INVALID_BUNDLE` | AAB is corrupted or wrong format | Rebuild the AAB; run `gpc validate` first |
 | `VERSION_CODE_CONFLICT` | Version code already used | Increment versionCode in build.gradle |
 | `RELEASE_NOT_FOUND` | No release on the specified track | Check track name; use `gpc releases list --track <track>` |
-| `ROLLOUT_INVALID` | Invalid rollout percentage | Use 0-100 (not 0.0-1.0); use `--rollout 10` not `--rollout 0.1` |
+| `RELEASES_USAGE_ERROR` / `PUBLISH_USAGE_ERROR` (exit 2) | Rollout outside 1-100 | `--rollout` and `--to` are percentages: `--rollout 10`, not `--rollout 0.1` |
 | `PROMOTE_NO_SOURCE` | Source track has no release to promote | Upload to source track first |
 | `UPLOAD_CHUNK_FAILED` | Chunk could not be sent after retries | Check network; increase `GPC_MAX_RETRIES` or `GPC_UPLOAD_TIMEOUT` |
 | `UPLOAD_NO_COMPLETION` | All bytes sent but no completion response | Retry upload; check `GPC_UPLOAD_TIMEOUT` |
@@ -219,13 +223,13 @@ Exit code 6 is **not an error** — it's an intentional signal that a vitals met
 
 ```bash
 # This exits 6 if crash rate > 2.0%
-gpc vitals crashes --threshold 2.0
+gpc vitals crashes --threshold 0.02
 
 # Check the actual value
 gpc vitals crashes --json | jq '.crashRate'
 
 # In CI, use exit code to gate promotion
-gpc vitals crashes --threshold 1.5 && gpc releases promote --from beta --to production
+gpc vitals crashes --threshold 0.015 && gpc releases promote --from beta --to production
 ```
 
 ### 7a. Order refund review errors (exit code 2, v0.9.96+)

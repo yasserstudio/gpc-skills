@@ -37,7 +37,7 @@
         "Provides two workflow files or a single file with two jobs",
         "First workflow triggers on tag push and uploads to beta",
         "Second workflow uses workflow_dispatch for manual promotion",
-        "Includes gpc vitals crashes --threshold 2.0 before promotion",
+        "Includes gpc vitals crashes --threshold 0.02 before promotion",
         "Uses gpc releases promote --from beta --to production with rollout percentage",
         "Writes to $GITHUB_STEP_SUMMARY with --output markdown"
       ]

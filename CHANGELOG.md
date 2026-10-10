@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.33.0 -- 2026-10-10
+
+Synced to GPC v1.0.0-rc.2 and gpc-action v1.1.4. Minor: rc.2 changes how every vitals gate reads thresholds and data, so the guidance changes with it.
+
+### Updated Skills
+
+- **gpc-vitals-monitoring** (1.11.0 -> 1.12.0) -- Thresholds are fractions everywhere (`--threshold 0.02` is 2%; the old `2.0` examples could never fire and now exit 2 with `THRESHOLD_INVALID`). New section on how gates read vitals: worst value of the latest day, one row per start type, report type and `--dim` value, `gpc watch` exits 4 on an unreadable metric, `--vitals-gate` and `gpc train` block on missing data. Data lag corrected to 2-4 days.
+- **gpc-troubleshooting** (0.23.0 -> 0.24.0) -- New codes `THRESHOLD_INVALID`, `TRAIN_GATE_NO_DATA`, `API_METRIC_GAMES_ONLY`, `INVALID_PACKAGE_NAME` in the catalog, the SKILL table and the trigger list.
+- **gpc-ci-integration** (1.10.0 -> 1.11.0) -- Every CI sample uses fractional thresholds and real flags; exit-code notes for rc.2.
+- **gpc-release-flow** (1.11.2 -> 1.12.0) -- Rollout gating samples use `releases rollout increase --to N --vitals-gate` with a fractional `vitals.thresholds.crashRate`; fictional `train` flags replaced with the real config file.
+- **gpc-train** (0.10.1 -> 0.11.0) -- Rewritten against the real command. The config is a top-level `.gpcrc-train.json` (not a `release-train` block in `.gpcrc.json`); `gpc train advance` must be scheduled, nothing advances on its own; there is no `--resume` (restart with `start --force`); `abort` only clears state and does **not** halt rollouts, so the incident eval now halts with `releases rollout halt` first. New: `TRAIN_GATE_NO_DATA` hold, gates read the worst value of the latest day, `gates.*.max` stays a percentage. Reference rewritten with a CI cron example.
+- **gpc-multi-app** (1.1.0 -> 1.1.1), **gpc-migrate-fastlane** (1.4.0 -> 1.4.1) -- CI samples use fractional thresholds.
+
+### Bundle
+
+README requirements line synced to GPC v1.0.0-rc.2 and gpc-action v1.1.4 (default GPC 1.0.0-rc.2); gpc-ci-integration and gpc-security name the new action default. 19 skills.
+
+---
+
 ## v1.32.0 -- 2026-09-29
 
 Synced to GPC v1.0.0-rc.1 and gpc-action v1.1.3. Minor rather than patch: the release changes what several commands do in CI, so the guidance changes with it.

@@ -138,8 +138,8 @@ jobs:
         env:
           GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
         run: |
-          gpc vitals crashes --threshold 2.0
-          gpc vitals anr --threshold 0.47
+          gpc vitals crashes --threshold 0.02
+          gpc vitals anr --threshold 0.0047
 ```
 
 ## Step Summary Output

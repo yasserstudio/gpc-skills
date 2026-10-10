@@ -77,11 +77,9 @@ gpc preflight app-release.aab --fail-on error
 Hand off to `gpc-release-flow` for upload, rollout, and promote. Typical one-command release:
 
 ```bash
-gpc publish \
-  --package com.example.app \
-  --file app-release.aab \
-  --track internal \
-  --rollout 1.0
+gpc publish app-release.aab \
+  --app com.example.app \
+  --track internal
 ```
 
 `gpc publish` handles the full edit lifecycle (open → upload → release → commit). For staged production rollouts, promote, or halt, see `gpc-release-flow`.
@@ -114,7 +112,7 @@ gpc doctor
 gpc preflight app-release.aab --fail-on error
 
 # GPC release flow (delegate to gpc-release-flow)
-gpc publish --package com.example.notes --file app-release.aab --track production --rollout 0.1
+gpc publish app-release.aab --app com.example.notes --track production --rollout 10
 
 # GPC vitals (delegate to gpc-vitals-monitoring, typically after waiting a day)
 gpc vitals crashes --package com.example.notes --days 1 --json

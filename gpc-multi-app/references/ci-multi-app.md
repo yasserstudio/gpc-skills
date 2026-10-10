@@ -89,7 +89,7 @@ deploy-lite:
     FAILED=0
     for app in com.example.main com.example.lite com.example.pro; do
       echo "Checking $app..."
-      if ! npx @gpc-cli/cli vitals crashes --threshold 2.0 --app "$app"; then
+      if ! npx @gpc-cli/cli vitals crashes --threshold 0.02 --app "$app"; then
         echo "::warning::$app crash rate exceeds threshold"
         FAILED=1
       fi

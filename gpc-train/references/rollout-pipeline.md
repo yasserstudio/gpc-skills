@@ -1,63 +1,40 @@
-# Release Train — Full Lifecycle
+# Release Train: Full Lifecycle
 
-End-to-end reference for the `gpc train` config-driven staged rollout pipeline.
+End-to-end reference for the `gpc train` config-driven staged rollout pipeline, matching GPC v1.0.0-rc.2.
 
 ## Overview
 
 ```
-configure .gpcrc.json → gpc train start → stage 1 (immediate)
-  → [wait: after time] → gate check → stage 2
-  → [wait: after time] → gate check → stage 3
-  → [wait: after time] → gate check → stage 4 → complete
+.gpcrc-train.json -> gpc train start -> stage 1 runs now
+  -> gpc train advance (scheduled) -> after elapsed? gates pass? -> stage 2
+  -> gpc train advance ...                                       -> stage N -> completed
 ```
 
-Each stage transition requires two conditions to be met:
-1. The `after` time delay has elapsed since the previous stage.
-2. All configured gates (crash rate, ANR rate) are below their `max` thresholds.
+Nothing moves on its own: each transition happens only when `gpc train advance` runs and both conditions hold:
 
-If either condition fails, progression is paused until the issue is resolved and the user resumes.
-
-## State file
-
-The train stores its progress in:
-
-```
-~/.cache/gpc/train-<packageName>.json
-```
-
-Example state:
-
-```json
-{
-  "packageName": "com.example.app",
-  "startedAt": "2026-03-15T10:00:00Z",
-  "currentStageIndex": 2,
-  "lastProgressedAt": "2026-03-17T10:05:00Z",
-  "status": "running",
-  "gateFailures": []
-}
-```
-
-Status values: `running`, `paused`, `aborted`, `complete`.
+1. The next stage's `after` delay has elapsed since the current stage ran.
+2. Every configured gate (crash rate, ANR rate) is at or below its `max`.
 
 ## Config reference
 
+`.gpcrc-train.json` (or any file passed with `--config`):
+
 ```json
 {
-  "release-train": {
-    "stages": [
-      { "track": "internal",   "rollout": 100 },
-      { "track": "alpha",      "rollout": 100, "after": "2d" },
-      { "track": "production", "rollout": 10,  "after": "7d" },
-      { "track": "production", "rollout": 100, "after": "14d" }
-    ],
-    "gates": {
-      "crashes": { "max": 1.5 },
-      "anr":     { "max": 0.5 }
-    }
+  "stages": [
+    { "track": "internal",   "rollout": 100 },
+    { "track": "alpha",      "rollout": 100, "after": "2d" },
+    { "track": "production", "rollout": 10,  "after": "7d" },
+    { "track": "production", "rollout": 100, "after": "14d" }
+  ],
+  "gates": {
+    "crashes": { "max": 1.5 },
+    "anr":     { "max": 0.5 }
   }
 }
 ```
+
+`gates.*.max` are **percentages** (`1.5` = 1.5%). Elsewhere in GPC (`gpc vitals --threshold`, `gpc watch`, `vitals.thresholds.*`) rates are fractions (`0.015`).
 
 ### Time format for `after`
 
@@ -65,132 +42,73 @@ Status values: `running`, `paused`, `aborted`, `complete`.
 |-------|---------|
 | `30m` | 30 minutes |
 | `12h` | 12 hours |
-| `2d`  | 2 days (48 hours) |
-| `7d`  | 7 days |
+| `2d`  | 2 days |
 | `14d` | 14 days |
 
-Omitting `after` means the stage is eligible immediately (subject to gate checks still passing).
+Omitting `after` makes the stage eligible on the next `advance` (gates still apply).
 
-## Phase-by-phase lifecycle
-
-### Phase 1 — Config
-
-Create or update `.gpcrc.json` with the `release-train` block. This is the single source of truth for stage definitions and gate thresholds. Commit this file to source control so all team members and CI share the same pipeline definition.
-
-### Phase 2 — Start
-
-```bash
-gpc train start
-```
-
-- Reads `.gpcrc.json`.
-- Creates the state file at `~/.cache/gpc/train-<packageName>.json`.
-- Executes stage 0 immediately (no `after` delay, no gate check on the first stage).
-- Transitions: promotes the release to the configured track at the configured rollout percentage.
-- Logs the start timestamp to the state file.
-
-### Phase 3 — Gate check
-
-Before each stage transition (stages 1+), `gpc train` evaluates the configured gates:
+## State file
 
 ```
-crash rate  ≤  gates.crashes.max  →  pass
-ANR rate    ≤  gates.anr.max      →  pass
+~/.cache/gpc/train-<packageName>.json
 ```
 
-If both pass and the `after` time has elapsed, progression continues. If either fails, the state is set to `paused` and a warning is printed:
-
-```
-Gate failed: crash rate 2.1% exceeds max 1.5%
-Progression paused. Fix the regression and run: gpc train start --resume
-```
-
-The gate check uses the same vitals API as `gpc vitals crashes` and `gpc vitals anr`. Note that vitals data for a newly released version takes 6–48 hours to populate — configure your `after` delays accordingly.
-
-### Phase 4 — Progression
-
-When both conditions are met (time elapsed + gates pass), the train:
-
-1. Calls the appropriate GPC release command for the next stage (promote, rollout increase, or rollout complete).
-2. Updates `currentStageIndex` and `lastProgressedAt` in the state file.
-3. Prints a progress line showing the new stage.
-
-### Phase 5 — Complete
-
-When the final stage is executed successfully, the state file status is set to `complete` and the train exits cleanly:
-
-```
-Release train complete. All stages executed.
-  internal → alpha → production@10% → production@100%
+```json
+{
+  "packageName": "com.example.app",
+  "status": "running",
+  "currentStage": 1,
+  "startedAt": "2026-10-01T10:00:00.000Z",
+  "updatedAt": "2026-10-03T10:05:00.000Z",
+  "stages": [
+    { "track": "internal", "rollout": 100, "executedAt": "2026-10-01T10:00:00.000Z" },
+    { "track": "alpha", "rollout": 100, "after": "2d", "executedAt": "2026-10-03T10:05:00.000Z" },
+    { "track": "production", "rollout": 10, "after": "7d" }
+  ],
+  "gates": { "crashes": { "max": 1.5 }, "anr": { "max": 0.5 } }
+}
 ```
 
-## Commands at a glance
+Status values: `running`, `paused`, `completed`. `gpc train status` prints this state (`--json` for the raw object).
 
-| Command | What it does |
-|---------|-------------|
-| `gpc train start` | Start the train from stage 0, or restart a completed/aborted train |
-| `gpc train start --resume` | Resume a paused train from the current stage |
-| `gpc train status` | Show current stage, last progression time, time until next stage, gate health |
-| `gpc train status --resume` | Show status and attempt to resume if paused and gates now pass |
-| `gpc train pause` | Pause automatic progression (does not halt active rollout) |
-| `gpc train abort` | Abort the train and halt all active rollouts on managed tracks |
+## Commands
 
-## Pause vs abort
+| Command | Behavior |
+|---------|----------|
+| `gpc train start [--config <file>] [--force]` | Writes state and runs stage 1 now. With a train already running it changes nothing unless `--force`, which starts over at stage 1. |
+| `gpc train advance` | Moves to the next stage when its `after` delay has elapsed and gates pass. Schedule it (CI cron). |
+| `gpc train status` | Shows the saved state. |
+| `gpc train pause` | Stops `advance` from moving the train. Does not touch rollouts on Google Play. |
+| `gpc train abort` | Clears the state. Does **not** halt rollouts; use `gpc releases rollout halt --track <track>`. |
 
-| | Pause | Abort |
-|-|-------|-------|
-| Stops stage progression | Yes | Yes |
-| Halts active rollout | No | Yes |
-| Clears state file | No | Yes |
-| How to recover | `gpc train start --resume` | `gpc train start` (from stage 0) |
+There is no resume command. After a pause or a failed gate, restart with `gpc train start --force` (stage 1 again), adjusting the config first if earlier stages should not re-run.
 
-Use **pause** when you want to temporarily hold the pipeline (e.g., over a holiday weekend) without touching the active rollout.
+## Gate checks
 
-Use **abort** when a critical regression requires immediately stopping distribution and starting over.
+Before each transition `advance` reads the most recent day of crash and ANR data and takes the worst value of that day.
 
-## Gate failure recovery flow
+| Result | Effect | Exit |
+|--------|--------|------|
+| All gates pass | Next stage runs | 0 |
+| Crash gate over `max` | Train paused, `TRAIN_CRASH_GATE_FAILED` | 6 |
+| ANR gate over `max` | Train paused, `TRAIN_ANR_GATE_FAILED` | 6 |
+| No data for a gate (rc.2+) | Train stays on its stage, `TRAIN_GATE_NO_DATA` | 6 |
 
-```
-1. gpc train status         → confirm gate failure and which metric
-2. gpc vitals crashes       → inspect crash rate and top clusters
-3. gpc vitals anr           → inspect ANR rate
-4. Fix the regression       → ship a new build to internal
-5. gpc train start --resume → resume from the paused stage
-```
+Vitals data lags 2 to 4 days, so set `after` delays long enough for a stage to produce data, and expect `TRAIN_GATE_NO_DATA` on low-traffic apps. Before rc.2 a gate with no data let the train advance.
 
-If the fix requires a brand-new release (new version code), abort the current train and start a new one:
-
-```bash
-gpc train abort
-# ... upload new AAB, set release notes ...
-gpc train start
-```
-
-## CI usage
-
-Run the train check in CI to assert that a train is healthy before a deployment step:
+## Scheduling `advance` in CI
 
 ```yaml
-- name: Check train gate health
-  run: gpc train status
-  # Exits non-zero if the train is in a failed/aborted state
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    steps:
+      - run: npx @gpc-cli/cli train advance --app com.example.app
+        env:
+          GPC_SERVICE_ACCOUNT: ${{ secrets.GPC_SERVICE_ACCOUNT }}
 ```
 
-Or start and detach (fire-and-forget) in an async CI pipeline:
-
-```yaml
-- name: Start release train
-  run: gpc train start
-```
-
-The train state persists in `~/.cache/gpc/` — use a persistent cache volume if running across CI jobs.
-
-## Timing reference
-
-| Gate data type | Data lag |
-|----------------|----------|
-| Crash rate for new version | 6–48 hours after rollout begins |
-| ANR rate for new version | 6–48 hours after rollout begins |
-| Play Store review data | 1–24 hours |
-
-Set `after` delays that are long enough for meaningful vitals data to accumulate before gate checks run. A minimum of `2d` on any production stage is recommended.
+Exit 6 fails the job on a breach or missing data; the state file must persist between runs (use a self-hosted runner or cache `~/.cache/gpc`).

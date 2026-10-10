@@ -23,7 +23,7 @@
         "Recommends halting given crash rate exceeds safe threshold",
         "Shows gpc releases rollout halt --track production",
         "Explains that halting stops new installs but doesn't remove from existing users",
-        "Suggests checking vitals with gpc vitals crashes --version",
+        "Suggests checking vitals with gpc vitals crashes --dim versionCode",
         "Recommends creating a new release with the fix rather than resuming the bad one"
       ]
     },
@@ -47,7 +47,7 @@
       "files": [],
       "expectations": [
         "Introduces gpc train as the automated release pipeline solution",
-        "Shows the .gpcrc.json release-train config with stages and gates",
+        "Shows the .gpcrc-train.json config with stages and gates",
         "Shows gpc train start to kick off the pipeline",
         "Explains that gates (crash/ANR thresholds) automatically pause progression",
         "Shows gpc train status to monitor current stage and time remaining"

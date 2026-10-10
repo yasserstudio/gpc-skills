@@ -79,7 +79,7 @@ A 403 on `gpc vitals` or `gpc anomalies list` means the Play Developer Reporting
 | `INVALID_BUNDLE` | AAB is corrupted | Rebuild; run `gpc validate` first |
 | `VERSION_CODE_CONFLICT` | Version code exists | Increment versionCode |
 | `RELEASE_NOT_FOUND` | No release on track | Check with `gpc releases list` |
-| `ROLLOUT_INVALID` | Bad rollout percentage | Use 0-100, not decimal |
+| `RELEASES_USAGE_ERROR` | Rollout outside 1-100 | `--rollout` and `--to` are percentages (1-100): `--rollout 10`, not `0.1` |
 | `PROMOTE_NO_SOURCE` | Source track empty | Upload to source track first |
 | `EDIT_CONFLICT` | Another edit is open | Only one edit at a time |
 
@@ -110,7 +110,7 @@ Three codes added in v1.0.0-rc.1 so a silent success can no longer stand in for 
 |------|------|---------|-----|
 | `CONFIRMATION_REQUIRED` | 2 | A money command ran non-interactively without `--yes` | Add `--yes` once you are sure, or preview with `--dry-run` (which never needs it) |
 | `IMAGE_SYNC_DIR_UNREADABLE` | 1 | `listings images sync` cannot read a local image directory | Fix the directory's permissions (and container volume ownership in CI). Nothing was changed on Google Play |
-| `THRESHOLD_NO_DATA` | 6 | `--threshold` was set but the query returned no metric value | Check `--app` and widen `--days`. Vitals lag 1-2 days and a low-traffic app may have none; drop `--threshold` for that run |
+| `THRESHOLD_NO_DATA` | 6 | `--threshold` was set but the query returned no metric value | Check `--app` and widen `--days`. Vitals lag 2-4 days and a low-traffic app may have none; drop `--threshold` for that run |
 
 ### `CONFIRMATION_REQUIRED`
 
@@ -144,11 +144,30 @@ gpc purchases orders refund GPA.1234-5678-9012-34567 --yes
 
 **Exit code:** 6 — added in v1.0.0-rc.1
 
-**Cause:** a `gpc vitals ... --threshold` run got no metric value back, usually a wrong `--app`, Play's 1-2 day data lag, or an app with too little traffic. It used to exit 0, so a CI gate passed without reading a single metric.
+**Cause:** a `gpc vitals ... --threshold` run got no metric value back, usually a wrong `--app`, Play's 2-4 day data lag, or an app with too little traffic. It used to exit 0, so a CI gate passed without reading a single metric.
 
 **Fix:** check `--app`, widen `--days`, or drop `--threshold` for that run. Read `gpc vitals crashes --json` first if you are unsure whether the app reports any data at all.
 
-## User and tester errors (exit code 4)
+## Vitals gate errors (v1.0.0-rc.2+)
+
+rc.2 fixed vitals gates that could not fire and made every gate fail closed.
+
+| Code | Exit | Message | Fix |
+|------|------|---------|-----|
+| `THRESHOLD_INVALID` | 2 | A rate threshold of 1 or more, a non-number, or `--vitals-gate` with no `vitals.thresholds.crashRate` | Rates are fractions: `--threshold 0.02` means 2%. Fix `vitals.thresholds.*` in config too |
+| `TRAIN_GATE_NO_DATA` | 6 | `gpc train advance` found no crash/ANR value for a gate, so it stayed on the current stage | Vitals lag 2-4 days; run `gpc train advance` again later |
+| `API_METRIC_GAMES_ONLY` | 4 | `gpc vitals rendering` on an app that is not a game | Expected: Google serves slow-rendering data to games only. Not a credentials problem |
+| `INVALID_PACKAGE_NAME` | 2 | `--app`, `GPC_APP` or config `app` is not a valid application ID (stray space, `-a=com.x`) | Use `--app com.example.app` or `-a com.example.app` |
+
+### `THRESHOLD_INVALID`
+
+**Exit code:** 2 — added in v1.0.0-rc.2
+
+**Cause:** Google reports rates (crash, ANR, slow start, slow rendering, wakeup, wakelock, LMK) as fractions, so a threshold of `2.0` can never be exceeded. Older docs taught `--threshold 2.0` for 2%, which silently disabled the gate. rc.2 refuses any rate threshold of 1 or more on `gpc vitals <metric> --threshold`, `gpc vitals watch --threshold`, `gpc watch --crash-threshold` (and the other watch rate thresholds) and `vitals.thresholds.crashRate` for `releases rollout increase --vitals-gate`.
+
+**Fix:** divide by 100: `--threshold 0.02` for 2%, `0.0047` for 0.47%. `gpc train` gates (`gates.crashes.max` in the train config) are the exception: they stay percentages.
+
+
 
 | Code | Message | Fix |
 |------|---------|-----|

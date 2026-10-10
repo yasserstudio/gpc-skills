@@ -1,9 +1,9 @@
 ---
 name: gpc-ci-integration
 description: "Use when integrating GPC into CI/CD pipelines. Make sure to use this skill whenever the user mentions GitHub Actions, GitLab CI, Bitbucket Pipelines, CircleCI, CI/CD, automated release, pipeline, GPC_SERVICE_ACCOUNT, JSON output, CSV output, TSV output, exit codes, gpc in CI, automate Play Store deployment, release workflow, deploy to Play Store from CI, automated rollout, step summary, bundle wait, wait for bundle processing, or wants to set up any kind of automated Google Play deployment pipeline. Also trigger when someone asks about running GPC in a headless environment, parsing GPC output in scripts, using GPC exit codes for conditional logic, or configuring retries and timeouts for CI — even if they don't mention a specific CI platform. For local setup, see gpc-setup. For release commands, see gpc-release-flow."
-compatibility: "GPC v0.9.82+. Works with any CI platform that supports Node.js 24+ (recommended), 22+, or 20+, or standalone binary. v1.0.0-rc.1+ exits 2 on usage mistakes and on a money command without --yes, exits 4 on a vitals 403, and exits 6 with THRESHOLD_NO_DATA. GPC Action v1.1.3+ defaults to GPC 1.0.0-rc.1."
+compatibility: "GPC v0.9.82+. Works with any CI platform that supports Node.js 24+ (recommended), 22+, or 20+, or standalone binary. v1.0.0-rc.1+ exits 2 on usage mistakes and on a money command without --yes, exits 4 on a vitals 403, and exits 6 with THRESHOLD_NO_DATA. GPC Action v1.1.4+ defaults to GPC 1.0.0-rc.2. v1.0.0-rc.2+ rate thresholds are fractions and >= 1 exits 2 (THRESHOLD_INVALID)."
 metadata:
-  version: 1.10.0
+  version: 1.11.0
 ---
 
 # GPC CI Integration
@@ -61,7 +61,7 @@ One step replaces the full install + run + cleanup sequence. The action runs a b
 
 The action is a TypeScript action running on Node 24. No additional configuration is required for the migration.
 
-**Which GPC it runs:** the action downloads the standalone `gpc` binary from the GPC GitHub release and verifies its SHA-256 against checksums committed in the action. As of action v1.1.3 (2026-09-29) the default is GPC **1.0.0-rc.1** (v1.1.1 defaulted to 0.9.99, v1.0.0 to 0.9.80). `@v1` follows the latest v1.x. Pin a GPC version with `gpc-version: 0.9.99`, or use `gpc-version: latest` (verified only against the release's own checksums.txt, lower assurance). The action does not put `gpc` on the PATH for later steps, and it always runs an upload (`release-files` and `package-name` are required); for other commands use its `args` input or install the CLI (`npm install -g @gpc-cli/cli`).
+**Which GPC it runs:** the action downloads the standalone `gpc` binary from the GPC GitHub release and verifies its SHA-256 against checksums committed in the action. As of action v1.1.4 (2026-10-10) the default is GPC **1.0.0-rc.2** (v1.1.1 defaulted to 0.9.99, v1.0.0 to 0.9.80). `@v1` follows the latest v1.x. Pin a GPC version with `gpc-version: 0.9.99`, or use `gpc-version: latest` (verified only against the release's own checksums.txt, lower assurance). The action does not put `gpc` on the PATH for later steps, and it always runs an upload (`release-files` and `package-name` are required); for other commands use its `args` input or install the CLI (`npm install -g @gpc-cli/cli`).
 
 For advanced pipelines (multi-step, vitals gating, changelog generation), continue with the manual workflow patterns below.
 
@@ -175,8 +175,8 @@ jobs:
         env:
           GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
         run: |
-          gpc vitals crashes --threshold 2.0
-          gpc vitals anr --threshold 0.47
+          gpc vitals crashes --threshold 0.02
+          gpc vitals anr --threshold 0.0047
 
       - name: Release status
         if: always()
@@ -305,7 +305,7 @@ fi
 
 ```yaml
 - name: Check vitals
-  run: gpc vitals crashes --threshold 2.0
+  run: gpc vitals crashes --threshold 0.02
   continue-on-error: false  # Exit code 6 fails the job
 ```
 
@@ -335,8 +335,8 @@ fi
 
 - name: Gate on vitals
   run: |
-    gpc vitals crashes --threshold 2.0
-    gpc vitals anr --threshold 0.47
+    gpc vitals crashes --threshold 0.02
+    gpc vitals anr --threshold 0.0047
 
 - name: Promote to production
   run: gpc releases promote --from beta --to production --rollout 10
@@ -596,7 +596,7 @@ gpc releases upload app.aab --track beta --retry-log retries.log
 | Timeout on upload | Large AAB + slow CI network | Increase `GPC_TIMEOUT` |
 | Rate limited | Too many API calls | Increase `GPC_BASE_DELAY`, reduce parallelism |
 | Exit code 6 | Vitals threshold breached | Review crash/ANR data, fix issues before promoting |
-| `THRESHOLD_NO_DATA` (exit 6) | `--threshold` set but no metric value came back | Wrong `GPC_APP`/`--app`, Play's 1-2 day data lag, or too little traffic. Widen `--days` (v1.0.0-rc.1+) |
+| `THRESHOLD_NO_DATA` (exit 6) | `--threshold` set but no metric value came back | Wrong `GPC_APP`/`--app`, Play's 2-4 day data lag, or too little traffic. Widen `--days` (v1.0.0-rc.1+) |
 | Vitals step now fails with exit 4 | Reporting API disabled, or the service account cannot read the app | Enable the Play Developer Reporting API and grant access. It exited 0 before v1.0.0-rc.1 |
 | `CONFIRMATION_REQUIRED` (exit 2) | A refund or revocation ran in CI without `--yes` | Add `--yes`, or preview with `--dry-run` (v1.0.0-rc.1+) |
 | `EDIT_CONFLICT` | Parallel runs editing same app | Serialize release jobs or use job concurrency limits |

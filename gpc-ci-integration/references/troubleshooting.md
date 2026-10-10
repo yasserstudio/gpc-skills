@@ -94,7 +94,7 @@ Use exit codes for conditional CI logic:
 ```yaml
 - name: Check vitals
   id: vitals
-  run: gpc vitals crashes --threshold 2.0
+  run: gpc vitals crashes --threshold 0.02
   continue-on-error: true
 
 - name: Promote (only if vitals OK)

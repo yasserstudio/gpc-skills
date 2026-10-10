@@ -129,7 +129,7 @@ Once on GPC, you can add these capabilities that Fastlane doesn't have:
 ```yaml
 # Vitals gating before production promotion
 - name: Check vitals
-  run: npx @gpc-cli/cli vitals crashes --threshold 1.5
+  run: npx @gpc-cli/cli vitals crashes --threshold 0.015
 
 # Staged rollout with percentage control
 - name: Promote with rollout

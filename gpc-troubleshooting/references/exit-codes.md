@@ -21,7 +21,7 @@ Since v1.0.0-rc.1, a usage mistake such as an unknown option or a missing argume
 
 ```bash
 # Simple check
-gpc vitals crashes --threshold 2.0
+gpc vitals crashes --threshold 0.02
 if [ $? -eq 6 ]; then
   echo "Crash rate too high — blocking promotion"
   exit 1
@@ -46,7 +46,7 @@ esac
 - name: Check vitals
   id: vitals
   continue-on-error: true
-  run: gpc vitals crashes --threshold 1.5
+  run: gpc vitals crashes --threshold 0.015
 
 - name: Block if threshold breached
   if: steps.vitals.outcome == 'failure'
@@ -60,8 +60,8 @@ esac
 ```yaml
 check-vitals:
   script:
-    - gpc vitals crashes --threshold 1.5
-    - gpc vitals anr --threshold 0.4
+    - gpc vitals crashes --threshold 0.015
+    - gpc vitals anr --threshold 0.004
   allow_failure: false  # Block pipeline on exit code != 0
 ```
 
@@ -87,14 +87,16 @@ Fields:
 
 ## Exit code 6 — threshold breach
 
+Rate thresholds are fractions (`0.02` is 2%). A rate threshold of 1 or more is a usage error (`THRESHOLD_INVALID`, exit 2), because a rate never exceeds 1.
+
 This is **not an error** — it's an intentional signal for CI gating.
 
 ```bash
 # Returns exit 0 if crash rate ≤ 1.5%, exit 6 if > 1.5%
-gpc vitals crashes --threshold 1.5
+gpc vitals crashes --threshold 0.015
 
 # JSON output includes threshold details
-gpc vitals crashes --threshold 1.5 --json
+gpc vitals crashes --threshold 0.015 --json
 ```
 
 ```json

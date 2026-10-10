@@ -3,7 +3,7 @@ name: gpc-release-flow
 description: "Use when uploading, releasing, promoting, or managing rollouts on Google Play. Make sure to use this skill whenever the user mentions gpc releases, upload AAB, upload APK, staged rollout, promote to production, halt rollout, gpc publish, release notes, track management, internal testing, beta release, production rollout, version code, rollout percentage, or wants to ship an Android app to any Play Store track. Also trigger when someone asks about the Google Play edit lifecycle, release validation, or how to do a phased rollout — even if they don't mention GPC by name. For metadata and listings, see gpc-metadata-sync. For CI/CD integration, see gpc-ci-integration."
 compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). For private-app publishing to Managed Google Play, see gpc-enterprise (v0.9.56+). v0.9.87+ returns a consistent list --json envelope on tracks list. v0.9.94+ reports incomplete App content declarations as API_DECLARATION_REQUIRED instead of a permissions error. v0.9.96+ adds device-tiers create --allow-unknown-devices."
 metadata:
-  version: 1.11.2
+  version: 1.12.0
 ---
 
 # GPC Release Flow
@@ -392,7 +392,7 @@ Disable with `--no-interactive` or `GPC_NO_INTERACTIVE=1`.
 - `gpc releases status` confirms version code matches the uploaded AAB
 - Rollout percentage is correct
 - Release notes are set for the expected languages
-- `gpc vitals crashes --version <code>` shows no spikes post-release (or use `gpc status` to check vitals across all metrics)
+- `gpc vitals crashes --dim versionCode` shows no spikes post-release (or use `gpc status` to check vitals across all metrics)
 
 ## Failure modes / debugging
 

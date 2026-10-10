@@ -67,8 +67,8 @@ check-vitals:
   before_script:
     - npm install -g @gpc-cli/cli
   script:
-    - gpc vitals crashes --threshold 1.5
-    - gpc vitals anr --threshold 0.4
+    - gpc vitals crashes --threshold 0.015
+    - gpc vitals anr --threshold 0.004
   allow_failure: false
 
 promote-production:
@@ -98,8 +98,8 @@ vitals-report:
     - npm install -g @gpc-cli/cli
   script:
     - gpc vitals overview --json > vitals.json
-    - gpc vitals crashes --threshold 2.0
-    - gpc vitals anr --threshold 0.5
+    - gpc vitals crashes --threshold 0.02
+    - gpc vitals anr --threshold 0.005
   artifacts:
     paths:
       - vitals.json

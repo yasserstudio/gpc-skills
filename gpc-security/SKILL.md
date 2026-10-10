@@ -283,7 +283,7 @@ Configuration: `socket.yml` at repo root controls Socket.dev alert rules. `.npmr
 
 The GPC GitHub Action (`yasserstudio/gpc-action`) is a TypeScript action running on Node 24 with these security properties:
 
-- **Verified binary**: it downloads the standalone `gpc` binary from the GPC GitHub release and checks its SHA-256 on every run (cache hits included) against checksums committed in the action itself, not only the release's mutable `checksums.txt`. The default GPC version is pinned: 1.0.0-rc.1 as of action v1.1.3. `gpc-version: latest` or an unpinned version falls back to the release checksums with a warning.
+- **Verified binary**: it downloads the standalone `gpc` binary from the GPC GitHub release and checks its SHA-256 on every run (cache hits included) against checksums committed in the action itself, not only the release's mutable `checksums.txt`. The default GPC version is pinned: 1.0.0-rc.2 as of action v1.1.4. `gpc-version: latest` or an unpinned version falls back to the release checksums with a warning.
 - **Credentials**: authentication uses the service account JSON key passed in `service-account-json`. Store it as an encrypted secret; there is no OIDC or keyless option yet.
 - **Built-in preflight gate**: the action runs `gpc preflight` before upload, and a failing scan blocks the publish (`preflight: false` skips it).
 - **Node 24 runtime**: matches the current GPC CLI CI matrix.

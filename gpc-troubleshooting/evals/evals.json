@@ -29,7 +29,7 @@
     },
     {
       "id": 3,
-      "prompt": "I'm getting exit code 6 from gpc vitals crashes --threshold 1.5 in our GitHub Actions workflow. Is this a bug? The command seems to run fine but the step shows as failed.",
+      "prompt": "I'm getting exit code 6 from gpc vitals crashes --threshold 0.015 in our GitHub Actions workflow. Is this a bug? The command seems to run fine but the step shows as failed.",
       "expected_output": "Explains exit code 6 is an intentional threshold breach signal, not a bug",
       "files": [],
       "expectations": [

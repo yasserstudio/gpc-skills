@@ -3,7 +3,7 @@ name: gpc-vitals-monitoring
 description: "Use when monitoring Android app health metrics from Google Play. Make sure to use this skill whenever the user mentions gpc vitals, gpc watch, gpc status, crash rate, ANR rate, startup time, Android vitals, crash monitoring, threshold alerting, vitals gating, rollout monitoring, auto-halt, breach notification, webhook alerting, frame rate, battery usage, memory issues, error tracking, app quality, user reviews, review replies, Play Store reviews, star rating, negative reviews, review export, financial reports, stats reports, gpc reports, reports list, reports download, bulk reports, earnings report, sales report, play balance, installs report, subscriptions report, reports bucket, GPC_REPORTS_BUCKET, pubsite_prod, REPORT_ACCESS_DENIED, download bulk reports permission, or wants to check app health, monitor a staged rollout, respond to reviews, or download Play Console reports. Also trigger when someone asks about gating deployments on crash data, monitoring app performance after a release, watching a rollout for regressions, or tracking review sentiment — even if they don't mention GPC. For releases, see gpc-release-flow. For CI gating, see gpc-ci-integration."
 compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Vitals data requires the app to have sufficient install volume. v0.9.83+ adds reviews fidelity fields and the unified list envelope. v0.9.97+ adds memory-rss/memory-bitmap P50-P99 memory usage (Feb 2027 P90 requirement). v0.9.93+ downloads Play bulk reports live from the account's Cloud Storage bucket (needs the 'View app information and download bulk reports (read-only)' grant on the service account). v1.0.0-rc.1+ fails vitals and anomalies with exit 4 on a Reporting API 403 and exits 6 with THRESHOLD_NO_DATA when a --threshold run gets no value."
 metadata:
-  version: 1.11.0
+  version: 1.12.0
 ---
 
 # GPC Vitals Monitoring
@@ -80,21 +80,23 @@ gpc vitals overview
 # Crash rate and top clusters
 gpc vitals crashes
 
-# Filter by version code
-gpc vitals crashes --version 142
+# Group by version code
+gpc vitals crashes --dim versionCode
 
 # CI threshold alerting — exit code 6 if crash rate exceeds threshold
-gpc vitals crashes --threshold 2.0
+gpc vitals crashes --threshold 0.02
 ```
 
 Exit code 6 means threshold was breached — use this to gate deployments.
+
+Rate thresholds are **fractions**, the way Google reports them: 2% is `0.02`, 1.09% is `0.0109`, 0.47% is `0.0047`. A rate can never exceed 1, so a value of 1 or more is rejected with `THRESHOLD_INVALID` (exit 2) instead of silently never firing. `error-count` is a count, so it takes the count.
 
 ### 3) ANR monitoring
 
 ```bash
 gpc vitals anr
-gpc vitals anr --version 142
-gpc vitals anr --threshold 0.47  # Google's bad behavior threshold
+gpc vitals anr --dim versionCode
+gpc vitals anr --threshold 0.0047  # Google's bad behavior threshold
 ```
 
 ### 4) Performance metrics
@@ -147,7 +149,7 @@ The Reporting API only serves these at daily aggregation, which GPC enforces. `-
 Background: v0.9.58 shipped a misnamed resource (`lowMemoryKillerRateMetricSet`) that 404'd. **v0.9.59 is the working build** — the real Google resource is `lmkRateMetricSet` with metrics `userPerceivedLmkRate`, `userPerceivedLmkRate7dUserWeighted`, `userPerceivedLmkRate28dUserWeighted`, and `distinctUsers`. Use v0.9.59+ for LMK queries.
 
 ```bash
-gpc vitals lmk --app com.example.app --since 7d
+gpc vitals lmk --app com.example.app --days 7
 ```
 
 Supports the same flags as other vitals subcommands: `--days <n>`, `--threshold <value>`, `--json`.
@@ -159,8 +161,8 @@ Supports the same flags as other vitals subcommands: `--days <n>`, `--threshold 
 `gpc vitals error-count` returns a time-windowed count of error-issue occurrences from the Play Developer Reporting API. Use for CI gates when you want an absolute count rather than a rate.
 
 ```bash
-gpc vitals error-count --app com.example.app --since 7d
-gpc vitals error-count --app com.example.app --since 7d --threshold 100
+gpc vitals error-count --app com.example.app --days 7
+gpc vitals error-count --app com.example.app --days 7 --threshold 100
 ```
 
 Exits 6 if the count exceeds --threshold (same CI convention as other vitals commands).
@@ -193,7 +195,7 @@ Compares: crash rate, ANR rate, startup time, rendering, battery, and memory. Us
 
 ### 4b) Real-time rollout monitoring (`gpc watch`, v0.9.67+)
 
-`gpc watch` is the unified rollout monitoring command. It polls rollout status (near real-time) and vitals data (24-48h delayed) on an interval, checks thresholds, and takes action on breach.
+`gpc watch` is the unified rollout monitoring command. It polls rollout status (near real-time) and vitals data (2-4 days delayed) on an interval, checks thresholds, and takes action on breach.
 
 ```bash
 # Basic: monitor crashes + ANR on production, poll every 15 minutes
@@ -223,7 +225,7 @@ gpc watch --metrics crashes,anr,lmk,slowStarts,slowRender,errorCount
 - `halt` — halt the active rollout via Google Play API
 - `webhook` — POST breach event as JSON to `--webhook-url`
 
-**Thresholds** resolve in priority order: CLI flags > `.gpcrc.json` `vitals.thresholds.*` > defaults (crash 2%, ANR 1%, LMK 3%, slow start 5%, slow render 10%).
+**Thresholds** resolve in priority order: CLI flags > `.gpcrc.json` `vitals.thresholds.*` > defaults (crash 2% / `0.02`, ANR 1% / `0.01`, LMK 3% / `0.03`, slow start 5% / `0.05`, slow render 10% / `0.1`). Flags and config values are fractions.
 
 **Auto-stop:** the watch loop stops when the rollout reaches 100%, a breach triggers halt, `--rounds` limit is hit, or Ctrl+C.
 
@@ -338,25 +340,27 @@ Use `--threshold` to gate rollouts on vitals quality:
 
 ```bash
 # Gate on crash rate (exits with code 6 if breached)
-gpc vitals crashes --threshold 2.0
+gpc vitals crashes --threshold 0.02
 
 # Gate on ANR rate
-gpc vitals anr --threshold 0.47
+gpc vitals anr --threshold 0.0047
 
 # Combine in a script
-gpc vitals crashes --threshold 2.0 && \
-gpc vitals anr --threshold 0.47 && \
+gpc vitals crashes --threshold 0.02 && \
+gpc vitals anr --threshold 0.0047 && \
 echo "Vitals OK — safe to promote"
 ```
 
-**A gate never passes blind (v1.0.0-rc.1+).** If a `--threshold` run gets no metric value back, it exits 6 with `THRESHOLD_NO_DATA` instead of exiting 0. The usual causes are a wrong `--app`, Play's 1-2 day data lag, and an app with too little traffic. Check `--app`, widen `--days`, or drop `--threshold` for that run. A 403 on the same command exits 4.
+**A gate never passes blind (v1.0.0-rc.1+).** If a `--threshold` run gets no metric value back, it exits 6 with `THRESHOLD_NO_DATA` instead of exiting 0. The usual causes are a wrong `--app`, Play's 2-4 day data lag, and an app with too little traffic. Check `--app`, widen `--days`, or drop `--threshold` for that run. A 403 on the same command exits 4.
+
+**How gates read vitals (v1.0.0-rc.2+).** Rate thresholds are fractions (`0.02` = 2%); 1 or more is refused with `THRESHOLD_INVALID` (exit 2). A gate compares the worst value of the most recent day: startup has one row per start type and error-count one per report type, and with `--dim` every dimension value is its own row, so `--dim deviceModel --threshold 0.02` fails if any one device model is over 2%. `gpc watch` judges the latest day and exits 4 if a watched metric with a threshold could not be read. `releases rollout increase --vitals-gate` and `gpc train advance` block on missing data instead of advancing. Before rc.2, `gpc watch` never received a value (it misread Google's response), so upgrade before relying on `--on-breach halt`.
 
 In CI, use exit code 6 to block promotion:
 ```yaml
 - name: Check vitals before promotion
   run: |
-    gpc vitals crashes --threshold 2.0
-    gpc vitals anr --threshold 0.47
+    gpc vitals crashes --threshold 0.02
+    gpc vitals anr --threshold 0.0047
 - name: Promote to production
   if: success()
   run: gpc releases promote --from beta --to production --rollout 10
@@ -374,16 +378,17 @@ The `--vitals-gate` flag on rollout commands checks crash and ANR thresholds **b
 **New behavior (v0.9.74+):** GPC checks vitals first. If thresholds are breached, the rollout increase never happens.
 
 ```bash
-# Increase rollout only if crash and ANR rates are within thresholds
-gpc releases rollout --track production --rollout 50 \
-  --vitals-gate --crash-threshold 2.0 --anr-threshold 0.47
+# Increase rollout only if the crash rate is within the configured threshold
+gpc releases rollout increase --track production --to 50 --vitals-gate
 
 # Use in a staged rollout script
-gpc releases rollout --track production --rollout 10 --vitals-gate
-gpc releases rollout --track production --rollout 25 --vitals-gate
-gpc releases rollout --track production --rollout 50 --vitals-gate
-gpc releases rollout --track production --rollout 100 --vitals-gate
+gpc releases rollout increase --track production --to 10 --vitals-gate
+gpc releases rollout increase --track production --to 25 --vitals-gate
+gpc releases rollout increase --track production --to 50 --vitals-gate
+gpc releases rollout increase --track production --to 100 --vitals-gate
 ```
+
+`--vitals-gate` has no threshold flags of its own: it reads `vitals.thresholds.crashRate` from `.gpcrc.json`, as a fraction (`0.02` is 2%). Without that key the gate is skipped with a warning.
 
 Exit code 6 means a vitals threshold was breached and the rollout increase was **not** applied. Exit code 0 means vitals passed and the rollout was increased.
 
@@ -391,21 +396,18 @@ In CI, use `if: success()` guards to stop the pipeline at the first failing gate
 
 ```yaml
 - name: Ramp to 25%
-  run: gpc releases rollout --track production --rollout 25 --vitals-gate \
-       --crash-threshold 2.0 --anr-threshold 0.47
+  run: gpc releases rollout increase --track production --to 25 --vitals-gate
 
 - name: Ramp to 50%
   if: success()
-  run: gpc releases rollout --track production --rollout 50 --vitals-gate \
-       --crash-threshold 2.0 --anr-threshold 0.47
+  run: gpc releases rollout increase --track production --to 50 --vitals-gate
 
 - name: Full rollout
   if: success()
-  run: gpc releases rollout --track production --rollout 100 --vitals-gate \
-       --crash-threshold 2.0 --anr-threshold 0.47
+  run: gpc releases rollout increase --track production --to 100 --vitals-gate
 ```
 
-Threshold defaults (if flags are omitted): crash 2%, ANR 0.47%. Override via `.gpcrc.json` `vitals.thresholds.*`.
+Set the gate's threshold in `.gpcrc.json` under `vitals.thresholds.crashRate`, as a fraction (`0.02` is 2%).
 
 Read:
 - `references/ci-gating.md`
@@ -424,14 +426,14 @@ The fix in v0.9.82 reads `rows[last].metrics[firstMetric].decimalValue.value`, w
 {
   "vitals": {
     "thresholds": {
-      "crashRate": 2.0,
-      "anrRate": 0.5
+      "crashRate": 0.02,
+      "anrRate": 0.005
     }
   }
 }
 ```
 
-These values are used as defaults by `--vitals-gate`, `gpc watch`, and `gpc vitals crashes/anr --threshold`. CLI flags still take priority over config.
+Config thresholds are fractions, exactly like the flags: `0.02` is 2%, `0.005` is 0.5%. These values are used as defaults by `--vitals-gate`, `gpc watch`, and `gpc vitals crashes/anr --threshold`. CLI flags still take priority over config.
 
 ### 9) Reporting API rate limit
 
@@ -517,9 +519,11 @@ Error codes specific to this path: `REPORT_ACCESS_DENIED` (4, missing grant), `R
 | Symptom | Likely Cause | Fix |
 |---------|-------------|-----|
 | No vitals data | App has insufficient installs | Vitals require significant install volume; small apps may not have data |
+| `THRESHOLD_INVALID` (exit 2) | Rate threshold written as a percentage (e.g. `2.0`) | Use the fraction: `0.02` for 2% (v1.0.0-rc.2+) |
+| `API_METRIC_GAMES_ONLY` (exit 4) | `vitals rendering` on a non-game app | Expected: Google serves slow rendering to games only (v1.0.0-rc.2+) |
 | `THRESHOLD_NO_DATA` (exit 6) | `--threshold` set but no metric value came back | Wrong `--app`, data lag, or no traffic. Check `--app`, widen `--days`, or drop `--threshold` for that run (v1.0.0-rc.1+) |
 | Exit 4 with the Reporting API enable link | Reporting API disabled, or the service account cannot read this app | Enable the Play Developer Reporting API for the project and grant the service account access. It exited 0 before v1.0.0-rc.1 |
-| `--threshold` always passes | Threshold too high | Check current crash rate with `gpc vitals crashes` first, then set appropriate threshold |
+| `--threshold` always passes | Threshold too high, or written as a percentage on a version before rc.2 | Thresholds are fractions (`0.02` = 2%). Check the current rate with `gpc vitals crashes` first |
 | Reviews API rate limit | Too many requests | Reviews API: 200 GET/hour, 2,000 POST/day. Space out requests. |
 | Reports not found | Wrong month format | Use `YYYY-MM` format (e.g., `2026-02`) |
 | `REPORT_ACCESS_DENIED` on any reports command | The service account lacks the bulk-reports grant | Play Console -> Users and permissions -> the service account -> Account permissions -> enable "View app information and download bulk reports (read-only)", wait a few minutes, then `gpc auth clear-cache` and retry |
@@ -528,7 +532,7 @@ Error codes specific to this path: `REPORT_ACCESS_DENIED` (4, missing grant), `R
 | `REPORT_OBJECT_NOT_FOUND` with a dimension | That dimension is not published for the month | The error lists the dimensions that exist; reviews reports have no dimension |
 | Report month returns nothing | Month is not finished | Play publishes a month's reports after it ends; use the last complete month |
 | Multi-CSV financial archive refuses to print | `REPORT_MULTIPLE_ENTRIES` | Save the archive with `--output-file report.zip`, or use `--json` to inline every entry |
-| Empty crash clusters | New release | Crash data takes time to aggregate; check again in 24-48 hours |
+| Empty crash clusters | New release | Crash data takes time to aggregate; check again in 2-4 days |
 
 ## Related skills
 

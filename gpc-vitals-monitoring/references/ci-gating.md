@@ -4,23 +4,25 @@
 
 Use GPC's `--threshold` flag to gate deployments on app quality. If crash rate or ANR rate exceeds the threshold, GPC exits with code 6, failing the CI job.
 
+Rate thresholds are **fractions**, the way Google reports them: 2% is `0.02`, 1.09% is `0.0109`, 0.47% is `0.0047`. A rate can never exceed 1, so a value of 1 or more is rejected with `THRESHOLD_INVALID` (exit 2) instead of silently never firing. `error-count` is a count, so it takes the count.
+
 ## Google Play Thresholds
 
 Google Play has official "bad behavior" thresholds that can affect app visibility:
 
 | Metric | Bad Threshold | Recommended Gate |
 |--------|--------------|-----------------|
-| Crash rate | 1.09% (overall) | 2.0% (conservative) |
-| ANR rate | 0.47% (overall) | 0.47% (match Google) |
+| Crash rate | 1.09% (overall) | 2.0% (conservative), i.e. `--threshold 0.02` |
+| ANR rate | 0.47% (overall) | 0.47% (match Google), i.e. `--threshold 0.0047` |
 
 ## Basic Gating
 
 ```bash
 # Fail if crash rate exceeds 2%
-gpc vitals crashes --threshold 2.0
+gpc vitals crashes --threshold 0.02
 
 # Fail if ANR rate exceeds 0.47%
-gpc vitals anr --threshold 0.47
+gpc vitals anr --threshold 0.0047
 ```
 
 Exit codes:
@@ -28,7 +30,7 @@ Exit codes:
 - `4` — Vitals could not be read at all: the Play Developer Reporting API is disabled for the project, or the service account has no access to this app (v1.0.0-rc.1+; it printed "no data" and exited 0 before)
 - `6` — Threshold breached (block promotion), or no metric value came back to compare against (`THRESHOLD_NO_DATA`, v1.0.0-rc.1+)
 
-A gate that cannot read a number must not pass. A wrong `--app`, Play's 1-2 day data lag, or an app with too little traffic all produce `THRESHOLD_NO_DATA` rather than a silent success, so the pipeline stops instead of promoting on no evidence. Widen `--days` for a low-traffic app, or drop `--threshold` for that run.
+A gate that cannot read a number must not pass. A wrong `--app`, Play's 2-4 day data lag, or an app with too little traffic all produce `THRESHOLD_NO_DATA` rather than a silent success, so the pipeline stops instead of promoting on no evidence. Widen `--days` for a low-traffic app, or drop `--threshold` for that run.
 
 ## GitHub Actions Pattern
 
@@ -44,10 +46,10 @@ jobs:
         run: npm install -g @gpc-cli/cli
 
       - name: Check crash rate
-        run: gpc vitals crashes --threshold 2.0
+        run: gpc vitals crashes --threshold 0.02
 
       - name: Check ANR rate
-        run: gpc vitals anr --threshold 0.47
+        run: gpc vitals anr --threshold 0.0047
 
       - name: Promote to production
         run: gpc releases promote --from beta --to production --rollout 10
@@ -77,8 +79,8 @@ jobs:
 
       - name: Check vitals
         run: |
-          gpc vitals crashes --threshold 2.0
-          gpc vitals anr --threshold 0.47
+          gpc vitals crashes --threshold 0.02
+          gpc vitals anr --threshold 0.0047
 
       - name: Alert on failure
         if: failure()
@@ -102,27 +104,25 @@ Use this in post-release monitoring to detect regressions.
 The `--vitals-gate` flag on rollout commands checks thresholds **before** applying the rollout increase. If a threshold is breached the increase is skipped and GPC exits 6. This prevents users from being exposed to a higher rollout percentage while metrics are failing.
 
 ```bash
-# Safe ramp: only increases if vitals are within thresholds
-gpc releases rollout --track production --rollout 50 \
-  --vitals-gate --crash-threshold 2.0 --anr-threshold 0.47
+# Safe ramp: only increases if the crash rate is within the configured threshold
+gpc releases rollout increase --track production --to 50 --vitals-gate
 ```
+
+`--vitals-gate` has no threshold flags of its own: it reads `vitals.thresholds.crashRate` from `.gpcrc.json`, as a fraction (`0.02` is 2%). Without that key the gate is skipped with a warning.
 
 Staged pipeline pattern:
 
 ```yaml
 - name: Ramp to 25%
-  run: gpc releases rollout --track production --rollout 25 --vitals-gate \
-       --crash-threshold 2.0 --anr-threshold 0.47
+  run: gpc releases rollout increase --track production --to 25 --vitals-gate
 
 - name: Ramp to 50%
   if: success()
-  run: gpc releases rollout --track production --rollout 50 --vitals-gate \
-       --crash-threshold 2.0 --anr-threshold 0.47
+  run: gpc releases rollout increase --track production --to 50 --vitals-gate
 
 - name: Full rollout
   if: success()
-  run: gpc releases rollout --track production --rollout 100 --vitals-gate \
-       --crash-threshold 2.0 --anr-threshold 0.47
+  run: gpc releases rollout increase --track production --to 100 --vitals-gate
 ```
 
 **Behavior difference from standalone threshold checks:**
@@ -136,7 +136,7 @@ Use `--vitals-gate` for rollout safety. Use standalone `--threshold` for post-de
 
 ## Considerations
 
-- **Data lag:** Vitals data may be delayed by 24-48 hours
+- **Data lag:** Vitals data may be delayed by 2-4 days
 - **Volume requirements:** Small apps may not have enough data for meaningful metrics, and from v1.0.0-rc.1 a `--threshold` run with no data fails the job rather than passing it
 - **New releases:** Crash data for a new version takes time to accumulate
 - **False positives:** A single bad device/OS can spike crash rates temporarily

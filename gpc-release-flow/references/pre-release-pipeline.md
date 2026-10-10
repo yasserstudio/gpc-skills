@@ -63,8 +63,8 @@ Crash data from a new release takes 6-48 hours to appear. Check:
 
 ```bash
 # After waiting (next day or per monitoring schedule)
-gpc vitals crashes --version <versionCode>
-gpc vitals anr --version <versionCode>
+gpc vitals crashes --dim versionCode
+gpc vitals anr --dim versionCode
 
 # Or use the unified status with a fresh fetch
 gpc status --refresh
@@ -74,10 +74,10 @@ gpc status --refresh
 
 ```bash
 # Check crash rate (exits 6 if breached)
-gpc vitals crashes --threshold 2.0
+gpc vitals crashes --threshold 0.02
 
 # Check ANR rate
-gpc vitals anr --threshold 0.47
+gpc vitals anr --threshold 0.0047
 
 # Or check both via gpc status (exits 6 if any threshold breached)
 gpc status
@@ -133,8 +133,8 @@ jobs:
 
       - name: Gate on vitals before promotion
         run: |
-          gpc vitals crashes --threshold 2.0
-          gpc vitals anr --threshold 0.47
+          gpc vitals crashes --threshold 0.02
+          gpc vitals anr --threshold 0.0047
 
       - name: Promote to production (10% rollout)
         env:

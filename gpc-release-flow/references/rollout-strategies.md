@@ -28,15 +28,15 @@ gpc releases promote --from internal --to beta
 gpc releases promote --from beta --to production --rollout 1
 
 # Day 4 (check vitals first)
-gpc vitals crashes --threshold 2.0
+gpc vitals crashes --threshold 0.02
 gpc releases rollout increase --track production --to 10
 
 # Day 5
-gpc vitals crashes --threshold 2.0
+gpc vitals crashes --threshold 0.02
 gpc releases rollout increase --track production --to 50
 
 # Day 7
-gpc vitals crashes --threshold 2.0
+gpc vitals crashes --threshold 0.02
 gpc releases rollout complete --track production
 ```
 
@@ -87,14 +87,14 @@ gpc releases upload app.aab --track production --rollout 5
 # Wait for crash data
 sleep 3600  # 1 hour
 
-# Option A (v0.9.74+): pass thresholds directly — vitals are checked before the increase
-# Exits 6 without touching rollout if thresholds are breached
-gpc releases rollout increase --track production --to 50 \
-  --crash-threshold 2.0 --anr-threshold 0.47
+# Option A (v0.9.74+): --vitals-gate checks vitals before the increase
+# Exits 6 without touching rollout if the configured threshold is breached
+# (set vitals.thresholds.crashRate in .gpcrc.json; it is a fraction, 0.02 = 2%)
+gpc releases rollout increase --track production --to 50 --vitals-gate
 
 # Option B: explicit pre-check (any version)
-gpc vitals crashes --threshold 2.0   # exits 6 if breached
-gpc vitals anr --threshold 0.47      # exits 6 if breached
+gpc vitals crashes --threshold 0.02   # exits 6 if breached
+gpc vitals anr --threshold 0.0047      # exits 6 if breached
 gpc releases rollout increase --track production --to 50
 ```
 
@@ -107,7 +107,7 @@ If you detect issues after release:
 gpc releases rollout halt --track production
 
 # Investigate
-gpc vitals crashes --version <code>
+gpc vitals crashes --dim versionCode
 
 # After fixing, create a new release (don't resume the bad one)
 gpc publish fixed-app.aab --track production --rollout 5
