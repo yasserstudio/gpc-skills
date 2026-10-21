@@ -274,16 +274,10 @@ gpc releases upload app.aab --track production --changes-not-sent-for-review
 gpc releases promote --from beta --to production --changes-not-sent-for-review
 ```
 
-**JSON error output:**
-```json
-{
-  "success": false,
-  "error": {
-    "code": "API_CHANGES_NOT_SENT_FOR_REVIEW",
-    "message": "This app requires the changesNotSentForReview flag to be set",
-    "suggestion": "Re-run the command with --changes-not-sent-for-review"
-  }
-}
+**Error output** (stderr, plain text even with `--json`):
+```text
+Error [API_CHANGES_NOT_SENT_FOR_REVIEW]: This app requires the changesNotSentForReview flag to be set
+Suggestion: Re-run the command with --changes-not-sent-for-review
 ```
 
 **Notes:**
@@ -311,16 +305,10 @@ gpc releases upload app.aab --track production --error-if-in-review
 gpc releases upload app.aab --track production
 ```
 
-**JSON error output:**
-```json
-{
-  "success": false,
-  "error": {
-    "code": "API_CHANGES_ALREADY_IN_REVIEW",
-    "message": "Track already has changes in review; committing would cancel the pending review",
-    "suggestion": "Use --error-if-in-review to prevent silent cancellation, or omit the flag to replace the in-review changes"
-  }
-}
+**Error output** (stderr, plain text even with `--json`):
+```text
+Error [API_CHANGES_ALREADY_IN_REVIEW]: Track already has changes in review; committing would cancel the pending review
+Suggestion: Use --error-if-in-review to prevent silent cancellation, or omit the flag to replace the in-review changes
 ```
 
 **Notes:**

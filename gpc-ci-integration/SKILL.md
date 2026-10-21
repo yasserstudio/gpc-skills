@@ -1,9 +1,9 @@
 ---
 name: gpc-ci-integration
 description: "Use when integrating GPC into CI/CD pipelines. Make sure to use this skill whenever the user mentions GitHub Actions, GitLab CI, Bitbucket Pipelines, CircleCI, CI/CD, automated release, pipeline, GPC_SERVICE_ACCOUNT, JSON output, CSV output, TSV output, exit codes, gpc in CI, automate Play Store deployment, release workflow, deploy to Play Store from CI, automated rollout, step summary, bundle wait, wait for bundle processing, or wants to set up any kind of automated Google Play deployment pipeline. Also trigger when someone asks about running GPC in a headless environment, parsing GPC output in scripts, using GPC exit codes for conditional logic, or configuring retries and timeouts for CI — even if they don't mention a specific CI platform. For local setup, see gpc-setup. For release commands, see gpc-release-flow."
-compatibility: "GPC v0.9.82+. Works with any CI platform that supports Node.js 24+ (recommended), 22+, or 20+, or standalone binary. v1.0.0-rc.1+ exits 2 on usage mistakes and on a money command without --yes, exits 4 on a vitals 403, and exits 6 with THRESHOLD_NO_DATA. GPC Action v1.1.4+ defaults to GPC 1.0.0-rc.2. v1.0.0-rc.2+ rate thresholds are fractions and >= 1 exits 2 (THRESHOLD_INVALID)."
+compatibility: "GPC v0.9.82+. Works with any CI platform that supports Node.js 24+ (recommended), 22+, or 20+, or standalone binary. v1.0.0-rc.1+ exits 2 on usage mistakes and on a money command without --yes, exits 4 on a vitals 403, and exits 6 with THRESHOLD_NO_DATA. GPC Action v1.1.5+ defaults to GPC 1.0.0. v1.0.0-rc.2+ rate thresholds are fractions and >= 1 exits 2 (THRESHOLD_INVALID). GPC v1.0.0 output is a table unless --json / --output json / --ci is passed, with no JSON envelope, and errors are plain text on stderr."
 metadata:
-  version: 1.11.0
+  version: 1.12.0
 ---
 
 # GPC CI Integration
@@ -61,15 +61,15 @@ One step replaces the full install + run + cleanup sequence. The action runs a b
 
 The action is a TypeScript action running on Node 24. No additional configuration is required for the migration.
 
-**Which GPC it runs:** the action downloads the standalone `gpc` binary from the GPC GitHub release and verifies its SHA-256 against checksums committed in the action. As of action v1.1.4 (2026-10-10) the default is GPC **1.0.0-rc.2** (v1.1.1 defaulted to 0.9.99, v1.0.0 to 0.9.80). `@v1` follows the latest v1.x. Pin a GPC version with `gpc-version: 0.9.99`, or use `gpc-version: latest` (verified only against the release's own checksums.txt, lower assurance). The action does not put `gpc` on the PATH for later steps, and it always runs an upload (`release-files` and `package-name` are required); for other commands use its `args` input or install the CLI (`npm install -g @gpc-cli/cli`).
+**Which GPC it runs:** the action downloads the standalone `gpc` binary from the GPC GitHub release and verifies its SHA-256 against checksums committed in the action. As of action v1.1.5 (2026-10-21) the default is GPC **1.0.0** (v1.1.4 defaulted to 1.0.0-rc.2, v1.1.1 to 0.9.99, v1.0.0 to 0.9.80). `@v1` follows the latest v1.x. Pin a GPC version with `gpc-version: 1.0.0`, or use `gpc-version: latest` (verified only against the release's own checksums.txt, lower assurance). The action does not put `gpc` on the PATH for later steps, and it always runs an upload (`release-files` and `package-name` are required); for other commands use its `args` input or install the CLI (`npm install -g @gpc-cli/cli`).
 
 For advanced pipelines (multi-step, vitals gating, changelog generation), continue with the manual workflow patterns below.
 
 ### 0) CI environment behavior
 
-GPC auto-detects CI environments:
+GPC adapts to CI environments, with one important exception:
 
-- **Output:** Defaults to JSON when stdout is not a TTY (piped or CI)
+- **Output:** Always a table unless you ask for JSON. A pipe or `CI=true` does **not** switch it. Pass `--json`, `--output json`, or `--ci` on every command you intend to parse.
 - **Interactive:** Prompts are disabled automatically when `CI=true`
 - **Colors:** Disabled in non-TTY environments
 - **Plugin-CI:** Writes GitHub Actions step summaries when `$GITHUB_STEP_SUMMARY` is available
@@ -78,7 +78,7 @@ Environment variables for CI override:
 ```bash
 GPC_NO_INTERACTIVE=1   # Explicitly disable prompts
 GPC_NO_COLOR=1         # Explicitly disable colors
-GPC_OUTPUT=json        # Force JSON output
+GPC_OUTPUT=json        # Default every command to JSON
 ```
 
 **Config resolution precedence (v0.9.81+):** CLI flags override env vars, which override the active profile, which overrides `.gpcrc.json`, which falls back to defaults.
@@ -257,7 +257,7 @@ For minimal CI images without Node.js:
 
 ### 6) Output formats for CI scripting
 
-GPC auto-outputs JSON in CI (non-TTY). Parse with `jq`:
+Ask for JSON explicitly, then parse with `jq`. There is no `{ success, data }` envelope: each command prints its own object at the top level, and list commands print `{ <key>, nextPageToken, meta.count, message? }`. Success is the exit code, never a field.
 
 > **JUnit output caveat:** `--output junit` is available but testcase `name` attributes use generic identifiers (`item-1`, `item-2`) for some commands (`tracks list`, `releases status`). Prefer `--output json | jq` for reliable CI parsing. Use `--output junit` only if your test reporter specifically requires JUnit XML format.
 
@@ -270,7 +270,7 @@ gpc releases status --output csv > releases.csv
 # TSV for awk / cut parsing in shell scripts
 gpc vitals crashes --output tsv | awk -F'\t' '{print $2}'
 
-# Force a specific format regardless of TTY detection
+# Set CSV as the default format for every command in the job
 GPC_OUTPUT=csv gpc apps list
 ```
 
@@ -278,30 +278,40 @@ Use CSV/TSV when piping into tools like `csvkit`, `mlr`, or spreadsheet imports.
 
 
 ```bash
-# Get version code from upload result
-VERSION=$(gpc releases upload app.aab --track beta | jq -r '.data.versionCode')
+# Get version code from upload result ({ versionCode, track, status })
+VERSION=$(gpc releases upload app.aab --track beta --json | jq -r '.versionCode')
 
-# Check if vitals are OK
-CRASH_RATE=$(gpc vitals crashes --output json | jq -r '.data.crashRate')
+# Gate on vitals with the built-in check: exit 6 means breached
+gpc vitals crashes --threshold 0.02 --json > /dev/null || code=$?
+if [ "${code:-0}" -eq 6 ]; then
+  echo "Crash rate above 2%, not promoting"
+  exit 1
+fi
 
-# Conditional promotion
-if (( $(echo "$CRASH_RATE < 2.0" | bc -l) )); then
+# Or read the rate as a number. `gpc status` exits 6 on a breach, so
+# under `set -e` capture it with `|| true`.
+STATUS_JSON=$(gpc status --json || true)
+CRASH_RATE=$(echo "$STATUS_JSON" | jq -r '.vitals.crashes.value // "unknown"')
+
+# Conditional promotion (rates are fractions: 0.02 is 2%)
+if [ "$CRASH_RATE" != "unknown" ] && (( $(echo "$CRASH_RATE < 0.02" | bc -l) )); then
   gpc releases promote --from beta --to production --rollout 10
 fi
 ```
+
+`gpc vitals <metric> --json` is a pass-through of Google's Play Developer Reporting rows (`{ "rows": [...] }`, metric values as **strings**), so prefer `--threshold` for gating and `gpc status --json` for numbers.
 
 ### 7) Exit codes for CI logic
 
 | Code | Meaning | CI Action |
 |------|---------|-----------|
 | `0` | Success | Continue |
-| `1` | General error | Fail job |
+| `1` | General error, including plugin failures (`PLUGIN_*`) | Fail job |
 | `2` | Usage error (bad arguments), or a money command with no `--yes` | Fix command |
 | `3` | Authentication error | Check secrets |
 | `4` | API error (rate limit, permission, vitals 403) | Retry or fix permissions |
 | `5` | Network error | Retry |
 | `6` | Threshold breach (vitals), or no metric value to compare | Block promotion |
-| `10` | Plugin error | Check plugin config |
 
 ```yaml
 - name: Check vitals
@@ -438,7 +448,7 @@ When Google Play rejects an app update, `gpc releases status` reports the reject
   run: |
     echo "Release was rejected or is still in review."
     echo "Check the Play Console for details."
-    gpc releases status --output json | jq '.data.releases[] | select(.status == "rejected")'
+    gpc releases status --output json | jq '.[] | select(.status == "rejected")'
     exit 1
 ```
 

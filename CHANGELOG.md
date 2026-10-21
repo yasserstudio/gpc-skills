@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.34.0 -- 2026-10-21
+
+Synced to GPC v1.0.0 and gpc-action v1.1.5. Minor: v1.0.0 ships the same code as rc.2, but its docs corrected what `--json` really prints, and this bundle had copied the old claims. There is no `{ success, data }` wrapper, output is a table by default even in a pipe or in CI, and errors are plain text on stderr.
+
+### Updated Skills
+
+- **gpc-ci-integration** (1.11.0 -> 1.12.0) -- CI samples no longer assume JSON arrives on its own: output is a table unless `--json`, `--output json` or `--ci` is passed, so the "GPC auto-detects CI environments" output claim is gone. The `.data.versionCode`, `.data.crashRate` and `.data.releases[]` parses could never have worked; upload prints `{ versionCode, track, status }`, `releases status` prints a bare array, and a crash rate as a number comes from `gpc status --json` (`.vitals.crashes.value`, a fraction, exit 6 on a breach so the sample uses `|| true`). Gating is `--threshold <fraction>` plus exit 6. Plugin failures exit 1; there is no exit 10. Action default is GPC 1.0.0 as of v1.1.5.
+- **gpc-troubleshooting** (0.24.0 -> 0.25.0) -- Errors are never JSON. The `{ "success": false, "error": {...} }` samples in the skill, the exit-code reference and the error catalog are replaced with the real stderr lines (`Error [CODE]:`, `Suggestion:`, `Details:`) plus a `grep` pattern for branching on a code. Threshold breaches print on stderr while stdout keeps Google's rows, the crash-rate lookup moves to `gpc status --json`, and the fictional exit 10 for plugins is folded into exit 1.
+- **gpc-vitals-monitoring** (1.12.0 -> 1.12.1) -- The monitoring-pipeline sample piped `.data`, which is always null: `gpc vitals <metric> --json` is Google's `{ rows: [...] }` with string values, and numbers come from `gpc status --json`. The CI review count reads `.meta.count` instead of `.data | length`.
+- **gpc-setup** (1.10.0 -> 1.10.1) -- The `output` config key defaults to `table`, in a pipe and in CI too, not "TTY=table, pipe=json". `gpc doctor --json` is called out as the one command that really does print `success`, `errors`, `warnings` and `checks[]`.
+- **gpc-security** (0.18.0 -> 0.18.1) -- `gpc auth status --json` reports the service account under `account`, not `email`, so the least-privilege and failure-mode snippets return a value again. The audit log's own `success` field is now marked as belonging to the log file rather than to command output. Action pinned default is GPC 1.0.0.
+- **gpc-android-cli-interop** (1.0.0 -> 1.0.1) -- The output contract handed to agents said `--json` was TTY-aware; it is not. Replaced with the real contract (ask for JSON, no envelope, list shape, plain-text errors). `gpc vitals` samples use `--app`; `--package` is not a flag it accepts.
+- **gpc-train** (0.11.0 -> 0.11.1) -- Rollout-pipeline reference now states GPC v1.0.0.
+
+### Bundle
+
+README requirements line synced to GPC v1.0.0 and gpc-action v1.1.5 (default GPC 1.0.0), and points at the new [Versioning and Stability](https://yasserstudio.github.io/gpc/reference/stability) page for what is stable inside 1.x. 19 skills.
+
+---
+
 ## v1.33.0 -- 2026-10-10
 
 Synced to GPC v1.0.0-rc.2 and gpc-action v1.1.4. Minor: rc.2 changes how every vitals gate reads thresholds and data, so the guidance changes with it.

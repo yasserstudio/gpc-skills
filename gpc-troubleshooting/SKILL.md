@@ -1,9 +1,9 @@
 ---
 name: gpc-troubleshooting
 description: "Use when debugging GPC errors, failures, or unexpected behavior. Make sure to use this skill whenever the user mentions gpc error, gpc failing, exit code, AUTH_FAILED, API_FORBIDDEN, NETWORK_ERROR, CONFIG_MISSING, EDIT_CONFLICT, upload failed, permission denied, timeout, rate limit, gpc doctor failing, unexpected exit code, command not working, GPC crash, debug GPC, verbose output, --json error, threshold breach, REPORT_ACCESS_DENIED, REPORT_BUCKET_NOT_FOUND, reports bucket access, bulk reports permission denied, API_DECLARATION_REQUIRED, App content declaration, foreground service declaration, API_ALREADY_EXISTS, API_ENDPOINT_RETIRED, ORDER_REVIEW_REFUND_INVALID, PLUGIN_PERMISSIONS_REQUIRED, PLUGIN_IDENTITY_MISMATCH, CONFIRMATION_REQUIRED, IMAGE_SYNC_DIR_UNREADABLE, THRESHOLD_NO_DATA, THRESHOLD_INVALID, TRAIN_GATE_NO_DATA, API_METRIC_GAMES_ONLY, INVALID_PACKAGE_NAME — even if they don't explicitly say 'troubleshoot.' Also trigger when someone encounters any GPC error they don't understand, when gpc doctor reports issues, when CI pipelines fail with GPC commands, or when they need to interpret exit codes. For auth-specific setup issues, see gpc-setup. For CI-specific issues, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Covers all packages: @gpc-cli/cli, @gpc-cli/core, @gpc-cli/api, @gpc-cli/auth, @gpc-cli/config. v0.9.85+ resolves the npm global install failure. v0.9.93+ adds the REPORT_* bulk-report error codes and the doctor reports-bucket check. v0.9.94+ adds API_DECLARATION_REQUIRED and stops App content declaration failures being reported as missing service account permissions. v0.9.96+ adds API_ALREADY_EXISTS, API_ENDPOINT_RETIRED, and ORDER_REVIEW_REFUND_INVALID. v1.0.0-rc.1+ adds CONFIRMATION_REQUIRED, IMAGE_SYNC_DIR_UNREADABLE, and THRESHOLD_NO_DATA, exits 2 on usage mistakes, and exits 4 on a vitals 403."
+compatibility: "GPC v0.9.82+. Covers all packages: @gpc-cli/cli, @gpc-cli/core, @gpc-cli/api, @gpc-cli/auth, @gpc-cli/config. v0.9.85+ resolves the npm global install failure. v0.9.93+ adds the REPORT_* bulk-report error codes and the doctor reports-bucket check. v0.9.94+ adds API_DECLARATION_REQUIRED and stops App content declaration failures being reported as missing service account permissions. v0.9.96+ adds API_ALREADY_EXISTS, API_ENDPOINT_RETIRED, and ORDER_REVIEW_REFUND_INVALID. v1.0.0-rc.1+ adds CONFIRMATION_REQUIRED, IMAGE_SYNC_DIR_UNREADABLE, and THRESHOLD_NO_DATA, exits 2 on usage mistakes, and exits 4 on a vitals 403. GPC v1.0.0 errors are plain text on stderr (`Error [CODE]:`, `Suggestion:`, `Details:`), never JSON, and plugin failures exit 1."
 metadata:
-  version: 0.24.0
+  version: 0.25.0
 ---
 
 # gpc-troubleshooting
@@ -39,7 +39,8 @@ gpc --version
 # Run failing command with verbose output
 GPC_DEBUG=1 gpc <failing-command>
 
-# Get error as JSON for parsing (also: --output csv, --output tsv since v0.9.68)
+# Get the result as JSON for parsing (also: --output csv, --output tsv since
+# v0.9.68). The error itself stays plain text on stderr, so capture both.
 gpc <failing-command> --json
 ```
 
@@ -50,13 +51,12 @@ gpc <failing-command> --json
 | Code | Category | Meaning |
 |------|----------|---------|
 | 0 | Success | Command completed successfully |
-| 1 | Config | Configuration error (missing .gpcrc.json, invalid fields) |
+| 1 | Config / general | Configuration error (missing .gpcrc.json, invalid fields), or a plugin failure with a `PLUGIN_*` code. There is no dedicated plugin exit code |
 | 2 | Usage | Invalid arguments or flags |
 | 3 | Auth | Authentication failure (expired token, invalid key, no credentials) |
 | 4 | API | Google Play API error (403, 404, 408, 409, rate limit) |
 | 5 | Network | Connection failure, DNS error, timeout |
 | 6 | Threshold | Vitals threshold breached, or no value came back to compare (used in CI gating) |
-| 10 | Plugin | Plugin permission validation error |
 
 **Changed in v1.0.0-rc.1.** Usage mistakes (unknown option, missing argument) now exit 2 as this table has always said; they exited 1 before. A vitals or anomalies 403 now exits 4 instead of printing "no data" and exiting 0. A refund or revocation with no terminal and no `--yes` exits 2 with `CONFIRMATION_REQUIRED`. Check any CI job that branches on a specific code.
 
@@ -121,8 +121,10 @@ export GPC_SERVICE_ACCOUNT=$(cat ~/path/to/key.json)
 # Check if an edit is stuck
 gpc apps list --json
 
-# API errors include suggestion field
-gpc releases upload app.aab --track beta --json 2>&1 | jq '.error'
+# API errors are plain text on stderr, never JSON. Read them there.
+gpc releases upload app.aab --track beta --json 2> upload.err || cat upload.err
+# Error [API_EDIT_CONFLICT]: ...
+# Suggestion: ...
 ```
 
 ### 4. Network errors (exit code 5)
@@ -225,8 +227,10 @@ Exit code 6 is **not an error** — it's an intentional signal that a vitals met
 # This exits 6 if crash rate > 2.0%
 gpc vitals crashes --threshold 0.02
 
-# Check the actual value
-gpc vitals crashes --json | jq '.crashRate'
+# Check the actual value. `gpc vitals ... --json` returns Google's raw
+# { rows: [...] } with string values, so read the number from status instead
+# (a fraction; status exits 6 on a breach, hence `|| true` under `set -e`).
+{ gpc status --json || true; } | jq -r '.vitals.crashes.value'
 
 # In CI, use exit code to gate promotion
 gpc vitals crashes --threshold 0.015 && gpc releases promote --from beta --to production
@@ -345,7 +349,7 @@ export GPC_UPLOAD_TIMEOUT=300000  # Upload timeout in ms (5 min)
 | `npm install -g @gpc-cli/cli` fails with `EUNSUPPORTEDPROTOCOL` | `workspace:*` specifiers leaked into published manifests (v0.9.77-v0.9.83) | Reinstall on v0.9.84+ or v0.9.85+: `npm install -g @gpc-cli/cli@latest`. Fixed in v0.9.84 (cli+core) and fully resolved in v0.9.85 (api package re-published). |
 | `gpc doctor` warns on `reports-bucket` | Service account lacks the bulk-reports grant, or the bucket name is wrong | Enable "View app information and download bulk reports (read-only)" in Play Console, or set the exact bucket with `--bucket` / `GPC_REPORTS_BUCKET` (v0.9.93+) |
 | Reports still denied right after granting the permission | Grant has not propagated, or a cached token predates it | Wait a few minutes, run `gpc auth clear-cache`, then retry (v0.9.93+) |
-| JSON output has no `suggestion` | Unexpected error type | File a bug — all errors should have suggestions |
+| An error prints no `Suggestion:` line on stderr | Unexpected error type | File a bug — all errors should have suggestions |
 
 ## Related skills
 

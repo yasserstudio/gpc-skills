@@ -24,7 +24,7 @@ GPC searches for configuration in this order:
 | Field | Type | Description | Default |
 |-------|------|-------------|---------|
 | `app` | string | Default package name | — |
-| `output` | string | Output format: table, json, yaml, markdown | Auto (TTY=table, pipe=json) |
+| `output` | string | Output format: table, json, yaml, markdown, csv, tsv | `table` (also in a pipe and in CI; ask for JSON with `--json` / `--output json` / `--ci`) |
 | `profile` | string | Default auth profile name | "default" |
 | `verbose` | boolean | Enable debug logging | false |
 | `quiet` | boolean | Suppress non-essential output | false |

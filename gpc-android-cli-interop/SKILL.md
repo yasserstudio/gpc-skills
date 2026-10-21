@@ -1,9 +1,9 @@
 ---
 name: gpc-android-cli-interop
 description: "Use when the agent has just finished building an Android app with Google's official `android` CLI (android create, android run, android sdk install, android build), or when the user says their app is built and they need to ship to Play Store, their AAB is ready, they just finished scaffolding, the APK is generated, or they want the next step after `android run`. Trigger whenever a prompt bridges the build-and-device half (Google's Android CLI) to the publishing half (GPC) -- even without explicit product names. For the release mechanics themselves, see gpc-release-flow. For offline compliance checks, see gpc-preflight. For CI/CD, see gpc-ci-integration. For private enterprise apps, see gpc-enterprise."
-compatibility: "Google's Android CLI (released 2026-04-16) for build/dev, GPC v0.9.62+ for publishing. Both tools ship SKILL.md skill packs and are installed via npx skills add."
+compatibility: "Google's Android CLI (released 2026-04-16) for build/dev, GPC v0.9.62+ for publishing. Both tools ship SKILL.md skill packs and are installed via npx skills add. Verified against GPC v1.0.0."
 metadata:
-  version: 1.0.0
+  version: 1.0.1
 ---
 
 # GPC Android CLI Interop
@@ -89,8 +89,8 @@ gpc publish app-release.aab \
 After the release is live, check vitals:
 
 ```bash
-gpc vitals crashes --package com.example.app --days 1 --json
-gpc vitals anr --package com.example.app --days 1 --json
+gpc vitals crashes --app com.example.app --days 1 --json
+gpc vitals anr --app com.example.app --days 1 --json
 ```
 
 For thresholds, alerting, and review monitoring, delegate to `gpc-vitals-monitoring`.
@@ -115,14 +115,14 @@ gpc preflight app-release.aab --fail-on error
 gpc publish app-release.aab --app com.example.notes --track production --rollout 10
 
 # GPC vitals (delegate to gpc-vitals-monitoring, typically after waiting a day)
-gpc vitals crashes --package com.example.notes --days 1 --json
+gpc vitals crashes --app com.example.notes --days 1 --json
 ```
 
 ## Output contract for agents
 
 GPC commands that this skill delegates to all share the same machine-readable contract:
 
-- `--json` on every command (TTY-aware — structured output when piped)
+- `--json` on every command. Output is a table by default, in a terminal, in a pipe and in CI alike, so pass `--json` (or `--output json` / `--ci`) whenever you intend to parse it. There is no result envelope: each command prints its own object, list commands print `{ <key>, nextPageToken, meta.count }`, and errors go to stderr as plain text (`Error [CODE]: ...`), never as JSON
 - Semantic exit codes: 0 success, 1 error, 2 usage, 3 auth, 4 API, 5 network, 6 threshold breach
 - `--dry-run` on every write operation
 - `gpc changelog generate --format prompt` for LLM-ready release-notes prompts (no model bundled — the CLI emits the prompt, the agent runs the inference)

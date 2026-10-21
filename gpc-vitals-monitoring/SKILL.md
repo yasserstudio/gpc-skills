@@ -1,9 +1,9 @@
 ---
 name: gpc-vitals-monitoring
 description: "Use when monitoring Android app health metrics from Google Play. Make sure to use this skill whenever the user mentions gpc vitals, gpc watch, gpc status, crash rate, ANR rate, startup time, Android vitals, crash monitoring, threshold alerting, vitals gating, rollout monitoring, auto-halt, breach notification, webhook alerting, frame rate, battery usage, memory issues, error tracking, app quality, user reviews, review replies, Play Store reviews, star rating, negative reviews, review export, financial reports, stats reports, gpc reports, reports list, reports download, bulk reports, earnings report, sales report, play balance, installs report, subscriptions report, reports bucket, GPC_REPORTS_BUCKET, pubsite_prod, REPORT_ACCESS_DENIED, download bulk reports permission, or wants to check app health, monitor a staged rollout, respond to reviews, or download Play Console reports. Also trigger when someone asks about gating deployments on crash data, monitoring app performance after a release, watching a rollout for regressions, or tracking review sentiment — even if they don't mention GPC. For releases, see gpc-release-flow. For CI gating, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Vitals data requires the app to have sufficient install volume. v0.9.83+ adds reviews fidelity fields and the unified list envelope. v0.9.97+ adds memory-rss/memory-bitmap P50-P99 memory usage (Feb 2027 P90 requirement). v0.9.93+ downloads Play bulk reports live from the account's Cloud Storage bucket (needs the 'View app information and download bulk reports (read-only)' grant on the service account). v1.0.0-rc.1+ fails vitals and anomalies with exit 4 on a Reporting API 403 and exits 6 with THRESHOLD_NO_DATA when a --threshold run gets no value."
+compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Vitals data requires the app to have sufficient install volume. v0.9.83+ adds reviews fidelity fields and the unified list envelope. v0.9.97+ adds memory-rss/memory-bitmap P50-P99 memory usage (Feb 2027 P90 requirement). v0.9.93+ downloads Play bulk reports live from the account's Cloud Storage bucket (needs the 'View app information and download bulk reports (read-only)' grant on the service account). v1.0.0-rc.1+ fails vitals and anomalies with exit 4 on a Reporting API 403 and exits 6 with THRESHOLD_NO_DATA when a --threshold run gets no value. On GPC v1.0.0, vitals --json is Google's raw { rows } with string values, numbers come from gpc status --json, and output is a table unless JSON is requested."
 metadata:
-  version: 1.12.0
+  version: 1.12.1
 ---
 
 # GPC Vitals Monitoring
@@ -444,8 +444,13 @@ The Play Developer Reporting API is rate-limited to **10 queries per second**. G
 Pipe JSON output to your monitoring stack:
 
 ```bash
-# Send crash data to your monitoring tool
-gpc vitals crashes --output json | jq '.data' | curl -X POST ...
+# Send crash data to your monitoring tool. `vitals --json` is Google's own
+# { rows: [...] } payload, with metric values as strings.
+gpc vitals crashes --output json | jq -c '.rows' | curl -X POST ...
+
+# Rates as numbers (fractions) come from `gpc status`, which exits 6 on a
+# breach, so keep it from killing the script.
+{ gpc status --json || true; } | jq -r '.vitals.crashes.value'
 
 # Periodic check (cron)
 gpc vitals overview --output json >> /var/log/gpc-vitals.jsonl
@@ -510,7 +515,7 @@ Error codes specific to this path: `REPORT_ACCESS_DENIED` (4, missing grant), `R
 - `gpc vitals overview` returns data (requires sufficient install volume)
 - Threshold commands return exit code 0 (OK) or 6 (breached)
 - `gpc reviews list` returns recent reviews
-- JSON output is parseable: `gpc vitals crashes --output json | jq .`
+- JSON output is parseable: `gpc vitals crashes --output json | jq .` (output is a table unless you ask for JSON, in CI too)
 - `gpc doctor` shows `reports-bucket` as a pass (the bulk-reports grant is in place)
 - `gpc reports list installs --month <last full month>` returns at least one object
 

@@ -92,7 +92,7 @@ GPC handles rate limiting automatically with exponential backoff, but be aware o
 
 ```bash
 # Check for new negative reviews in CI
-NEW_REVIEWS=$(gpc reviews list --stars 1-2 --since 1d --output json | jq '.data | length')
+NEW_REVIEWS=$(gpc reviews list --stars 1-2 --since 1d --output json | jq '.meta.count')
 if [ "$NEW_REVIEWS" -gt 0 ]; then
   echo "Warning: $NEW_REVIEWS new negative reviews in the last 24 hours"
 fi

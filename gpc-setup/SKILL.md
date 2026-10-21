@@ -1,9 +1,9 @@
 ---
 name: gpc-setup
 description: "Use when setting up GPC (Google Play Console CLI): authentication with service accounts, OAuth, or Application Default Credentials; configuration files (.gpcrc.json, env vars, XDG paths); auth profiles; running gpc doctor; troubleshooting auth errors. Make sure to use this skill whenever the user mentions gpc auth, gpc setup, service account setup, gpc config, gpc doctor, GPC_SERVICE_ACCOUNT, gpc auth login, gpc auth clear-cache, token cache, Google Play API credentials, Play Console authentication, download bulk reports permission, reports bucket access, GPC_REPORTS_BUCKET, or wants to install/configure GPC — even if they don't explicitly say 'setup.' Also trigger when someone is troubleshooting auth failures, token expiration, keychain issues, or proxy/network configuration for GPC."
-compatibility: "GPC v0.9.82+. Requires Node.js 20+, pnpm 9+ (for development). npm for installation. v0.9.93+ adds gpc auth clear-cache, the doctor reports-bucket check, and the bulk-reports account permission needed by gpc reports. v0.9.95+ creates and updates profiles via auth login --profile (previously silently ignored). v0.9.96+ grows gpc verify checklist to 11 items and makes every item promptable. v0.9.98+ honors NO_PROXY and fails closed when a configured proxy cannot be applied."
+compatibility: "GPC v0.9.82+. Requires Node.js 20+, pnpm 9+ (for development). npm for installation. v0.9.93+ adds gpc auth clear-cache, the doctor reports-bucket check, and the bulk-reports account permission needed by gpc reports. v0.9.95+ creates and updates profiles via auth login --profile (previously silently ignored). v0.9.96+ grows gpc verify checklist to 11 items and makes every item promptable. v0.9.98+ honors NO_PROXY and fails closed when a configured proxy cannot be applied. On GPC v1.0.0 the output config key defaults to table, in a pipe and in CI alike."
 metadata:
-  version: 1.10.0
+  version: 1.10.1
 ---
 
 # GPC Setup
@@ -242,7 +242,7 @@ Checks (23 total):
 
 Use `gpc doctor --fix` to auto-remediate fixable issues (version, auth, config keys).
 
-JSON output is supported: `gpc doctor --json` or `gpc doctor --output json`.
+JSON output is supported: `gpc doctor --json` or `gpc doctor --output json`, which prints `{ success, errors, warnings, checks[] }`. Doctor is the exception: most commands print their own result with no `success` field, and the exit code is always the real answer.
 
 #### Signing key verification (v0.9.75+)
 

@@ -1,6 +1,6 @@
 # Release Train: Full Lifecycle
 
-End-to-end reference for the `gpc train` config-driven staged rollout pipeline, matching GPC v1.0.0-rc.2.
+End-to-end reference for the `gpc train` config-driven staged rollout pipeline, matching GPC v1.0.0.
 
 ## Overview
 
