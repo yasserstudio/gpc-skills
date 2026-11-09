@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.34.1 -- 2026-11-09
+
+Synced to GPC v1.0.1 and gpc-action v1.1.6. Patch: a Node 26 proxy fix and Google's October 29, 2026 policy dates.
+
+### Updated Skills
+
+- **gpc-preflight** (1.6.0 -> 1.7.0) -- Contacts and precise-location rules are mandatory for Android 17 targets on January 27, 2027 (Google moved them from October 28, 2026), both with Play Console declarations. Documents `location-minimal-scope` and the `READ_CALL_LOG` phone-verification change (effective January 27, 2027), which the skill had not covered. Drops the stale May 15, 2026 deadline and states that geofencing has no separate Android 17 date.
+- **gpc-security** (0.18.1 -> 0.18.2) -- New F-05c entry: Play API requests bypassed `HTTPS_PROXY` on Node 26 before v1.0.1; do not pin `undici` to 6.x.
+- **gpc-setup** (1.10.1 -> 1.10.2) -- Node.js 20.18.1+; proxy section covers the Node 26 fix and `NO_PROXY` subdomain matching.
+- README requirements: GPC v1.0.1, gpc-action v1.1.6, Node.js 20.18.1+.
+
 ## v1.34.0 -- 2026-10-21
 
 Synced to GPC v1.0.0 and gpc-action v1.1.5. Minor: v1.0.0 ships the same code as rc.2, but its docs corrected what `--json` really prints, and this bundle had copied the old claims. There is no `{ success, data }` wrapper, output is a table by default even in a pipe or in CI, and errors are plain text on stderr.

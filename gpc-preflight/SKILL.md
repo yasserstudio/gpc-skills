@@ -1,9 +1,9 @@
 ---
 name: gpc-preflight
 description: "Use when scanning an AAB or APK for Google Play policy compliance before submission, or checking signing key consistency across releases. Trigger when the user mentions preflight, compliance check, policy scan, pre-submission check, signing key consistency, certificate mismatch, or wants to verify their AAB/APK meets Google Play requirements. Also trigger for questions about restricted permissions, target SDK requirements, 64-bit compliance, hardcoded secrets detection, Data Safety form reminders, foreground service declarations, or App content declarations."
-compatibility: "GPC v0.9.82+. v1.0.0-rc.1+ adds native-libs-16kb-unchecked, a warning raised when the 512-library read cap meant not every native library could be checked for 16 KB alignment. v0.9.99+ estimates the per-device download of an AAB (default threshold 200 MB) and reports foreground-service-type-missing once as a warning; manifest checks run on AABs only (APK manifests are binary XML). v0.9.94+ adds the App content declaration advisory. v0.9.66+ for signing consistency. v0.9.65+ for April 2026 policy rules. APK support added in v0.9.47. AAB/APK scans are entirely offline; signing consistency requires auth."
+compatibility: "GPC v0.9.82+. v1.0.0-rc.1+ adds native-libs-16kb-unchecked, a warning raised when the 512-library read cap meant not every native library could be checked for 16 KB alignment. v0.9.99+ estimates the per-device download of an AAB (default threshold 200 MB) and reports foreground-service-type-missing once as a warning; manifest checks run on AABs only (APK manifests are binary XML). v0.9.94+ adds the App content declaration advisory. v0.9.66+ for signing consistency. v0.9.65+ for April 2026 policy rules. APK support added in v0.9.47. AAB/APK scans are entirely offline; signing consistency requires auth. v1.0.1+ cites Google's October 29, 2026 policy dates (contacts and precise location mandatory for Android 17 targets on January 27, 2027, with Play Console declarations; READ_CALL_LOG phone verification ends January 27, 2027)."
 metadata:
-  version: 1.6.0
+  version: 1.7.0
 ---
 
 # GPC Preflight Scanner
@@ -133,13 +133,17 @@ This is NOT an offline scan. It calls the Play API to create an edit, list bundl
 
 ### April 2026 policy rules (v0.9.65+)
 
-Three rules added for Google Play's April 15, 2026 policy batch. Compliance deadline: May 15, 2026.
+Rules for Google Play's April 15, 2026 sensitive-permissions policy batch, updated by Google's October 29, 2026 announcement. GPC v1.0.1+ prints the current dates; older versions cite October 28, 2026, which Google moved.
 
-1. **Contacts broad access** (`contacts-permission-broad`): Flags READ_CONTACTS / WRITE_CONTACTS. Google now requires the Android Contact Picker instead of broad access. Emits a single finding even when both permissions are present. Suppress via `allowedPermissions` for dialer/messaging apps.
+1. **Contacts broad access** (`contacts-permission-broad`): Flags READ_CONTACTS / WRITE_CONTACTS. Google requires the Android Contact Picker unless broad access is core to the app and declared in Play Console. Mandatory for apps targeting Android 17 (API 37+) on January 27, 2027. Emits a single finding even when both permissions are present. Suppress via `allowedPermissions` for dialer/messaging apps.
 
-2. **Geofencing foreground service** (`geofencing-foreground-service`): Fires when a service has `foregroundServiceType` containing "location" AND the app declares `ACCESS_BACKGROUND_LOCATION`. Google removed geofencing as an approved foreground service use case. For legitimate background location tracking (navigation, fitness), suppress via `"disabledRules": ["geofencing-foreground-service"]`.
+2. **Geofencing foreground service** (`geofencing-foreground-service`): Fires when a service has `foregroundServiceType` containing "location" AND the app declares `ACCESS_BACKGROUND_LOCATION`. Google removed geofencing as an approved foreground service use case (effective 30 days after the April 15, 2026 announcement; Google publishes no separate Android 17 date). For legitimate background location tracking (navigation, fitness), suppress via `"disabledRules": ["geofencing-foreground-service"]`.
 
 3. **Health Connect granular permissions** (`health-connect-granular`): Flags `READ_ALL_HEALTH_DATA`. Severity is `warning` when `targetSdk >= 36` (Android 16 requirement), `info` otherwise. Replace with granular permissions like `health.READ_STEPS`, `health.READ_HEART_RATE`, etc.
+
+4. **Precise location minimum scope** (`location-minimal-scope`, v0.9.88+): Flags `ACCESS_FINE_LOCATION`. Severity is `info`, `warning` when `targetSdk >= 37`. Google requires the Android location button for one-time precise location and a Play Console declaration for `ACCESS_FINE_LOCATION`, mandatory for Android 17 targets on January 27, 2027.
+
+5. **Call log phone verification**: the `READ_CALL_LOG` restricted-permission finding notes that account verification via phone call stops being an accepted use case on January 27, 2027 (announced July 15, 2026), and points to the Digital Credentials API or SMS Retriever API.
 
 ### App content declaration advisory (v0.9.94+)
 

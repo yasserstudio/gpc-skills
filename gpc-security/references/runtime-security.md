@@ -157,6 +157,12 @@ const safeUrl = `${parsed.protocol}//${parsed.host}${parsed.pathname}`;
 
 **Fix:** undici is a declared dependency and `EnvHttpProxyAgent` handles `NO_PROXY`. Proxy variables are resolved lowercase-first with empty values treated as unset. A proxy that cannot be applied stops the command with `NETWORK_ERROR` (exit 5) before any request. On npm installs, the standalone-binary switch is compiled out, so an environment variable cannot skip proxy setup.
 
+### F-05c: Proxy bypass on Node 26 (fixed in v1.0.1)
+
+**Threat:** Node 26's built-in `fetch` reads the global dispatcher from a newer key than undici 6 sets, so on Node 26 with `HTTPS_PROXY` set, Play API requests (bearer token included) went direct while the OAuth token request still used the proxy. Node 22/24 and the standalone binary were unaffected.
+
+**Fix:** GPC uses undici 7, which registers the dispatcher under both keys, and CI runs on Node 22, 24 and 26. `NO_PROXY` is now resolved like the proxy variables (an empty `no_proxy=` cannot hide `NO_PROXY`), and a `NO_PROXY` domain also covers its subdomains. Do not pin `undici` to 6.x with a package-manager override: on Node 26 that brings the bypass back.
+
 ---
 
 ### F-06: Skills installer env passthrough
