@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.35.0 -- 2026-11-13
+
+Synced to GPC v1.1.0. Minor: `gpc preflight` now checks which Google Play Billing Library version an app ships.
+
+### Updated Skills
+
+- **gpc-preflight** (1.7.0 -> 1.8.0) -- Documents the Google Play Billing Library version check: `billing-library-deprecated` rates the library major against Google's deprecation table on the scan date (error after the November 1 extension deadline, warning after the August 31 update deadline, info in the 12 months before it), and `billing-library-version-unknown` flags an app that holds the billing permission with no readable version. Adds `policy-local-network-declaration` (`ACCESS_LOCAL_NETWORK` on Android 17 targets). Explains when an override is acceptable and when to migrate instead.
+- README requirements: GPC v1.1.0+ for the Google Play Billing Library check.
+
 ## v1.34.1 -- 2026-11-09
 
 Synced to GPC v1.0.1 and gpc-action v1.1.6. Patch: a Node 26 proxy fix and Google's October 29, 2026 policy dates.

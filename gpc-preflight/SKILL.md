@@ -1,9 +1,9 @@
 ---
 name: gpc-preflight
 description: "Use when scanning an AAB or APK for Google Play policy compliance before submission, or checking signing key consistency across releases. Trigger when the user mentions preflight, compliance check, policy scan, pre-submission check, signing key consistency, certificate mismatch, or wants to verify their AAB/APK meets Google Play requirements. Also trigger for questions about restricted permissions, target SDK requirements, 64-bit compliance, hardcoded secrets detection, Data Safety form reminders, foreground service declarations, or App content declarations."
-compatibility: "GPC v0.9.82+. v1.0.0-rc.1+ adds native-libs-16kb-unchecked, a warning raised when the 512-library read cap meant not every native library could be checked for 16 KB alignment. v0.9.99+ estimates the per-device download of an AAB (default threshold 200 MB) and reports foreground-service-type-missing once as a warning; manifest checks run on AABs only (APK manifests are binary XML). v0.9.94+ adds the App content declaration advisory. v0.9.66+ for signing consistency. v0.9.65+ for April 2026 policy rules. APK support added in v0.9.47. AAB/APK scans are entirely offline; signing consistency requires auth. v1.0.1+ cites Google's October 29, 2026 policy dates (contacts and precise location mandatory for Android 17 targets on January 27, 2027, with Play Console declarations; READ_CALL_LOG phone verification ends January 27, 2027)."
+compatibility: "GPC v0.9.82+. v1.1.0+ adds the Google Play Billing Library version check (billing-library-deprecated, billing-library-version-unknown; AAB only). v1.0.0-rc.1+ adds native-libs-16kb-unchecked, a warning raised when the 512-library read cap meant not every native library could be checked for 16 KB alignment. v0.9.99+ estimates the per-device download of an AAB (default threshold 200 MB) and reports foreground-service-type-missing once as a warning; manifest checks run on AABs only (APK manifests are binary XML). v0.9.94+ adds the App content declaration advisory. v0.9.66+ for signing consistency. v0.9.65+ for April 2026 policy rules. APK support added in v0.9.47. AAB/APK scans are entirely offline; signing consistency requires auth. v1.0.1+ cites Google's October 29, 2026 policy dates (contacts and precise location mandatory for Android 17 targets on January 27, 2027, with Play Console declarations; READ_CALL_LOG phone verification ends January 27, 2027)."
 metadata:
-  version: 1.7.0
+  version: 1.8.0
 ---
 
 # GPC Preflight Scanner
@@ -52,7 +52,7 @@ gpc preflight app.aab --fail-on error --json
 | secrets | AWS keys, Google API keys, Stripe keys, private keys | critical/warning |
 | billing | Stripe, Braintree, PayPal, Razorpay SDK detection | warning |
 | privacy | Tracking SDKs, Advertising ID, data collection cross-reference | warning/info |
-| policy | Families/COPPA, financial, health, UGC, overlay | warning/info |
+| policy | Families/COPPA, financial, health, UGC, overlay, Google Play Billing Library version (v1.1.0+) | error/warning/info |
 | size | Estimated per-device download (AAB: largest ABI only, no bundle metadata or on-demand/fast-follow modules; APK: whole file), large native libs, large assets | warning/info |
 
 ## Configuration (.preflightrc.json)
@@ -100,7 +100,12 @@ For an AAB, `size-over-limit` estimates what **one device** downloads, the way G
 | geofencing-foreground-service | warning | Location FGS + ACCESS_BACKGROUND_LOCATION (v0.9.65+, April 2026 policy) |
 | health-connect-granular | warning/info | READ_ALL_HEALTH_DATA; warning on targetSdk >= 36, info otherwise (v0.9.65+, April 2026 policy) |
 | policy-app-content-declaration | info | Any `FOREGROUND_SERVICE*` permission; reminder that Play Console -> Policy -> App content needs the matching declaration (v0.9.94+) |
+| policy-local-network-declaration | info | `ACCESS_LOCAL_NETWORK` on targetSdk >= 37; Play Console declaration required from Aug 25, 2027, only when device pickers are insufficient (v1.1.0+) |
 | native-libs-16kb-unchecked | warning | Not every native library could be checked for 16 KB alignment (v1.0.0-rc.1+) |
+| billing-library-deprecated | error/warning/info | Google Play Billing Library major past or near Google's deadline, rated on the scan date (v1.1.0+) |
+| billing-library-version-unknown | info | App holds `com.android.vending.BILLING` but the manifest has no readable Billing Library version (v1.1.0+) |
+
+**Google Play Billing Library version** (v1.1.0+, AAB only): when the app holds `com.android.vending.BILLING`, preflight reads the `com.google.android.play.billingclient.version` meta-data that the library (and `billing-ktx`) merges into the manifest and rates the major against Google's deprecation table (https://developer.android.com/google/play/billing/deprecation-faq). Each major has an update deadline (Aug 31) and an extension deadline (Nov 1): 7 = 2026, 8 = 2027, 9 = 2028. Severity depends on today's date (UTC, the deadline day itself is not yet past): `error` after the extension deadline, `warning` after the update deadline (request an extension from Play Console's Policy status page), `info` in the 12 months before the update deadline, nothing otherwise. Majors below 5 are always `error`. So from November 2, 2026, an AAB on Billing Library 7 or older fails the default `failOn: "error"`. That error mirrors a real Google Play rejection: advise migrating, not overriding. With `failOn: "warning"` and a Play Console extension granted, `"severityOverrides": { "billing-library-deprecated": "info" }` is acceptable until the migration lands; for builds that never upload to Play, `"disabledRules": ["billing-library-deprecated"]`. `billing-library-version-unknown` usually means the meta-data was stripped with `tools:node="remove"`.
 
 **`native-libs-16kb-unchecked`** (v1.0.0-rc.1+): the reader buffers at most 512 `.so` headers, which keeps memory flat on a bundle carrying thousands of native libraries. When a bundle has more than that, the alignment check covers only the first 512, so preflight says so rather than let a truncated check read as a clean one. The finding names how many were skipped. To cover the whole bundle, check it with Android Studio's APK Analyzer or `zipalign -c -P 16 -v 4 app.apk` on a universal APK. Most apps never see this rule.
 
