@@ -1,0 +1,31 @@
+name: Validate commands
+
+# Every `gpc ...` command and flag in the skills must exist in the published
+# GPC CLI. Catches fictional commands before they ship to agents.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1" # weekly: catches a new GPC release that drops a command
+
+permissions: {}
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+      - name: Install the published GPC CLI
+        run: npm install --no-save --no-package-lock --ignore-scripts @gpc-cli/cli@latest
+      - name: Check every documented command and flag
+        run: node scripts/validate-commands.mjs

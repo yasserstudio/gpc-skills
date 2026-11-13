@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.36.0 -- 2026-11-13
+
+Minor: removes the commands and flags that GPC does not have. A check against the real GPC v1.1.0 command tree found 111 of them across the bundle, plus an OAuth login and OS keychain that GPC never shipped. An agent following those examples would have run commands that fail. A new CI check now runs every `gpc ...` line in the skills against the published CLI on each push and weekly.
+
+### Updated Skills
+
+- **gpc-setup** (1.10.2 -> 1.11.0) -- GPC has no browser or OAuth login and no keychain. The OAuth section and `references/oauth-flow.md` are replaced by `references/adc-flow.md`: sign in with `gcloud auth application-default login`, verify with `gpc auth login --adc` (stores nothing). `GPC_SKIP_KEYCHAIN` is gone.
+- **gpc-security** (0.18.3 -> 0.19.0) -- Credential storage no longer claims OS keychain use or stored OAuth refresh tokens; GPC keeps the key path in config and short-lived tokens in the cache (`gpc auth clear-cache`). ADC user credentials belong to gcloud.
+- **gpc-troubleshooting** (0.26.0 -> 0.27.0) -- Drops the `AUTH_KEYCHAIN_ERROR` code, which does not exist. `gpc releases list` and `gpc config list` become `gpc releases status` and `gpc config show`.
+- **gpc-monetization** (0.19.0 -> 0.20.0) -- Removes `--allow-missing` and `--latency-tolerance` (not exposed by the CLI), `iap batch-delete`, `iap create --regions-version` (use `one-time-products create`) and `purchases subscription acknowledge`. Subscription offer batches use `offers batch-get --ids` and `offers batch-update-states --file`; one-time product offer batches take `<product-id> --purchase-option --file`; `defer-v2` takes `--duration <seconds>`; `iap list` paginates with `--limit`.
+- **gpc-user-management** (0.13.0 -> 0.14.0) -- `grants create|update|delete <email>` take `--package` and comma-separated `--permissions`; there is no `grants patch` and `grants list` has no `--app`.
+- **gpc-release-flow** (1.12.0 -> 1.13.0) -- `--in-app-update-priority` and `--retain-version-codes` belong to `releases upload`, not `publish`. Release notes use `--notes` (en-US) and `--notes-dir`. `tracks create` takes a track name. Expansion files are SDK-only (`client.expansionFiles`); the `upload-expansion` command did not exist.
+- **gpc-ci-integration** (1.13.0 -> 1.14.0) -- `--error-if-in-review` is a commit option on upload, publish, promote, rollout and assign (not on `releases status`); the in-review samples are rewritten around it.
+- **gpc-vitals-monitoring** (1.13.0 -> 1.14.0) -- Markdown output is `--output markdown`; review paging is `--limit` plus `--next-page`; `reviews analyze` has no `--days`.
+- **gpc-migrate-fastlane** (1.4.1 -> 1.5.0) -- Command mapping fixed: `rollout increase --to`, `--notes`/`--notes-dir`, `vitals crashes|anr --threshold`, `listings get`. There is no `gpc releases commit`; upload, publish and promote commit for you.
+- **gpc-android-cli-interop** (1.0.1 -> 1.0.2), **gpc-games** (1.1.0 -> 1.1.1), **gpc-metadata-sync** (1.7.0 -> 1.7.1), **gpc-multi-app** (1.2.0 -> 1.2.1), **gpc-onboarding** (0.14.0 -> 0.14.1), **gpc-preflight** (1.8.0 -> 1.8.1), **gpc-train** (0.11.1 -> 0.11.2) -- Auth is "service account or ADC"; `releases list` and `config list` references corrected; inline flag mentions reworded so they name real commands.
+- README: gpc-setup row and reference table point to `adc-flow.md`.
+
+### Tooling
+
+- `scripts/validate-commands.mjs` checks every `gpc ...` command and flag in the skills against the real Commander tree of `@gpc-cli/cli` (or a local build via `GPC_CLI`). `.github/workflows/validate-commands.yml` runs it on push, pull request and weekly.
+
 ## v1.35.1 -- 2026-11-13
 
 Synced to GPC v1.1.0 (the `gpc status` cache gate fixes that shipped with it) and gpc-action v1.1.7. Patch.

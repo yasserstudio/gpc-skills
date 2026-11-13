@@ -5,18 +5,13 @@ Managing release notes (what's new text) across languages with GPC.
 ## Setting release notes during upload
 
 ```bash
-# Upload with release notes
+# Upload with release notes (--notes sets en-US only)
 gpc releases upload app-release.aab \
   --track beta \
-  --release-notes "en-US=Bug fixes and performance improvements"
-
-# Multiple languages
-gpc releases upload app-release.aab \
-  --track beta \
-  --release-notes "en-US=Bug fixes and improvements" \
-  --release-notes "ja-JP=バグ修正とパフォーマンスの向上" \
-  --release-notes "fr-FR=Corrections de bugs et améliorations"
+  --notes "Bug fixes and performance improvements"
 ```
+
+`--notes` takes one plain string for en-US. For more than one language, use `--notes-dir` (below).
 
 ## Using a release notes file
 
@@ -25,7 +20,7 @@ For many languages, use a directory of text files:
 ```bash
 gpc releases upload app-release.aab \
   --track production \
-  --release-notes-dir release-notes/
+  --notes-dir release-notes/
 ```
 
 ### Directory structure
@@ -47,7 +42,7 @@ Each file contains the plain text release notes for that language.
 gpc publish app-release.aab \
   --track production \
   --rollout 10 \
-  --release-notes-dir release-notes/
+  --notes-dir release-notes/
 ```
 
 ## Character limits

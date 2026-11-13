@@ -1,9 +1,9 @@
 ---
 name: gpc-security
-description: "Use when dealing with GPC credential security, secret management, audit logging, or access control. Make sure to use this skill whenever the user mentions credentials, service account key, secret rotation, key rotation, credential storage, audit log, audit trail, security best practices, .gpcrc.json security, secrets in CI, GPC_SERVICE_ACCOUNT safety, keychain, token cache, credential leak, key compromise, secure deployment — even if they don't explicitly say 'security.' Also trigger when someone asks about where GPC stores credentials, how to rotate service account keys, how to audit who did what with GPC, how to securely pass credentials in CI/CD, or how to handle a compromised service account key. Also trigger on app signing key custody: app-signing enroll, app-signing rotate, Play App Signing, self-hosted Cloud KMS key, cryptoKeyVersion, signing certificate lineage, signing key rotation. For auth setup, see gpc-setup. For CI configuration, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Covers credential storage, audit logging, supply chain hardening, and security patterns across all packages. v0.9.96+ adds gpc app-signing enroll/rotate for self-hosted Google Cloud KMS signing keys. v0.9.98+ fails closed on an unusable proxy and never prints proxy URLs. v1.0.0-rc.1+ keeps the refund-review token out of webhook and plugin payloads and requires --yes for money commands in non-interactive runs. Verified against GPC v1.0.0, whose auth status JSON reports the service account as account. v1.0.1 fixes a proxy bypass on Node 26 (F-05c)."
+description: "Use when dealing with GPC credential security, secret management, audit logging, or access control. Make sure to use this skill whenever the user mentions credentials, service account key, secret rotation, key rotation, credential storage, audit log, audit trail, security best practices, .gpcrc.json security, secrets in CI, GPC_SERVICE_ACCOUNT safety, token cache, credential leak, key compromise, secure deployment — even if they don't explicitly say 'security.' Also trigger when someone asks about where GPC stores credentials, how to rotate service account keys, how to audit who did what with GPC, how to securely pass credentials in CI/CD, or how to handle a compromised service account key. Also trigger on app signing key custody: app-signing enroll, app-signing rotate, Play App Signing, self-hosted Cloud KMS key, cryptoKeyVersion, signing certificate lineage, signing key rotation. For auth setup, see gpc-setup. For CI configuration, see gpc-ci-integration."
+compatibility: "GPC v0.9.82+. Covers credential storage, audit logging, supply chain hardening, and security patterns across all packages. v0.9.96+ adds gpc app-signing enroll/rotate for self-hosted Google Cloud KMS signing keys. v0.9.98+ fails closed on an unusable proxy and never prints proxy URLs. v1.0.0-rc.1+ keeps the refund-review token out of webhook and plugin payloads and requires --yes for money commands in non-interactive runs. Verified against GPC v1.0.0, whose auth status JSON reports the service account as account. v1.0.1 fixes a proxy bypass on Node 26 (F-05c). Commands and flags checked against the GPC v1.1.0 command tree (gpc-skills v1.36.0)."
 metadata:
-  version: 0.18.3
+  version: 0.19.0
 ---
 
 # gpc-security
@@ -33,7 +33,7 @@ GPC stores credentials in platform-appropriate secure locations:
 
 | Data | Location | Security |
 |------|----------|----------|
-| OAuth tokens | OS keychain (macOS/Linux/Windows) | OS-managed encryption |
+| ADC user credentials | gcloud's `application_default_credentials.json` (owned by gcloud, not GPC) | File permissions |
 | Token cache | `~/.cache/gpc/tokens/` | File permissions (0600) |
 | User config | `~/.config/gpc/config.json` | File permissions |
 | Project config | `.gpcrc.json` | Version-controlled (no secrets!) |
@@ -243,9 +243,8 @@ git log --all --full-history -p -- '*.json' | grep -l '"private_key"'
 | Key file committed to git | Not in .gitignore | Add to .gitignore; rotate key immediately |
 | Token cache stale after rotation | Old cached tokens | Delete `~/.cache/gpc/tokens/` |
 | Audit log not writing | Config dir not writable | Check permissions on `~/.config/gpc/` |
-| Service account email unknown | Key not inspected | `gpc auth status --json \| jq -r '.account'` |
+| Service account email unknown | Key not inspected | Read `.account` from `gpc auth status --json` |
 | CI shows credential in logs | Key passed as argument | Use environment variables, never CLI args |
-| Keychain prompt every command | macOS keychain access not granted | Click "Always Allow" on the prompt |
 
 ### 8. Supply chain protection (v0.9.77+)
 

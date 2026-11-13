@@ -14,7 +14,7 @@ npx skills add yasserstudio/gpc-skills
 
 | Skill | Description |
 |-------|-------------|
-| **gpc-setup** | Authentication (service account, OAuth, ADC), configuration, profiles, `gpc doctor`, `gpc setup` wizard |
+| **gpc-setup** | Authentication (service account, ADC), configuration, profiles, `gpc doctor`, `gpc setup` wizard |
 | **gpc-onboarding** | First-run guided setup, `gpc quickstart`, `gpc init`, `gpc auth` wizard |
 | **gpc-release-flow** | Upload AAB/APK, create releases, draft releases, promote tracks, staged rollouts, `gpc publish`, `gpc diff`, `gpc bundles list/find/wait` |
 | **gpc-metadata-sync** | Store listings, screenshots, images, image sync with dedup (`gpc listings images sync`), Fastlane metadata compatibility, pull/push |
@@ -166,7 +166,7 @@ gpc-<skill>/
 | `references/service-account.md` | Creating and configuring service accounts |
 | `references/configuration.md` | Config files, env vars, precedence |
 | `references/troubleshooting.md` | Auth and setup debugging |
-| `references/oauth-flow.md` | OAuth device flow deep dive |
+| `references/adc-flow.md` | Application Default Credentials for local dev |
 
 ### gpc-release-flow
 | File | Topic |

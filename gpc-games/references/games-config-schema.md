@@ -1,6 +1,6 @@
 # Games configuration JSON schemas
 
-Config shapes for `gpc games achievements create/update --file` and `gpc games leaderboards create/update --file` (Games Configuration API, `gamesconfiguration v1configuration`).
+Config shapes for the `--file` flag of the `create` and `update` subcommands of `gpc games achievements` and `gpc games leaderboards` (Games Configuration API, `gamesconfiguration v1configuration`).
 
 ## Achievement
 

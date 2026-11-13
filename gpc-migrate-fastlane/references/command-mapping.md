@@ -27,7 +27,7 @@ Complete mapping of Fastlane supply commands to GPC equivalents.
 | Fastlane | GPC |
 |----------|-----|
 | `supply --track_promote_to production --track beta` | `gpc releases promote --from beta --to production` |
-| (no direct equivalent) | `gpc releases rollout increase --track production --rollout 50` |
+| (no direct equivalent) | `gpc releases rollout increase --track production --to 50` |
 | (no direct equivalent) | `gpc releases rollout halt --track production` |
 | (no direct equivalent) | `gpc releases rollout complete --track production` |
 
@@ -37,8 +37,8 @@ GPC provides granular rollout control that Fastlane doesn't support natively.
 
 | Fastlane | GPC |
 |----------|-----|
-| `supply --aab app.aab --track beta --release_notes "..." ` | `gpc releases upload app.aab --track beta --release-notes "en-US=..."` |
-| Changelogs in `metadata/android/en-US/changelogs/142.txt` | `gpc releases upload --release-notes-dir release-notes/` |
+| `supply --aab app.aab --track beta --release_notes "..." ` | `gpc releases upload app.aab --track beta --notes "..."` (en-US) |
+| Changelogs in `metadata/android/en-US/changelogs/142.txt` | `gpc releases upload app.aab --notes-dir release-notes/` (`<dir>/<lang>.txt`) |
 
 **Release-notes automation (v0.9.62+):** Fastlane users manage per-locale `metadata/android/<lang>/changelogs/<version>.txt` files by hand. GPC v0.9.62+ can generate them from your git log:
 
@@ -72,7 +72,7 @@ Pair with `--ai` (v0.9.63+) for automatic LLM translation and `--apply` (v0.9.64
 |---------|-------------|
 | Validate bundle | `gpc validate app.aab` |
 | Staged rollout control | `gpc releases rollout increase/halt/complete` |
-| Vitals monitoring | `gpc vitals crashes/anr --threshold` |
+| Vitals monitoring | `gpc vitals crashes --threshold 0.02` and `gpc vitals anr --threshold 0.01` |
 | Review management | `gpc reviews list/reply` |
 | Subscription management | `gpc subscriptions create/update` |
 | IAP sync | `gpc iap sync --dir` |

@@ -1,9 +1,9 @@
 ---
 name: gpc-games
 description: "Use when managing Google Play Games Services achievement and leaderboard configurations with GPC. Make sure to use this skill whenever the user mentions gpc games, games achievements, games leaderboards, achievement config, leaderboard config, Play Games, Play Games Services, gamesconfiguration, achievement CRUD, leaderboard CRUD, points value, incremental achievement, stepsToUnlock, score order, score format, --game-id, GPC_GAME_ID, games.applicationId, or wants to create, update, delete, list, diff, push, pull, or set the icon of achievement and leaderboard definitions for a game (games set-icon, API_ENDPOINT_RETIRED, imageConfigurations). Also trigger when someone wants to sync local achievement/leaderboard JSON against the remote Play Games configuration, read the runtime (player-facing) leaderboards or achievements, or find a game's numeric application ID. For app releases and tracks, see gpc-release-flow. For in-app purchases and subscriptions, see gpc-monetization."
-compatibility: "GPC v0.9.86+ (Games Configuration API: gpc games achievements/leaderboards CRUD + diff, gpc games runtime). Requires authenticated GPC setup (see gpc-setup) and a numeric game application ID. Breaking in v0.9.86: gpc games events removed; runtime list commands moved under gpc games runtime. v0.9.90+ adds set-icon and directory push/pull. v0.9.96+ reports the retired icon-upload endpoint as API_ENDPOINT_RETIRED."
+compatibility: "GPC v0.9.86+ (Games Configuration API: gpc games achievements/leaderboards CRUD + diff, gpc games runtime). Requires authenticated GPC setup (see gpc-setup) and a numeric game application ID. Breaking in v0.9.86: gpc games events removed; runtime list commands moved under gpc games runtime. v0.9.90+ adds set-icon and directory push/pull. v0.9.96+ reports the retired icon-upload endpoint as API_ENDPOINT_RETIRED. Commands and flags checked against the GPC v1.1.0 command tree (gpc-skills v1.36.0)."
 metadata:
-  version: 1.1.0
+  version: 1.1.1
 ---
 
 # gpc-games
@@ -18,7 +18,7 @@ Do NOT use this skill for app releases, tracks, or AAB uploads (see `gpc-release
 
 ## Inputs required
 
-- An authenticated GPC setup (`gpc-setup`). The same service account / OAuth used for publishing works here.
+- An authenticated GPC setup (`gpc-setup`). The same service account or ADC credentials used for publishing works here.
 - A **numeric game application ID** (the Play Games "Application ID", distinct from the Android package name). Resolve it once and reuse it (see Procedure step 1).
 - For create/update: a JSON config file. See `references/games-config-schema.md` for the achievement and leaderboard shapes.
 
@@ -137,7 +137,7 @@ gpc games runtime achievements --app com.example.mygame
 ## Failure modes / debugging
 
 - "No game ID" / missing application ID: set `--game-id`, `GPC_GAME_ID`, or `games.applicationId` (step 1). Remember it is the numeric Play Games ID, not the package name.
-- `gpc games events` no longer exists (removed in v0.9.86) — events are configured in the Play Console UI only.
+- The `events` subcommand of `gpc games` no longer exists (removed in v0.9.86). Events are configured in the Play Console UI only.
 - Runtime commands moved under `gpc games runtime` in v0.9.86; the old top-level runtime list commands are gone.
 - `API_ENDPOINT_RETIRED` on `set-icon`: Google removed the `imageConfigurations` icon-upload route from its published API. Not a fixable configuration problem -- upload the icon in Play Console. `push`/`pull` and every other `games` command still work.
 - Permission errors: the service account needs access to the game in Play Games Services; see `gpc-troubleshooting` for the error catalog.

@@ -10,7 +10,6 @@ All known GPC error codes with causes and fixes.
 | `AUTH_EXPIRED` | Token expired | Re-authenticate; check network if refresh fails |
 | `AUTH_NO_CREDENTIALS` | No credentials found | Run `gpc auth login` or set `GPC_SERVICE_ACCOUNT` |
 | `AUTH_INVALID_KEY` | Malformed service account JSON | Re-download from Google Cloud Console |
-| `AUTH_KEYCHAIN_ERROR` | Cannot access OS keychain | Grant access or use `GPC_SERVICE_ACCOUNT` env var |
 | `AUTH_SCOPE_DENIED` | OAuth scope not granted | Re-authorize with required scopes |
 
 ## API errors (exit code 4)
@@ -78,7 +77,7 @@ A 403 on `gpc vitals` or `gpc anomalies list` means the Play Developer Reporting
 |------|---------|-----|
 | `INVALID_BUNDLE` | AAB is corrupted | Rebuild; run `gpc validate` first |
 | `VERSION_CODE_CONFLICT` | Version code exists | Increment versionCode |
-| `RELEASE_NOT_FOUND` | No release on track | Check with `gpc releases list` |
+| `RELEASE_NOT_FOUND` | No release on track | Check with `gpc releases status` |
 | `RELEASES_USAGE_ERROR` | Rollout outside 1-100 | `--rollout` and `--to` are percentages (1-100): `--rollout 10`, not `0.1` |
 | `PROMOTE_NO_SOURCE` | Source track empty | Upload to source track first |
 | `EDIT_CONFLICT` | Another edit is open | Only one edit at a time |
@@ -165,7 +164,7 @@ rc.2 fixed vitals gates that could not fire and made every gate fail closed.
 
 **Exit code:** 2 — added in v1.0.0-rc.2
 
-**Cause:** Google reports rates (crash, ANR, slow start, slow rendering, wakeup, wakelock, LMK) as fractions, so a threshold of `2.0` can never be exceeded. Older docs taught `--threshold 2.0` for 2%, which silently disabled the gate. rc.2 refuses any rate threshold of 1 or more on `gpc vitals <metric> --threshold`, `gpc vitals watch --threshold`, `gpc watch --crash-threshold` (and the other watch rate thresholds) and `vitals.thresholds.crashRate` for `releases rollout increase --vitals-gate`.
+**Cause:** Google reports rates (crash, ANR, slow start, slow rendering, wakeup, wakelock, LMK) as fractions, so a threshold of `2.0` can never be exceeded. Older docs taught `--threshold 2.0` for 2%, which silently disabled the gate. rc.2 refuses any rate threshold of 1 or more on the `--threshold` flag of `gpc vitals` metric commands, `gpc vitals watch --threshold`, `gpc watch --crash-threshold` (and the other watch rate thresholds) and `vitals.thresholds.crashRate` for `releases rollout increase --vitals-gate`.
 
 **Fix:** divide by 100: `--threshold 0.02` for 2%, `0.0047` for 0.47%. `gpc train` gates (`gates.crashes.max` in the train config) are the exception: they stay percentages. So is `gpc status --threshold` (`crashes=1.5` is 1.5%), which rejects 100 or more with the same code (v1.1.0+); `vitals.thresholds.*` read by `gpc status` are fractions.
 
@@ -323,7 +322,7 @@ Suggestion: Use --error-if-in-review to prevent silent cancellation, or omit the
 
 **Notes:**
 - In CI pipelines, always use `--error-if-in-review` to avoid accidentally overwriting a release that is under review.
-- If you need to check the current review state before uploading, use `gpc releases list --track <track> --json` to inspect the release status.
+- If you need to check the current review state before uploading, use `gpc releases status --track <track> --json` to inspect the release status.
 - Without this flag, GPC will proceed and the previous in-review submission will be silently cancelled by the Google Play API.
 
 ---

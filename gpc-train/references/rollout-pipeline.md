@@ -34,7 +34,7 @@ Nothing moves on its own: each transition happens only when `gpc train advance` 
 }
 ```
 
-`gates.*.max` are **percentages** (`1.5` = 1.5%). Elsewhere in GPC (`gpc vitals --threshold`, `gpc watch`, `vitals.thresholds.*`) rates are fractions (`0.015`).
+`gates.*.max` are **percentages** (`1.5` = 1.5%). Elsewhere in GPC (the `--threshold` flag on `gpc vitals` commands, `gpc watch`, `vitals.thresholds.*`) rates are fractions (`0.015`).
 
 ### Time format for `after`
 

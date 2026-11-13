@@ -1,9 +1,9 @@
 ---
 name: gpc-migrate-fastlane
 description: "Use when migrating from Fastlane supply to GPC for Google Play operations. Make sure to use this skill whenever the user mentions Fastlane, fastlane supply, Fastfile, Appfile, Gemfile, migrate from Fastlane, replace Fastlane, Fastlane to GPC, supply command, Fastlane metadata, Fastlane screenshots, ruby-based deployment, bundle exec fastlane — even if they don't explicitly say 'migrate.' Also trigger when someone has an existing Fastlane setup and wants to use GPC alongside or instead of it, when they're comparing Fastlane and GPC, or when they ask about compatibility between the two tools. For general metadata management, see gpc-metadata-sync. For CI/CD setup, see gpc-ci-integration."
-compatibility: "GPC v0.9.9+. Works alongside existing Fastlane installations. Same service account keys and metadata directory structure are compatible."
+compatibility: "GPC v0.9.9+. Works alongside existing Fastlane installations. Same service account keys and metadata directory structure are compatible. Commands and flags checked against the GPC v1.1.0 command tree (gpc-skills v1.36.0)."
 metadata:
-  version: 1.4.1
+  version: 1.5.0
 ---
 
 # gpc-migrate-fastlane
@@ -130,7 +130,7 @@ gpc listings push --dir fastlane/metadata/android/ --dry-run
 gpc validate app.aab
 
 # Compare listing output
-gpc listings view --lang en-US --json
+gpc listings get --lang en-US --json
 ```
 
 ### 6. Migrate CI configuration
@@ -185,7 +185,7 @@ rm Gemfile Gemfile.lock
 | Screenshots missing after push | GPC listings push doesn't push images | Use `gpc listings images upload` separately |
 | CI slower than Fastlane | Ruby/Bundler vs Node.js startup | Use `npx @gpc-cli/cli` or pre-install globally; both are fast |
 | `EDIT_CONFLICT` error | Fastlane and GPC both have open edits | Don't run both tools simultaneously on the same app |
-| `changesNotSentForReview` 403 on commit | App has a rejected update — was Fastlane supply's #1 failure point | v0.9.69+: `gpc releases commit` auto-rescues this by retrying with the correct flag. No manual intervention needed. |
+| `changesNotSentForReview` 403 on commit | App has a rejected update; was Fastlane supply's #1 failure point | v0.9.69+: GPC's commit step (upload, publish, promote and the other edit commands) auto-rescues this by retrying with the correct flag. No manual intervention needed. |
 
 ## Related skills
 

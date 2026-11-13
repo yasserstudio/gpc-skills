@@ -1,9 +1,9 @@
 ---
 name: gpc-troubleshooting
 description: "Use when debugging GPC errors, failures, or unexpected behavior. Make sure to use this skill whenever the user mentions gpc error, gpc failing, exit code, AUTH_FAILED, API_FORBIDDEN, NETWORK_ERROR, CONFIG_MISSING, EDIT_CONFLICT, upload failed, permission denied, timeout, rate limit, gpc doctor failing, unexpected exit code, command not working, GPC crash, debug GPC, verbose output, --json error, threshold breach, REPORT_ACCESS_DENIED, REPORT_BUCKET_NOT_FOUND, reports bucket access, bulk reports permission denied, API_DECLARATION_REQUIRED, App content declaration, foreground service declaration, API_ALREADY_EXISTS, API_ENDPOINT_RETIRED, ORDER_REVIEW_REFUND_INVALID, PLUGIN_PERMISSIONS_REQUIRED, PLUGIN_IDENTITY_MISMATCH, CONFIRMATION_REQUIRED, IMAGE_SYNC_DIR_UNREADABLE, THRESHOLD_NO_DATA, THRESHOLD_INVALID, STATUS_NO_CACHE, STATUS_VITALS_UNREADABLE, TRAIN_GATE_NO_DATA, API_METRIC_GAMES_ONLY, INVALID_PACKAGE_NAME — even if they don't explicitly say 'troubleshoot.' Also trigger when someone encounters any GPC error they don't understand, when gpc doctor reports issues, when CI pipelines fail with GPC commands, or when they need to interpret exit codes. For auth-specific setup issues, see gpc-setup. For CI-specific issues, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Covers all packages: @gpc-cli/cli, @gpc-cli/core, @gpc-cli/api, @gpc-cli/auth, @gpc-cli/config. v0.9.85+ resolves the npm global install failure. v0.9.93+ adds the REPORT_* bulk-report error codes and the doctor reports-bucket check. v0.9.94+ adds API_DECLARATION_REQUIRED and stops App content declaration failures being reported as missing service account permissions. v0.9.96+ adds API_ALREADY_EXISTS, API_ENDPOINT_RETIRED, and ORDER_REVIEW_REFUND_INVALID. v1.0.0-rc.1+ adds CONFIRMATION_REQUIRED, IMAGE_SYNC_DIR_UNREADABLE, and THRESHOLD_NO_DATA, exits 2 on usage mistakes, and exits 4 on a vitals 403. GPC v1.0.0 errors are plain text on stderr (`Error [CODE]:`, `Suggestion:`, `Details:`), never JSON, and plugin failures exit 1. v1.1.0+ adds STATUS_VITALS_UNREADABLE and tightens STATUS_NO_CACHE for gpc status."
+compatibility: "GPC v0.9.82+. Covers all packages: @gpc-cli/cli, @gpc-cli/core, @gpc-cli/api, @gpc-cli/auth, @gpc-cli/config. v0.9.85+ resolves the npm global install failure. v0.9.93+ adds the REPORT_* bulk-report error codes and the doctor reports-bucket check. v0.9.94+ adds API_DECLARATION_REQUIRED and stops App content declaration failures being reported as missing service account permissions. v0.9.96+ adds API_ALREADY_EXISTS, API_ENDPOINT_RETIRED, and ORDER_REVIEW_REFUND_INVALID. v1.0.0-rc.1+ adds CONFIRMATION_REQUIRED, IMAGE_SYNC_DIR_UNREADABLE, and THRESHOLD_NO_DATA, exits 2 on usage mistakes, and exits 4 on a vitals 403. GPC v1.0.0 errors are plain text on stderr (`Error [CODE]:`, `Suggestion:`, `Details:`), never JSON, and plugin failures exit 1. v1.1.0+ adds STATUS_VITALS_UNREADABLE and tightens STATUS_NO_CACHE for gpc status. Commands and flags checked against the GPC v1.1.0 command tree (gpc-skills v1.36.0)."
 metadata:
-  version: 0.26.0
+  version: 0.27.0
 ---
 
 # gpc-troubleshooting
@@ -82,7 +82,6 @@ gpc <failing-command> --json
 | `AUTH_EXPIRED` | Token expired and refresh failed | Re-authenticate; check network/proxy |
 | `AUTH_NO_CREDENTIALS` | No auth configured | Run `gpc auth login` or set `GPC_SERVICE_ACCOUNT` |
 | `AUTH_INVALID_KEY` | Malformed service account JSON | Re-download key from Google Cloud Console |
-| `AUTH_KEYCHAIN_ERROR` | OS keychain access denied | Grant keychain access or use env var auth |
 
 ```bash
 # Check current auth status
@@ -91,7 +90,7 @@ gpc auth status
 # Re-authenticate
 gpc auth login --service-account ~/path/to/key.json
 
-# Bypass keychain with env var
+# Or pass the key through an env var
 export GPC_SERVICE_ACCOUNT=$(cat ~/path/to/key.json)
 ```
 
@@ -164,7 +163,7 @@ export GPC_CA_CERT=/path/to/ca-cert.pem
 | `CONFIG_INVALID_KEY` | Key is empty, malformed, or a reserved name (v0.9.80+) | Use a valid alphanumeric profile/key name |
 | `CONFIG_APP_MISSING` | No app specified | Set with `gpc config set app` or `--app` flag |
 
-**Config precedence fix (v0.9.81+):** Before v0.9.81, an active profile would silently win over `GPC_SERVICE_ACCOUNT`/`GPC_APP` env vars and the `--service-account`/`--app` flags. This was a bug. Since v0.9.81, the documented precedence is enforced: flags override env vars, env vars override the active profile, the active profile overrides defaults. If env vars appear to be ignored, check whether an active profile is set with `gpc config list` and either update or deactivate it.
+**Config precedence fix (v0.9.81+):** Before v0.9.81, an active profile would silently win over `GPC_SERVICE_ACCOUNT`/`GPC_APP` env vars and the `--service-account`/`--app` flags. This was a bug. Since v0.9.81, the documented precedence is enforced: flags override env vars, env vars override the active profile, the active profile overrides defaults. If env vars appear to be ignored, check whether an active profile is set with `gpc config show` and either update or deactivate it.
 
 ```bash
 # Initialize config
@@ -174,7 +173,7 @@ gpc config init
 gpc config set app com.example.app
 
 # Check current config
-gpc config list
+gpc config show
 ```
 
 ### 6. Upload and release errors
@@ -183,7 +182,7 @@ gpc config list
 |-------|-------|-----|
 | `INVALID_BUNDLE` | AAB is corrupted or wrong format | Rebuild the AAB; run `gpc validate` first |
 | `VERSION_CODE_CONFLICT` | Version code already used | Increment versionCode in build.gradle |
-| `RELEASE_NOT_FOUND` | No release on the specified track | Check track name; use `gpc releases list --track <track>` |
+| `RELEASE_NOT_FOUND` | No release on the specified track | Check track name; use `gpc releases status --track <track>` |
 | `RELEASES_USAGE_ERROR` / `PUBLISH_USAGE_ERROR` (exit 2) | Rollout outside 1-100 | `--rollout` and `--to` are percentages: `--rollout 10`, not `--rollout 0.1` |
 | `PROMOTE_NO_SOURCE` | Source track has no release to promote | Upload to source track first |
 | `UPLOAD_CHUNK_FAILED` | Chunk could not be sent after retries | Check network; increase `GPC_MAX_RETRIES` or `GPC_UPLOAD_TIMEOUT` |
@@ -201,8 +200,8 @@ gpc config list
 gpc validate app.aab
 
 # Check existing releases
-gpc releases list --track internal
-gpc releases list --track beta
+gpc releases status --track internal
+gpc releases status --track beta
 
 # Preview upload
 gpc releases upload app.aab --track beta --dry-run
@@ -347,7 +346,7 @@ export GPC_UPLOAD_TIMEOUT=300000  # Upload timeout in ms (5 min)
 | `users list` / `users get`: "Pagination is not currently available" | Google now rejects paginated users requests (GPC before v0.9.98) | Upgrade to v0.9.98+ |
 | `gpc doctor` warns "Unknown config keys: legacyApprovedPlugins, pluginApprovalPolicyVersion" (or `vitals`/`games`/`reports`) | Stale known-keys list (before v0.9.98); these keys are valid | Upgrade to v0.9.98+; no config change needed |
 | Commands work locally, fail in CI | Missing env vars in CI | Set `GPC_SERVICE_ACCOUNT` and `GPC_APP` in CI secrets; run `gpc setup --auto` (v0.9.68+) |
-| Env vars `GPC_SERVICE_ACCOUNT` / `GPC_APP` seem to be ignored | Active profile overriding env vars (pre-v0.9.81 bug) | Upgrade to v0.9.81+. Check active profile with `gpc config list`; env vars and flags now correctly override the profile. |
+| Env vars `GPC_SERVICE_ACCOUNT` / `GPC_APP` seem to be ignored | Active profile overriding env vars (pre-v0.9.81 bug) | Upgrade to v0.9.81+. Check active profile with `gpc config show`; env vars and flags now correctly override the profile. |
 | `npm install -g @gpc-cli/cli` fails with `EUNSUPPORTEDPROTOCOL` | `workspace:*` specifiers leaked into published manifests (v0.9.77-v0.9.83) | Reinstall on v0.9.84+ or v0.9.85+: `npm install -g @gpc-cli/cli@latest`. Fixed in v0.9.84 (cli+core) and fully resolved in v0.9.85 (api package re-published). |
 | `gpc doctor` warns on `reports-bucket` | Service account lacks the bulk-reports grant, or the bucket name is wrong | Enable "View app information and download bulk reports (read-only)" in Play Console, or set the exact bucket with `--bucket` / `GPC_REPORTS_BUCKET` (v0.9.93+) |
 | Reports still denied right after granting the permission | Grant has not propagated, or a cached token predates it | Wait a few minutes, run `gpc auth clear-cache`, then retry (v0.9.93+) |

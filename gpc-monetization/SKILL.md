@@ -1,9 +1,9 @@
 ---
 name: gpc-monetization
 description: "Use when managing in-app purchases, subscriptions, pricing, or Real-Time Developer Notifications in Google Play. Make sure to use this skill whenever the user mentions gpc subscriptions, gpc iap, gpc purchases, gpc pricing, gpc rtdn, in-app products, base plans, subscription offers, one-time products, consumable products, purchase verification, purchase acknowledgement, purchase token, subscription cancellation, subscription deferral, voided purchases, refunds, regional pricing, currency conversion, price migration, SKU management, monetization, revenue, billing, subscription analytics, churn, trial conversion, subscriber count, RTDN, Real-Time Developer Notifications, Pub/Sub notifications, subscription events, purchase events — even if they don't explicitly say 'monetization.' Also trigger when someone wants to create or update subscriptions, manage base plan lifecycle (activate/deactivate), set up introductory offers, verify server-side purchases, handle refunds, convert prices across regions, sync IAP products from files, migrate subscribers to new prices, view subscription analytics, decode Pub/Sub notification payloads, respond to a chargeback dispute (chargeback, pending refund review, pendingRefundReviewNotification, pendingRefundToken, gpc purchases orders review-refund), or check RTDN topic configuration. For release management, see gpc-release-flow. For CI automation, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Subscriptions and IAP require products configured in Google Play Console. v0.9.84+ sends --regions-version to the API on subscription/OTP writes. v0.9.96+ fixes one-time-products create/update and the four single-offer commands (which now require --purchase-option), and adds gpc purchases orders review-refund for chargeback disputes. v0.9.99+ for external transaction refunds (required refund time/ID) and typed game reward / external content link fields. v1.0.0-rc.1+ requires --yes for refunds and revocations in non-interactive runs (CONFIRMATION_REQUIRED, exit 2)."
+compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Subscriptions and IAP require products configured in Google Play Console. v0.9.84+ sends --regions-version to the API on subscription/OTP writes. v0.9.96+ fixes one-time-products create/update and the four single-offer commands (which now require --purchase-option), and adds gpc purchases orders review-refund for chargeback disputes. v0.9.99+ for external transaction refunds (required refund time/ID) and typed game reward / external content link fields. v1.0.0-rc.1+ requires --yes for refunds and revocations in non-interactive runs (CONFIRMATION_REQUIRED, exit 2). Commands and flags checked against the GPC v1.1.0 command tree (gpc-skills v1.36.0)."
 metadata:
-  version: 0.19.0
+  version: 0.20.0
 ---
 
 # gpc-monetization
@@ -36,7 +36,7 @@ Manage subscriptions, in-app products, purchases, and pricing with GPC.
 
 ```bash
 gpc auth status
-gpc config get app
+gpc config show
 ```
 
 Confirm auth is valid and default app is set. If not, `Read:` the gpc-setup skill.
@@ -83,29 +83,19 @@ gpc subscriptions update <product-id> --file updated.json --update-mask "listing
 
 # Preview changes
 gpc subscriptions update <product-id> --file updated.json --dry-run
-
-# Upsert: create the subscription if it does not already exist
-gpc subscriptions update <product-id> --file updated.json --allow-missing
-
-# Control propagation speed (default: LATENCY_SENSITIVE)
-gpc subscriptions update <product-id> --file updated.json --latency-tolerance LATENCY_TOLERANT
 ```
 
 The `--update-mask` flag controls which fields are updated. Omit it to replace the entire subscription.
 
-The `--allow-missing` flag enables upsert behavior: if the subscription does not exist, it will be created instead of returning an error.
-
-The `--latency-tolerance` flag controls how quickly changes propagate. Use `LATENCY_SENSITIVE` (default) for immediate propagation, or `LATENCY_TOLERANT` when you can accept a delay in exchange for higher throughput during bulk operations.
-
 #### D. Batch operations
 
 ```bash
-# Batch-get multiple subscriptions at once
-gpc subscriptions batch-get <id1> <id2> <id3>
+# Batch-get several offers of one base plan
+gpc subscriptions offers batch-get <product-id> <base-plan-id> --ids "offer_a,offer_b"
 
-# Batch-update multiple subscriptions from JSON
-gpc subscriptions batch-update --file batch-updates.json --dry-run
-gpc subscriptions batch-update --file batch-updates.json
+# Activate or deactivate several offers of one base plan from JSON
+gpc subscriptions offers batch-update-states <product-id> <base-plan-id> --file offer-states.json --dry-run
+gpc subscriptions offers batch-update-states <product-id> <base-plan-id> --file offer-states.json
 ```
 
 #### E. Delete a subscription
@@ -153,12 +143,6 @@ gpc subscriptions offers create <product-id> <base-plan-id> --file offer.json
 # Update an offer
 gpc subscriptions offers update <product-id> <base-plan-id> <offer-id> --file offer.json
 
-# Upsert: create the offer if it does not already exist
-gpc subscriptions offers update <product-id> <base-plan-id> <offer-id> --file offer.json --allow-missing
-
-# Control propagation speed for bulk offer updates
-gpc subscriptions offers update <product-id> <base-plan-id> <offer-id> --file offer.json --latency-tolerance LATENCY_TOLERANT
-
 # Activate / deactivate an offer
 gpc subscriptions offers activate <product-id> <base-plan-id> <offer-id>
 gpc subscriptions offers deactivate <product-id> <base-plan-id> <offer-id>
@@ -177,13 +161,13 @@ One-time purchases — consumables, non-consumables, entitlements.
 gpc iap list
 
 # Paginated listing (useful for apps with many products)
-gpc iap list --page-size 50
-gpc iap list --page-size 50 --next-page <page-token>
+gpc iap list --limit 50
+gpc iap list --limit 50 --next-page <page-token>
 
 gpc iap get <sku>
 ```
 
-> **New in v0.9.51:** `gpc iap list` (aliased as `gpc one-time-products list`) now supports `--page-size` and `--next-page` for paginated results. The response includes a `nextPageToken` field when more results are available.
+`gpc iap list` supports `--limit` and `--next-page` for paginated results. The `--json` response includes a `nextPageToken` field when more results are available.
 
 #### B. Create and update
 
@@ -192,18 +176,12 @@ gpc iap get <sku>
 gpc iap create --file product.json --dry-run
 gpc iap create --file product.json
 
-# Specify a regions version on create (defaults to 2022/02)
-gpc iap create --file product.json --regions-version "2022/02"
+# Specify a regions version (defaults to 2022/02); the one-time-products commands take it
+gpc one-time-products create --file product.json --regions-version "2022/02"
 
 # Update
 gpc iap update <sku> --file updated.json --dry-run
 gpc iap update <sku> --file updated.json
-
-# Upsert: create the product if it does not already exist
-gpc iap update <sku> --file updated.json --allow-missing
-
-# Control propagation speed
-gpc iap update <sku> --file updated.json --latency-tolerance LATENCY_TOLERANT
 
 # Delete
 gpc iap delete <sku>
@@ -211,12 +189,15 @@ gpc iap delete <sku>
 
 `Read:` `references/iap-schema.md` for the JSON structure and field reference.
 
-#### C. Batch delete
+#### C. Batch get and update
 
 ```bash
-# Delete multiple IAP products at once
-gpc iap batch-delete <sku1> <sku2> <sku3> --dry-run
-gpc iap batch-delete <sku1> <sku2> <sku3>
+# Get several IAP products at once
+gpc iap batch-get --skus "sku_a,sku_b,sku_c"
+
+# Update several IAP products from one JSON file
+gpc iap batch-update --file products.json --dry-run
+gpc iap batch-update --file products.json
 ```
 
 #### D. Sync from directory
@@ -281,44 +262,45 @@ gpc ext-txn refund order-1001 --partial-amount 4990000 --currency EUR --refund-i
 - From v1.0.0-rc.1 a refund without a terminal needs `--yes`, or it exits 2 with `CONFIRMATION_REQUIRED`.
 - US **external content links** program: add `externalContentLinkDetails { linkType: LINK_TO_DIGITAL_CONTENT_OFFER | LINK_TO_APP_DOWNLOAD, installedAppPackage, externalAppCategory: APP | GAME }` to the create file (separate from the older `externalOfferDetails`). Google requires reporting purchases from Oct 1 2026 and app downloads by Dec 1 2026.
 
-### Activating/deactivating OTP offers (v0.9.57+)
+### Activating/deactivating OTP offers
 
-One-time product offers support explicit activation/deactivation:
+One-time product offer states change through `batch-update-states` (there is no single-offer activate/deactivate command). Every offer command takes `--purchase-option <id>`:
 
 ```bash
-gpc otp offers activate --app com.example.app --product-id sku_id --offer-id offer_id
-gpc otp offers deactivate --app com.example.app --product-id sku_id --offer-id offer_id
-```
+gpc otp offers batch-update-states <product-id> --purchase-option <po-id> --file otp-states.json --dry-run
+gpc otp offers batch-update-states <product-id> --purchase-option <po-id> --file otp-states.json
 
-Matches the subscription-offer lifecycle. Without this, OTP offers relied on state being set through batch update calls only.
+# Cancel a single offer
+gpc otp offers cancel <product-id> <offer-id> --purchase-option <po-id>
+```
 
 ### OTP offer and purchase-option batch operations (v0.9.79+)
 
 Batch operations on one-time product offers and purchase options:
 
 ```bash
-# Retrieve multiple OTP offers in one call
-gpc one-time-products offers batch-get --product-id <sku> --offer-ids "offer_a,offer_b"
+# Retrieve multiple OTP offers in one call (offer ids in the JSON file)
+gpc one-time-products offers batch-get <product-id> --purchase-option <po-id> --file otp-offer-ids.json
 
 # Update multiple OTP offers from JSON
-gpc one-time-products offers batch-update --file otp-offers.json --dry-run
-gpc one-time-products offers batch-update --file otp-offers.json
+gpc one-time-products offers batch-update <product-id> --purchase-option <po-id> --file otp-offers.json --dry-run
+gpc one-time-products offers batch-update <product-id> --purchase-option <po-id> --file otp-offers.json
 
 # Bulk activate or deactivate OTP offers
-gpc one-time-products offers batch-update-states --file otp-states.json --dry-run
-gpc one-time-products offers batch-update-states --file otp-states.json
+gpc one-time-products offers batch-update-states <product-id> --purchase-option <po-id> --file otp-states.json --dry-run
+gpc one-time-products offers batch-update-states <product-id> --purchase-option <po-id> --file otp-states.json
 
 # Delete multiple OTP offers at once
-gpc one-time-products offers batch-delete --product-id <sku> --offer-ids "offer_a,offer_b" --dry-run
-gpc one-time-products offers batch-delete --product-id <sku> --offer-ids "offer_a,offer_b"
+gpc one-time-products offers batch-delete <product-id> --purchase-option <po-id> --file otp-offer-ids.json --dry-run
+gpc one-time-products offers batch-delete <product-id> --purchase-option <po-id> --file otp-offer-ids.json
 
-# Bulk delete purchase options across products
-gpc one-time-products purchase-options batch-delete --file po-delete.json --dry-run
-gpc one-time-products purchase-options batch-delete --file po-delete.json
+# Bulk delete purchase options of a product
+gpc one-time-products purchase-options batch-delete <product-id> --file po-delete.json --dry-run
+gpc one-time-products purchase-options batch-delete <product-id> --file po-delete.json
 
 # Bulk update purchase-option states (activate/deactivate)
-gpc one-time-products purchase-options batch-update-states --file po-states.json --dry-run
-gpc one-time-products purchase-options batch-update-states --file po-states.json
+gpc one-time-products purchase-options batch-update-states <product-id> --file po-states.json --dry-run
+gpc one-time-products purchase-options batch-update-states <product-id> --file po-states.json
 ```
 
 All batch commands support `--dry-run` and `--json`. These operations cover the full v0.9.79 OTP batch surface: 4 offer methods (`batch-get`, `batch-update`, `batch-update-states`, `batch-delete`) and 2 purchase-option methods (`batch-delete`, `batch-update-states`).
@@ -342,9 +324,9 @@ gpc purchases consume <product-id> <token>
 #### B. Subscription purchases
 
 ```bash
-# Acknowledge a subscription purchase (v1 — required within 3 days)
-gpc purchases subscription acknowledge <subscription-id> <token>
-gpc purchases subscription acknowledge <subscription-id> <token> --payload "order-456"
+# Acknowledge a subscription purchase (required within 3 days): there is no
+# subscription-specific acknowledge command; `gpc purchases acknowledge` covers
+# one-time products only. Acknowledge subscriptions from your backend.
 
 # Get subscription purchase details (v2 API)
 # Returns SubscriptionPurchaseV2 with onHoldStateContext, inGracePeriodStateContext (v0.9.76+)
@@ -362,7 +344,7 @@ gpc purchases subscription cancel-v2 <token> --type DEVELOPER_CANCELED
 gpc purchases subscription defer <subscription-id> <token> --expiry 2025-06-01T00:00:00Z
 
 # Defer expiry (v2 — supports add-on subscriptions)
-gpc purchases subscription defer-v2 <token> --until 2026-07-01T00:00:00Z
+gpc purchases subscription defer-v2 <token> --duration 2592000   # seconds (30 days)
 
 # Revoke a subscription (v2 API)
 gpc purchases subscription revoke <token>

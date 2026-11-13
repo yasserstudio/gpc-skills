@@ -1,9 +1,9 @@
 ---
 name: gpc-multi-app
 description: "Use when managing multiple Google Play apps with GPC. Make sure to use this skill whenever the user mentions multiple apps, multi-app, monorepo, white-label, batch operations, bulk upload, several apps, --app flag, app switching, profiles for different apps, fleet management, app portfolio, multiple package names — even if they don't explicitly say 'multi-app.' Also trigger when someone has more than one Android app and wants to manage them efficiently, when they need different configurations per app, when they're running the same command across multiple apps, or when they have a monorepo with multiple Android modules. For single-app setup, see gpc-setup. For CI automation, see gpc-ci-integration."
-compatibility: "GPC v0.9.9+ (--profile global flag requires v0.9.55+). Requires authenticated GPC setup (see gpc-setup skill)."
+compatibility: "GPC v0.9.9+ (--profile global flag requires v0.9.55+). Requires authenticated GPC setup (see gpc-setup skill). Commands and flags checked against the GPC v1.1.0 command tree (gpc-skills v1.36.0)."
 metadata:
-  version: 1.2.0
+  version: 1.2.1
 ---
 
 # gpc-multi-app
@@ -83,16 +83,16 @@ Then add each profile's `app` (and any per-app settings) in `~/.config/gpc/confi
 Use profiles per command:
 
 ```bash
-gpc releases list --profile main
-gpc releases list --profile lite
-gpc releases list --profile enterprise
+gpc releases status --profile main
+gpc releases status --profile lite
+gpc releases status --profile enterprise
 ```
 
 Or set via environment:
 
 ```bash
 export GPC_PROFILE=enterprise
-gpc releases list  # uses enterprise profile
+gpc releases status  # uses enterprise profile
 ```
 
 `Read:` `references/profile-patterns.md` for advanced profile configurations.
@@ -198,8 +198,8 @@ When apps belong to different developer accounts:
 
 ```bash
 # Use different env vars per command
-GPC_SERVICE_ACCOUNT=$(cat keys/main.json) gpc releases list --app com.example.main
-GPC_SERVICE_ACCOUNT=$(cat keys/client.json) gpc releases list --app com.client.app
+GPC_SERVICE_ACCOUNT=$(cat keys/main.json) gpc releases status --app com.example.main
+GPC_SERVICE_ACCOUNT=$(cat keys/client.json) gpc releases status --app com.client.app
 ```
 
 Or use profiles (recommended):
@@ -239,7 +239,7 @@ done
 
 ## Verification
 
-- `gpc config list --profile <name>` shows correct app and auth per profile
+- `gpc config show --profile <name>` shows correct app and auth per profile
 - Commands with `--app` or `--profile` target the right app
 - Batch scripts exit 0 when all apps succeed
 - CI matrix runs deploy independently per app
@@ -252,7 +252,7 @@ done
 | Wrong app targeted | `--app` not set, picking up default | Always pass `--app` or use profiles explicitly |
 | `API_FORBIDDEN` on one app | Service account lacks access for that app | Check permissions per app in Play Console |
 | Batch script fails silently | Missing error handling in loop | Use `set -e` or check `$?` after each command |
-| Profile not found | Typo in profile name | Check `gpc config list` for available profiles |
+| Profile not found | Typo in profile name | Check `gpc config show` for available profiles |
 | CI matrix job fails one app | Independent failure | Matrix jobs run independently — check logs per app |
 | `.gpcrc.json` not picked up | Running from wrong directory | GPC walks up from `cwd`; ensure you're in the right dir |
 

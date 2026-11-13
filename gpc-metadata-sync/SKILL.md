@@ -1,9 +1,9 @@
 ---
 name: gpc-metadata-sync
 description: "Use when managing Google Play store listings, metadata, screenshots, or images. Make sure to use this skill whenever the user mentions gpc listings, store listing, metadata sync, screenshots, Fastlane metadata, localization, app description, pull listings, push listings, feature graphic, Play Store images, app title, short description, full description, changelogs, image sync, image dedup, listings images sync, save quota, publish quota exceeded, too many API saves, screenshot display order, AI-generated image attestation, --ai-generated, or wants to update any text or visual content on their Play Store page. Also trigger when someone asks about migrating from Fastlane supply, syncing metadata to/from local files, managing multi-language listings, or bulk-updating store content — even if they don't mention GPC explicitly. For releases and uploads, see gpc-release-flow."
-compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). v0.9.96+ adds --ai-generated on listings images upload and sync. v1.0.0-rc.1+ stops listings images sync --delete on an unreadable local directory (IMAGE_SYNC_DIR_UNREADABLE, exit 1) instead of treating it as empty."
+compatibility: "GPC v0.9+. Requires authenticated GPC setup (see gpc-setup skill). v0.9.96+ adds --ai-generated on listings images upload and sync. v1.0.0-rc.1+ stops listings images sync --delete on an unreadable local directory (IMAGE_SYNC_DIR_UNREADABLE, exit 1) instead of treating it as empty. Commands and flags checked against the GPC v1.1.0 command tree (gpc-skills v1.36.0)."
 metadata:
-  version: 1.7.0
+  version: 1.7.1
 ---
 
 # GPC Metadata Sync

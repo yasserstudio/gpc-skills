@@ -108,26 +108,17 @@ Use exit codes for conditional CI logic:
 
 ## Rejected or In-Review Releases
 
-If a previous submission is still in review or was rejected, uploading a new version may fail with `EDIT_CONFLICT`.
-
-**Detect before uploading:**
-```yaml
-- name: Check for pending review
-  run: gpc releases status --error-if-in-review
-```
-
-The `--error-if-in-review` flag exits with code 4 if any release is in `inReview` or `rejected` status. Handle it before uploading:
+By default, committing while a previous submission is still in review makes Google cancel that review. Pass `--error-if-in-review` on the committing command to fail instead (API error, exit 4). After a rejection, commits need `--changes-not-sent-for-review`.
 
 ```yaml
-- name: Check for pending review
-  id: review-check
-  run: gpc releases status --error-if-in-review
-  continue-on-error: true
+- name: Upload release (never cancel a pending review)
+  run: gpc releases upload app.aab --track beta --error-if-in-review
 
-- name: Upload release
-  if: steps.review-check.outcome == 'success'
+- name: Upload after a rejection
   run: gpc releases upload app.aab --track beta --changes-not-sent-for-review
 ```
+
+Check the current state with `gpc releases status --track beta`.
 
 If a release was rejected, resolve the issue in the Play Console before re-uploading from CI.
 

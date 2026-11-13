@@ -81,13 +81,7 @@ APK expansion files (OBB) allow you to attach additional data files to an APK wh
 
 ### Upload via GPC
 
-```bash
-# Upload main expansion file for a specific APK version code
-gpc releases upload-expansion main app.obb --apk-version-code 143
-
-# Upload patch expansion file
-gpc releases upload-expansion patch patch.obb --apk-version-code 143
-```
+There is no `gpc` command for expansion files. The `@gpc-cli/api` SDK exposes them as `client.expansionFiles.get / update / patch / upload(packageName, editId, apkVersionCode, "main" | "patch", ...)` inside an edit you open and commit yourself. New apps should use an AAB with Play Asset Delivery instead of OBB files.
 
 ### Key Rules
 

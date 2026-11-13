@@ -47,7 +47,6 @@ CLI flags > Environment variables > Config file > Defaults
 | `GPC_SERVICE_ACCOUNT` | Auth source |
 | `GPC_NO_COLOR` | Color output |
 | `GPC_NO_INTERACTIVE` | Interactive prompts |
-| `GPC_SKIP_KEYCHAIN` | Keychain usage |
 | `GPC_MAX_RETRIES` | Retry attempts |
 | `GPC_TIMEOUT` | Request timeout (ms) |
 | `GPC_BASE_DELAY` | Base retry delay (ms) |

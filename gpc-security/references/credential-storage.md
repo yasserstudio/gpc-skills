@@ -11,7 +11,7 @@ User-level (per OS user)
 │   └── audit.log            # Command audit trail
 ├── ~/.cache/gpc/
 │   └── tokens/              # Cached access tokens (auto-expire)
-└── OS Keychain              # OAuth refresh tokens (encrypted)
+└── (no OS keychain use)     # GPC stores no refresh tokens; ADC user credentials live in gcloud's config dir
 
 Project-level (per repository)
 └── .gpcrc.json              # Project config (NEVER contains secrets)
@@ -23,7 +23,6 @@ Project-level (per repository)
 |------|---------|----------|-----------|
 | Service account key path | config.json or env var | Yes | No (path only) |
 | Service account JSON content | `GPC_SERVICE_ACCOUNT` env var | Session | No |
-| OAuth refresh token | OS keychain | Yes | Yes (OS-managed) |
 | Access token (cached) | `~/.cache/gpc/tokens/` | 1 hour | No (short-lived) |
 | App package name | `.gpcrc.json` or config | Yes | No (not sensitive) |
 | Audit entries | `audit.log` | Yes | No |
@@ -44,7 +43,7 @@ Project-level (per repository)
 
 - Service account JSON key files
 - Access tokens
-- OAuth credentials
+- gcloud ADC credential files (`application_default_credentials.json`)
 - Private keys
 
 ### File permissions
@@ -57,15 +56,9 @@ GPC sets appropriate permissions on creation:
 | `tokens/*.json` | 0600 | Contains access tokens |
 | `audit.log` | 0600 | Contains command history |
 
-## OS keychain integration
+## OS keychain
 
-| OS | Backend | Tool |
-|----|---------|------|
-| macOS | Keychain Access | `security` CLI |
-| Linux | libsecret / GNOME Keyring | `secret-tool` |
-| Windows | Windows Credential Manager | `cmdkey` |
-
-Fallback when no keychain is available: `~/.config/gpc/credentials.json` (file-based, less secure).
+GPC does not use the OS keychain. It stores only the service account key **path** (in config) and short-lived access tokens (in the cache dir, cleared by `gpc auth clear-cache`). Protect the key file itself with file permissions or a secret manager.
 
 ## CI/CD credential patterns
 
@@ -79,7 +72,7 @@ steps:
   - name: Upload to Play Store
     env:
       GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SA_KEY }}
-    run: gpc releases upload --app com.example.app --file app.aab
+    run: gpc releases upload app.aab --app com.example.app
 
 # Job-scoped (avoid — exposes secret to all steps including third-party actions)
 # env:

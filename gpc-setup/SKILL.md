@@ -1,9 +1,9 @@
 ---
 name: gpc-setup
-description: "Use when setting up GPC (Google Play Console CLI): authentication with service accounts, OAuth, or Application Default Credentials; configuration files (.gpcrc.json, env vars, XDG paths); auth profiles; running gpc doctor; troubleshooting auth errors. Make sure to use this skill whenever the user mentions gpc auth, gpc setup, service account setup, gpc config, gpc doctor, GPC_SERVICE_ACCOUNT, gpc auth login, gpc auth clear-cache, token cache, Google Play API credentials, Play Console authentication, download bulk reports permission, reports bucket access, GPC_REPORTS_BUCKET, or wants to install/configure GPC — even if they don't explicitly say 'setup.' Also trigger when someone is troubleshooting auth failures, token expiration, keychain issues, or proxy/network configuration for GPC."
-compatibility: "GPC v0.9.82+. Requires Node.js 20.18.1+ (GPC v1.0.1+), pnpm 9+ (for development). npm for installation. v0.9.93+ adds gpc auth clear-cache, the doctor reports-bucket check, and the bulk-reports account permission needed by gpc reports. v0.9.95+ creates and updates profiles via auth login --profile (previously silently ignored). v0.9.96+ grows gpc verify checklist to 11 items and makes every item promptable. v0.9.98+ honors NO_PROXY and fails closed when a configured proxy cannot be applied. On GPC v1.0.0 the output config key defaults to table, in a pipe and in CI alike."
+description: "Use when setting up GPC (Google Play Console CLI): authentication with service accounts or Application Default Credentials (ADC); configuration files (.gpcrc.json, env vars, XDG paths); auth profiles; running gpc doctor; troubleshooting auth errors. Make sure to use this skill whenever the user mentions gpc auth, gpc setup, service account setup, gpc config, gpc doctor, GPC_SERVICE_ACCOUNT, gpc auth login, gpc auth clear-cache, token cache, Google Play API credentials, Play Console authentication, download bulk reports permission, reports bucket access, GPC_REPORTS_BUCKET, or wants to install/configure GPC — even if they don't explicitly say 'setup.' Also trigger when someone is troubleshooting auth failures, token expiration, or proxy/network configuration for GPC."
+compatibility: "GPC v0.9.82+. Requires Node.js 20.18.1+ (GPC v1.0.1+), pnpm 9+ (for development). npm for installation. v0.9.93+ adds gpc auth clear-cache, the doctor reports-bucket check, and the bulk-reports account permission needed by gpc reports. v0.9.95+ creates and updates profiles via auth login --profile (previously silently ignored). v0.9.96+ grows gpc verify checklist to 11 items and makes every item promptable. v0.9.98+ honors NO_PROXY and fails closed when a configured proxy cannot be applied. On GPC v1.0.0 the output config key defaults to table, in a pipe and in CI alike. Commands and flags checked against the GPC v1.1.0 command tree (gpc-skills v1.36.0)."
 metadata:
-  version: 1.10.2
+  version: 1.11.0
 ---
 
 # GPC Setup
@@ -14,7 +14,7 @@ Use this skill when the task involves:
 
 - Installing GPC (`npm install -g @gpc-cli/cli` or standalone binary)
 - Running the unified setup wizard (`gpc setup`, v0.9.68+)
-- Authenticating with Google Play Developer API (service account, OAuth, ADC)
+- Authenticating with Google Play Developer API (service account or ADC)
 - Managing auth profiles (`gpc auth profiles`, `gpc auth switch`)
 - Configuring GPC (`.gpcrc.json`, env vars, `gpc config init`)
 - Diagnosing setup issues (`gpc doctor`)
@@ -23,7 +23,7 @@ Use this skill when the task involves:
 ## Inputs required
 
 - Whether this is local development or CI/CD setup
-- Auth method: service account JSON, OAuth, or Application Default Credentials
+- Auth method: service account JSON or Application Default Credentials (GPC has no built-in browser login)
 - Package name of the Android app (e.g., `com.example.app`)
 - If CI: which CI platform (GitHub Actions, GitLab, etc.)
 
@@ -57,7 +57,7 @@ gpc setup
 `gpc setup` is a single command that combines authentication, configuration, and verification into one guided flow:
 
 1. Detects existing config (resumes if partial)
-2. Prompts for auth method (service account, OAuth, or ADC)
+2. Prompts for auth method (service account or ADC)
 3. Validates credentials
 4. Sets default package name
 5. Writes `.gpcrc.json`
@@ -123,24 +123,24 @@ Only the reports commands (and that doctor probe) request the extra `devstorage.
 Read:
 - `references/service-account.md`
 
-#### B) OAuth (for local development)
+#### B) Application Default Credentials (local dev and GCP environments)
 
-Interactive OAuth device flow — no key file needed:
+GPC has no built-in OAuth or browser login. To use your own Google account, sign in with `gcloud` and let GPC pick it up through ADC:
 
 ```bash
-gpc auth login
+gcloud auth application-default login \
+  --scopes=https://www.googleapis.com/auth/androidpublisher,https://www.googleapis.com/auth/cloud-platform
+gpc auth login --adc    # verifies ADC; stores nothing
 ```
 
-Tokens are cached in the OS keychain (macOS Keychain, Linux libsecret) or file fallback.
-
-#### C) Application Default Credentials (for GCP environments)
-
-Works automatically in Cloud Build, Cloud Run, GKE — no configuration needed:
+On Cloud Build, Cloud Run and GKE, ADC works with no setup. ADC is auto-detected whenever no service account is configured:
 
 ```bash
-# ADC is auto-detected when no other auth is configured
 gpc apps list
 ```
+
+Read:
+- `references/adc-flow.md`
 
 ### 2) Configure defaults
 
@@ -173,7 +173,6 @@ Guided wizard that:
 | `GPC_PROFILE` | Auth profile name |
 | `GPC_NO_COLOR` | Disable color output |
 | `GPC_NO_INTERACTIVE` | Disable interactive prompts |
-| `GPC_SKIP_KEYCHAIN` | Skip OS keychain, use file storage |
 
 #### Config resolution precedence (v0.9.81+)
 

@@ -1,9 +1,9 @@
 ---
 name: gpc-release-flow
 description: "Use when uploading, releasing, promoting, or managing rollouts on Google Play. Make sure to use this skill whenever the user mentions gpc releases, upload AAB, upload APK, staged rollout, promote to production, halt rollout, gpc publish, release notes, track management, internal testing, beta release, production rollout, version code, rollout percentage, or wants to ship an Android app to any Play Store track. Also trigger when someone asks about the Google Play edit lifecycle, release validation, or how to do a phased rollout — even if they don't mention GPC by name. For metadata and listings, see gpc-metadata-sync. For CI/CD integration, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). For private-app publishing to Managed Google Play, see gpc-enterprise (v0.9.56+). v0.9.87+ returns a consistent list --json envelope on tracks list. v0.9.94+ reports incomplete App content declarations as API_DECLARATION_REQUIRED instead of a permissions error. v0.9.96+ adds device-tiers create --allow-unknown-devices."
+compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). For private-app publishing to Managed Google Play, see gpc-enterprise (v0.9.56+). v0.9.87+ returns a consistent list --json envelope on tracks list. v0.9.94+ reports incomplete App content declarations as API_DECLARATION_REQUIRED instead of a permissions error. v0.9.96+ adds device-tiers create --allow-unknown-devices. Commands and flags checked against the GPC v1.1.0 command tree (gpc-skills v1.36.0)."
 metadata:
-  version: 1.12.0
+  version: 1.13.0
 ---
 
 # GPC Release Flow
@@ -62,11 +62,9 @@ gpc publish app-release.aab --track internal
 gpc publish app-release.aab --track beta --notes "Bug fixes and improvements"
 gpc publish app-release.aab --track production --rollout 10
 
-# Set in-app update priority (0-5) so clients can prompt updates (v0.9.70+)
-gpc publish app-release.aab --track production --rollout 10 --in-app-update-priority 5
-
-# Retain older version codes alongside the new upload (v0.9.70+)
-gpc publish app-release.aab --track production --retain-version-codes 42,43
+# In-app update priority (0-5) and retained version codes are `releases upload` flags (v0.9.70+)
+gpc releases upload app-release.aab --track production --rollout 10 --in-app-update-priority 5
+gpc releases upload app-release.aab --track production --retain-version-codes 42,43
 
 # Validate only — run the full pipeline (upload, track assignment, validate) but stop
 # before committing. Useful for CI dry-validation against the real API. (v0.9.68+)
@@ -215,8 +213,8 @@ gpc diff --metadata fastlane/metadata
 
 ```bash
 # List releases on a track with lifecycle states (DRAFT, IN_REVIEW, PUBLISHED, etc.)
-gpc releases list --track production
-gpc releases list --track beta --json
+gpc releases status --track production
+gpc releases status --track beta --json
 ```
 
 > **New in v0.9.46:** The `releases.list` endpoint provides release lifecycle states without opening an edit session. Use it to check whether a release is still in review, has been published, or is in draft -- useful for CI pipelines that need to gate on review completion.
@@ -329,7 +327,7 @@ Read:
 
 ```bash
 gpc tracks list                    # List all tracks
-gpc tracks get production          # Show track details + current releases
+gpc releases status --track production   # Current releases on one track
 ```
 
 > **New in v0.9.87:** `tracks list --json` now returns the unified envelope `{ tracks, nextPageToken, meta.count }`, matching the other list commands. Table output is unchanged; only the `--json` shape changed.
@@ -350,10 +348,10 @@ This is useful when you want to move a version code from one testing track to an
 Google Play supports custom closed testing tracks in addition to the built-in `internal`, `alpha`, `beta`, and `production` tracks:
 
 ```bash
-gpc tracks create --track-id my-custom-track --name "Partner Testing"
+gpc tracks create my-custom-track
 ```
 
-Uses `edits.tracks.create` under the hood. After creation, use the custom track ID in any `--track` flag.
+Uses `edits.tracks.create` under the hood. After creation, use the custom track name in any `--track` flag.
 
 ### 6) Preview with dry-run
 

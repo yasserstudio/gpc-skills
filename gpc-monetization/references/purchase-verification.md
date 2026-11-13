@@ -99,7 +99,7 @@ gpc purchases subscription defer <subscription-id> <token> \
   --expiry 2025-12-31T00:00:00Z
 
 # Defer expiry (v2 — supports add-on subscriptions)
-gpc purchases subscription defer-v2 <token> --until 2026-07-01T00:00:00Z
+gpc purchases subscription defer-v2 <token> --duration 2592000   # seconds (30 days)
 
 # Revoke (immediate termination, v2 API)
 gpc purchases subscription revoke <token>

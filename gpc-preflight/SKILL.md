@@ -1,9 +1,9 @@
 ---
 name: gpc-preflight
 description: "Use when scanning an AAB or APK for Google Play policy compliance before submission, or checking signing key consistency across releases. Trigger when the user mentions preflight, compliance check, policy scan, pre-submission check, signing key consistency, certificate mismatch, or wants to verify their AAB/APK meets Google Play requirements. Also trigger for questions about restricted permissions, target SDK requirements, 64-bit compliance, hardcoded secrets detection, Data Safety form reminders, foreground service declarations, or App content declarations."
-compatibility: "GPC v0.9.82+. v1.1.0+ adds the Google Play Billing Library version check (billing-library-deprecated, billing-library-version-unknown; AAB only). v1.0.0-rc.1+ adds native-libs-16kb-unchecked, a warning raised when the 512-library read cap meant not every native library could be checked for 16 KB alignment. v0.9.99+ estimates the per-device download of an AAB (default threshold 200 MB) and reports foreground-service-type-missing once as a warning; manifest checks run on AABs only (APK manifests are binary XML). v0.9.94+ adds the App content declaration advisory. v0.9.66+ for signing consistency. v0.9.65+ for April 2026 policy rules. APK support added in v0.9.47. AAB/APK scans are entirely offline; signing consistency requires auth. v1.0.1+ cites Google's October 29, 2026 policy dates (contacts and precise location mandatory for Android 17 targets on January 27, 2027, with Play Console declarations; READ_CALL_LOG phone verification ends January 27, 2027)."
+compatibility: "GPC v0.9.82+. v1.1.0+ adds the Google Play Billing Library version check (billing-library-deprecated, billing-library-version-unknown; AAB only). v1.0.0-rc.1+ adds native-libs-16kb-unchecked, a warning raised when the 512-library read cap meant not every native library could be checked for 16 KB alignment. v0.9.99+ estimates the per-device download of an AAB (default threshold 200 MB) and reports foreground-service-type-missing once as a warning; manifest checks run on AABs only (APK manifests are binary XML). v0.9.94+ adds the App content declaration advisory. v0.9.66+ for signing consistency. v0.9.65+ for April 2026 policy rules. APK support added in v0.9.47. AAB/APK scans are entirely offline; signing consistency requires auth. v1.0.1+ cites Google's October 29, 2026 policy dates (contacts and precise location mandatory for Android 17 targets on January 27, 2027, with Play Console declarations; READ_CALL_LOG phone verification ends January 27, 2027). Commands and flags checked against the GPC v1.1.0 command tree (gpc-skills v1.36.0)."
 metadata:
-  version: 1.8.0
+  version: 1.8.1
 ---
 
 # GPC Preflight Scanner
@@ -132,7 +132,7 @@ gpc preflight signing --json             # JSON output for CI
 gpc preflight signing --app com.example.app  # Override package name
 ```
 
-Compares signing certificates across your two most recent bundle versions via the Play API (`generatedApks.list`). Requires auth (service account or OAuth). Exit code 6 on mismatch (same as other preflight threshold breaches). Exit code 4 on API errors.
+Compares signing certificates across your two most recent bundle versions via the Play API (`generatedApks.list`). Requires auth (service account or ADC). Exit code 6 on mismatch (same as other preflight threshold breaches). Exit code 4 on API errors.
 
 This is NOT an offline scan. It calls the Play API to create an edit, list bundles, fetch generated APKs for the top two version codes, compare `certificateSha256Fingerprint`, then delete the edit.
 

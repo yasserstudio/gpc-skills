@@ -10,8 +10,8 @@ Suggestion: Run 'gpc auth login' to re-authenticate
 
 **Fix:** Re-authenticate:
 ```bash
-gpc auth login                                    # OAuth
 gpc auth login --service-account path/to/key.json # Service account
+gcloud auth application-default login --scopes=https://www.googleapis.com/auth/androidpublisher,https://www.googleapis.com/auth/cloud-platform  # ADC
 ```
 
 ### `AUTH_INVALID` — Invalid credentials

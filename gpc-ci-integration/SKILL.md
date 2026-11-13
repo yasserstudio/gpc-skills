@@ -1,9 +1,9 @@
 ---
 name: gpc-ci-integration
 description: "Use when integrating GPC into CI/CD pipelines. Make sure to use this skill whenever the user mentions GitHub Actions, GitLab CI, Bitbucket Pipelines, CircleCI, CI/CD, automated release, pipeline, GPC_SERVICE_ACCOUNT, JSON output, CSV output, TSV output, exit codes, gpc in CI, automate Play Store deployment, release workflow, deploy to Play Store from CI, automated rollout, step summary, bundle wait, wait for bundle processing, or wants to set up any kind of automated Google Play deployment pipeline. Also trigger when someone asks about running GPC in a headless environment, parsing GPC output in scripts, using GPC exit codes for conditional logic, or configuring retries and timeouts for CI — even if they don't mention a specific CI platform. For local setup, see gpc-setup. For release commands, see gpc-release-flow."
-compatibility: "GPC v0.9.82+. Works with any CI platform that supports Node.js 24+ (recommended), 22+, or 20+, or standalone binary. v1.0.0-rc.1+ exits 2 on usage mistakes and on a money command without --yes, exits 4 on a vitals 403, and exits 6 with THRESHOLD_NO_DATA. GPC Action v1.1.7+ defaults to GPC 1.1.0. v1.0.0-rc.2+ rate thresholds are fractions and >= 1 exits 2 (THRESHOLD_INVALID). GPC v1.0.0 output is a table unless --json / --output json / --ci is passed, with no JSON envelope, and errors are plain text on stderr. v1.1.0+ gpc status gates exit 4 (STATUS_VITALS_UNREADABLE) on unreadable vitals, never reuse a cache from a different window, and --all-apps exits non-zero when an app fails."
+compatibility: "GPC v0.9.82+. Works with any CI platform that supports Node.js 24+ (recommended), 22+, or 20+, or standalone binary. v1.0.0-rc.1+ exits 2 on usage mistakes and on a money command without --yes, exits 4 on a vitals 403, and exits 6 with THRESHOLD_NO_DATA. GPC Action v1.1.7+ defaults to GPC 1.1.0. v1.0.0-rc.2+ rate thresholds are fractions and >= 1 exits 2 (THRESHOLD_INVALID). GPC v1.0.0 output is a table unless --json / --output json / --ci is passed, with no JSON envelope, and errors are plain text on stderr. v1.1.0+ gpc status gates exit 4 (STATUS_VITALS_UNREADABLE) on unreadable vitals, never reuse a cache from a different window, and --all-apps exits non-zero when an app fails. Commands and flags checked against the GPC v1.1.0 command tree (gpc-skills v1.36.0)."
 metadata:
-  version: 1.13.0
+  version: 1.14.0
 ---
 
 # GPC CI Integration
@@ -164,11 +164,6 @@ jobs:
             --changes-not-sent-for-review \
             --mapping-type PROGUARD \
             --device-tier-config default
-
-      - name: Error if in review
-        env:
-          GPC_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
-        run: gpc releases status --error-if-in-review
 
       - name: Check vitals
         if: inputs.track == 'production'
@@ -437,24 +432,24 @@ Test your CI pipeline without making real changes:
 
 ### 9a) Handling rejected apps in CI
 
-When Google Play rejects an app update, `gpc releases status` reports the rejection reason. Use `--error-if-in-review` to detect and handle in-review or rejected states in your pipeline:
+`gpc releases status` shows what is on each track. Two commit flags handle review states; they go on the command that commits (`releases upload`, `publish`, `releases promote`, `releases rollout ...`), not on `releases status`:
+
+- `--changes-not-sent-for-review`: required after a rejection; commits without sending for review.
+- `--error-if-in-review`: by default Google cancels a submission that is still in review when a new commit arrives. With this flag the commit fails instead (API error, exit 4), so a CI run never silently pulls a pending review.
 
 ```yaml
-- name: Check for rejection
-  id: review-check
-  run: gpc releases status --error-if-in-review
+- name: Upload (fail rather than cancel a pending review)
+  id: upload
+  run: gpc releases upload app-release.aab --track production --error-if-in-review
   continue-on-error: true
 
-- name: Handle rejection
-  if: steps.review-check.outcome == 'failure'
+- name: Handle pending review
+  if: steps.upload.outcome == 'failure'
   run: |
-    echo "Release was rejected or is still in review."
-    echo "Check the Play Console for details."
-    gpc releases status --output json | jq '.[] | select(.status == "rejected")'
+    echo "A previous submission is still in review. Check the Play Console."
+    gpc releases status --track production
     exit 1
 ```
-
-The `--error-if-in-review` flag exits with code 4 if any release on the target track is in `inReview` or `rejected` status. Use this before uploading a new version to avoid `EDIT_CONFLICT` errors when a previous submission is still pending review.
 
 ### 10) Markdown output for GitHub step summaries
 

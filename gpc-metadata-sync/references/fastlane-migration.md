@@ -59,7 +59,7 @@ No conversion needed — the format is identical.
 | API coverage | ~20 endpoints | 162 endpoints |
 | Config | Fastfile + Appfile | `.gpcrc.json` + env vars |
 | Output | Ruby logs | JSON/table/yaml/markdown |
-| Auth | JSON key file only | Service account + OAuth + ADC |
+| Auth | JSON key file only | Service account + ADC |
 | Rollout syntax | `--rollout 0.1` (decimal) | `--rollout 10` (percentage) |
 
 ## Migration Checklist

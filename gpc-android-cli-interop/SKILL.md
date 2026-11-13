@@ -1,9 +1,9 @@
 ---
 name: gpc-android-cli-interop
 description: "Use when the agent has just finished building an Android app with Google's official `android` CLI (android create, android run, android sdk install, android build), or when the user says their app is built and they need to ship to Play Store, their AAB is ready, they just finished scaffolding, the APK is generated, or they want the next step after `android run`. Trigger whenever a prompt bridges the build-and-device half (Google's Android CLI) to the publishing half (GPC) -- even without explicit product names. For the release mechanics themselves, see gpc-release-flow. For offline compliance checks, see gpc-preflight. For CI/CD, see gpc-ci-integration. For private enterprise apps, see gpc-enterprise."
-compatibility: "Google's Android CLI (released 2026-04-16) for build/dev, GPC v0.9.62+ for publishing. Both tools ship SKILL.md skill packs and are installed via npx skills add. Verified against GPC v1.0.0."
+compatibility: "Google's Android CLI (released 2026-04-16) for build/dev, GPC v0.9.62+ for publishing. Both tools ship SKILL.md skill packs and are installed via npx skills add. Verified against GPC v1.0.0. Commands and flags checked against the GPC v1.1.0 command tree (gpc-skills v1.36.0)."
 metadata:
-  version: 1.0.1
+  version: 1.0.2
 ---
 
 # GPC Android CLI Interop
@@ -32,7 +32,7 @@ This skill is a dispatcher, not an implementation. For actual Play Store operati
 | Crash rate, ANR, startup, reviews       | `gpc-vitals-monitoring`   |
 | Store listings, screenshots, metadata   | `gpc-metadata-sync`       |
 | Subscriptions, IAP, pricing, RTDN       | `gpc-monetization`        |
-| Service account, OAuth, ADC, profiles   | `gpc-setup`               |
+| Service account, ADC, profiles          | `gpc-setup`               |
 | GitHub Actions, GitLab CI, JSON output  | `gpc-ci-integration`      |
 | Managed Google Play private apps        | `gpc-enterprise`          |
 | Fastlane-to-GPC migration               | `gpc-migrate-fastlane`    |

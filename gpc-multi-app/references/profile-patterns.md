@@ -21,8 +21,8 @@ Configuration patterns for managing multiple apps with GPC profiles.
 ```
 
 ```bash
-gpc releases list --profile main
-gpc releases list --profile lite
+gpc releases status --profile main
+gpc releases status --profile lite
 ```
 
 ## Different service accounts per profile
@@ -105,10 +105,10 @@ Same service account if all apps are under one developer account.
 
 ```bash
 export GPC_PROFILE=production
-gpc releases list  # uses production profile
+gpc releases status  # uses production profile
 
 # Override per command
-gpc releases list --profile staging
+gpc releases status --profile staging
 ```
 
 ## Monorepo pattern
@@ -123,8 +123,8 @@ monorepo/
 ```
 
 ```bash
-cd apps/main && gpc releases list    # uses com.example.main
-cd apps/lite && gpc releases list    # uses com.example.lite
+cd apps/main && gpc releases status    # uses com.example.main
+cd apps/lite && gpc releases status    # uses com.example.lite
 ```
 
 ## Combining profiles with CI

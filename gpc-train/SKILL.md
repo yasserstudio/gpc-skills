@@ -1,9 +1,9 @@
 ---
 name: gpc-train
 description: "Use when setting up or managing automated staged rollout pipelines with GPC. Trigger when the user mentions gpc train, release train, staged rollout automation, rollout pipeline, release gates, automatic rollout progression, auto-halt on regression, rollout stages — even if they don't explicitly say 'train.' Also trigger when someone wants to automatically progress a release from internal → alpha → production with time gates, or set up crash/ANR gates that pause a rollout."
-compatibility: "GPC v0.9.35+. Requires authenticated GPC setup (see gpc-setup skill). Release train config goes in .gpcrc-train.json (or --config <file>). Verified against GPC v1.0.0."
+compatibility: "GPC v0.9.35+. Requires authenticated GPC setup (see gpc-setup skill). Release train config goes in .gpcrc-train.json (or --config <file>). Verified against GPC v1.0.0. Commands and flags checked against the GPC v1.1.0 command tree (gpc-skills v1.36.0)."
 metadata:
-  version: 0.11.1
+  version: 0.11.2
 ---
 
 # GPC Release Train
@@ -53,7 +53,7 @@ Config keys:
 | `gates.crashes.max` | number | Maximum crash rate, as a **percentage** (`1.5` = 1.5%), before the train pauses |
 | `gates.anr.max` | number | Maximum ANR rate, as a **percentage** (`0.5` = 0.5%), before the train pauses |
 
-Train gates are the one place GPC takes percentages. `gpc vitals --threshold`, `gpc watch` and `vitals.thresholds.*` take fractions (`0.02` = 2%).
+Train gates are the one place GPC takes percentages. The `--threshold` flag on `gpc vitals` commands, `gpc watch` and `vitals.thresholds.*` take fractions (`0.02` = 2%).
 
 Read:
 - `references/rollout-pipeline.md`

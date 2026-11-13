@@ -20,7 +20,7 @@ gpc auth login --service-account /path/to/new-key.json
 
 # Verify
 gpc doctor
-gpc releases list --app com.example.app
+gpc releases status --app com.example.app
 ```
 
 ### Step 3: Update CI secrets

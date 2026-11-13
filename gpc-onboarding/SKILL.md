@@ -1,9 +1,9 @@
 ---
 name: gpc-onboarding
 description: "Use when a user is setting up GPC for the first time or going through initial configuration. Trigger when the user mentions gpc quickstart, first-time setup, initial configuration, onboarding, getting started, service account creation, doctor --fix, auth setup-gcp — even if they don't say 'onboarding.' Also trigger when someone is brand new to GPC and needs guided setup."
-compatibility: "GPC v0.9.35+. For existing config issues, see gpc-setup. For troubleshooting, see gpc-troubleshooting."
+compatibility: "GPC v0.9.35+. For existing config issues, see gpc-setup. For troubleshooting, see gpc-troubleshooting. Commands and flags checked against the GPC v1.1.0 command tree (gpc-skills v1.36.0)."
 metadata:
-  version: 0.14.0
+  version: 0.14.1
 ---
 
 # GPC Onboarding
@@ -39,7 +39,7 @@ Step 4/4  Running doctor...                   ✓ All checks passed
 
 Ready. Here's what you can do next:
   gpc status              → app health snapshot
-  gpc releases list       → current tracks
+  gpc releases status       → current tracks
   gpc reviews list        → recent reviews
   gpc vitals overview     → crash and ANR rates
 ```
@@ -139,7 +139,7 @@ A successful status output confirms GPC is fully configured and connected.
 Once onboarded, common next commands:
 
 - `gpc status` -- app health snapshot
-- `gpc releases list` -- view release tracks
+- `gpc releases status` -- view release tracks
 - `gpc vitals overview` -- crash/ANR dashboard
 - `gpc reviews list` -- recent user reviews
 - `gpc verify` -- check Android developer verification status

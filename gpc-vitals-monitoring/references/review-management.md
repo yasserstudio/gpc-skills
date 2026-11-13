@@ -24,8 +24,8 @@ gpc reviews list --stars 1-2 --since 7d --lang en
 # Pagination
 gpc reviews list --limit 50
 
-# Start from a specific index (skip first N reviews)
-gpc reviews list --start-index 20
+# Next page: pass the nextPageToken from the previous --json response
+gpc reviews list --limit 50 --next-page <token>
 ```
 
 ## Viewing a Single Review
