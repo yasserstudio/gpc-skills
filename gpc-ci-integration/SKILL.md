@@ -1,9 +1,9 @@
 ---
 name: gpc-ci-integration
 description: "Use when integrating GPC into CI/CD pipelines. Make sure to use this skill whenever the user mentions GitHub Actions, GitLab CI, Bitbucket Pipelines, CircleCI, CI/CD, automated release, pipeline, GPC_SERVICE_ACCOUNT, JSON output, CSV output, TSV output, exit codes, gpc in CI, automate Play Store deployment, release workflow, deploy to Play Store from CI, automated rollout, step summary, bundle wait, wait for bundle processing, or wants to set up any kind of automated Google Play deployment pipeline. Also trigger when someone asks about running GPC in a headless environment, parsing GPC output in scripts, using GPC exit codes for conditional logic, or configuring retries and timeouts for CI — even if they don't mention a specific CI platform. For local setup, see gpc-setup. For release commands, see gpc-release-flow."
-compatibility: "GPC v0.9.82+. Works with any CI platform that supports Node.js 24+ (recommended), 22+, or 20+, or standalone binary. v1.0.0-rc.1+ exits 2 on usage mistakes and on a money command without --yes, exits 4 on a vitals 403, and exits 6 with THRESHOLD_NO_DATA. GPC Action v1.1.5+ defaults to GPC 1.0.0. v1.0.0-rc.2+ rate thresholds are fractions and >= 1 exits 2 (THRESHOLD_INVALID). GPC v1.0.0 output is a table unless --json / --output json / --ci is passed, with no JSON envelope, and errors are plain text on stderr."
+compatibility: "GPC v0.9.82+. Works with any CI platform that supports Node.js 24+ (recommended), 22+, or 20+, or standalone binary. v1.0.0-rc.1+ exits 2 on usage mistakes and on a money command without --yes, exits 4 on a vitals 403, and exits 6 with THRESHOLD_NO_DATA. GPC Action v1.1.7+ defaults to GPC 1.1.0. v1.0.0-rc.2+ rate thresholds are fractions and >= 1 exits 2 (THRESHOLD_INVALID). GPC v1.0.0 output is a table unless --json / --output json / --ci is passed, with no JSON envelope, and errors are plain text on stderr. v1.1.0+ gpc status gates exit 4 (STATUS_VITALS_UNREADABLE) on unreadable vitals, never reuse a cache from a different window, and --all-apps exits non-zero when an app fails."
 metadata:
-  version: 1.12.0
+  version: 1.13.0
 ---
 
 # GPC CI Integration
@@ -61,7 +61,7 @@ One step replaces the full install + run + cleanup sequence. The action runs a b
 
 The action is a TypeScript action running on Node 24. No additional configuration is required for the migration.
 
-**Which GPC it runs:** the action downloads the standalone `gpc` binary from the GPC GitHub release and verifies its SHA-256 against checksums committed in the action. As of action v1.1.5 (2026-10-21) the default is GPC **1.0.0** (v1.1.4 defaulted to 1.0.0-rc.2, v1.1.1 to 0.9.99, v1.0.0 to 0.9.80). `@v1` follows the latest v1.x. Pin a GPC version with `gpc-version: 1.0.0`, or use `gpc-version: latest` (verified only against the release's own checksums.txt, lower assurance). The action does not put `gpc` on the PATH for later steps, and it always runs an upload (`release-files` and `package-name` are required); for other commands use its `args` input or install the CLI (`npm install -g @gpc-cli/cli`).
+**Which GPC it runs:** the action downloads the standalone `gpc` binary from the GPC GitHub release and verifies its SHA-256 against checksums committed in the action. As of action v1.1.7 (2026-11-13) the default is GPC **1.1.0** (v1.1.6 defaulted to 1.0.1, v1.1.5 to 1.0.0, v1.1.4 to 1.0.0-rc.2, v1.1.1 to 0.9.99, v1.0.0 to 0.9.80). `@v1` follows the latest v1.x. Pin a GPC version with `gpc-version: 1.1.0`, or use `gpc-version: latest` (verified only against the release's own checksums.txt, lower assurance). The action does not put `gpc` on the PATH for later steps, and it always runs an upload (`release-files` and `package-name` are required); for other commands use its `args` input or install the CLI (`npm install -g @gpc-cli/cli`).
 
 For advanced pipelines (multi-step, vitals gating, changelog generation), continue with the manual workflow patterns below.
 
@@ -324,6 +324,8 @@ fi
 - An unknown option or a missing argument now exits **2**, as the table has always said. It exited 1 before, so a step that treated 1 as "config problem" may now see 2.
 - `gpc vitals` and `gpc anomalies list` exit **4** when the Play Developer Reporting API is off or the service account cannot read the app. They printed "no data" and exited 0 before, which let a `--threshold` gate pass without reading a metric.
 - A `--threshold` run that gets no value back exits **6** with `THRESHOLD_NO_DATA` rather than 0.
+
+**Changed in v1.1.0 for `gpc status` gates:** with a threshold set, unreadable vitals exit **4** (`STATUS_VITALS_UNREADABLE`) instead of 0. A cache is reused only for the same sections and `--days`/`--review-days` windows with no recorded errors, and the run's own `--ttl` decides freshness (a blank `--ttl "$VAR"` exits 2). `--all-apps` exits with a failing app's code, ahead of a breach on another app. Use `gpc status --refresh` in CI to skip the cache.
 - `gpc purchases orders refund`, `orders review-refund`, `purchases subscription revoke` and `gpc external-transactions refund` move money and now need `--yes` in CI. Without it they exit **2** with `CONFIRMATION_REQUIRED`. `--dry-run` is exempt.
 
 ```yaml
@@ -608,6 +610,7 @@ gpc releases upload app.aab --track beta --retry-log retries.log
 | Exit code 6 | Vitals threshold breached | Review crash/ANR data, fix issues before promoting |
 | `THRESHOLD_NO_DATA` (exit 6) | `--threshold` set but no metric value came back | Wrong `GPC_APP`/`--app`, Play's 2-4 day data lag, or too little traffic. Widen `--days` (v1.0.0-rc.1+) |
 | Vitals step now fails with exit 4 | Reporting API disabled, or the service account cannot read the app | Enable the Play Developer Reporting API and grant access. It exited 0 before v1.0.0-rc.1 |
+| `gpc status` gate now fails with exit 4 | `STATUS_VITALS_UNREADABLE`: a threshold is set but vitals could not be read | Grant Reporting API access. It exited 0 before v1.1.0 |
 | `CONFIRMATION_REQUIRED` (exit 2) | A refund or revocation ran in CI without `--yes` | Add `--yes`, or preview with `--dry-run` (v1.0.0-rc.1+) |
 | `EDIT_CONFLICT` | Parallel runs editing same app | Serialize release jobs or use job concurrency limits |
 | `IN_REVIEW` or `REJECTED` | Previous submission pending or rejected | Use `--error-if-in-review` before uploading; resolve rejection in Play Console first |

@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.35.1 -- 2026-11-13
+
+Synced to GPC v1.1.0 (the `gpc status` cache gate fixes that shipped with it) and gpc-action v1.1.7. Patch.
+
+### Updated Skills
+
+- **gpc-vitals-monitoring** (1.12.1 -> 1.13.0) -- Cache rules for `gpc status` gates: a cache is reused only for the same sections and `--days`/`--review-days` windows with no recorded errors, the current `--ttl` decides freshness, cached vitals are rated against the current thresholds, and a threshold run that cannot read vitals exits 4 (`STATUS_VITALS_UNREADABLE`). Notes that `gpc status --threshold` takes percent while `vitals.thresholds.*` are fractions.
+- **gpc-troubleshooting** (0.25.0 -> 0.26.0) -- New `STATUS_VITALS_UNREADABLE` (exit 4) entry; `STATUS_NO_CACHE` (exit 2) now also covers a cache missing a requested section or covering a different window. `THRESHOLD_INVALID` covers `gpc status --threshold`.
+- **gpc-multi-app** (1.1.1 -> 1.2.0) -- `gpc status --all-apps` exits with a failing app's error code, ahead of a breach on another app (it exited 0 before v1.1.0).
+- **gpc-ci-integration** (1.12.0 -> 1.13.0) -- Action v1.1.7 defaults to GPC 1.1.0. Documents the v1.1.0 `gpc status` gate changes and recommends `--refresh` in CI.
+- **gpc-security** (0.18.2 -> 0.18.3) -- Action pinned default is GPC 1.1.0 as of v1.1.7.
+- README requirements: gpc-action v1.1.7 runs GPC 1.1.0; v1.1.0 status gate behavior.
+
 ## v1.35.0 -- 2026-11-13
 
 Synced to GPC v1.1.0. Minor: `gpc preflight` now checks which Google Play Billing Library version an app ships.

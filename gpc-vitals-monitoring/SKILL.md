@@ -1,9 +1,9 @@
 ---
 name: gpc-vitals-monitoring
 description: "Use when monitoring Android app health metrics from Google Play. Make sure to use this skill whenever the user mentions gpc vitals, gpc watch, gpc status, crash rate, ANR rate, startup time, Android vitals, crash monitoring, threshold alerting, vitals gating, rollout monitoring, auto-halt, breach notification, webhook alerting, frame rate, battery usage, memory issues, error tracking, app quality, user reviews, review replies, Play Store reviews, star rating, negative reviews, review export, financial reports, stats reports, gpc reports, reports list, reports download, bulk reports, earnings report, sales report, play balance, installs report, subscriptions report, reports bucket, GPC_REPORTS_BUCKET, pubsite_prod, REPORT_ACCESS_DENIED, download bulk reports permission, or wants to check app health, monitor a staged rollout, respond to reviews, or download Play Console reports. Also trigger when someone asks about gating deployments on crash data, monitoring app performance after a release, watching a rollout for regressions, or tracking review sentiment — even if they don't mention GPC. For releases, see gpc-release-flow. For CI gating, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Vitals data requires the app to have sufficient install volume. v0.9.83+ adds reviews fidelity fields and the unified list envelope. v0.9.97+ adds memory-rss/memory-bitmap P50-P99 memory usage (Feb 2027 P90 requirement). v0.9.93+ downloads Play bulk reports live from the account's Cloud Storage bucket (needs the 'View app information and download bulk reports (read-only)' grant on the service account). v1.0.0-rc.1+ fails vitals and anomalies with exit 4 on a Reporting API 403 and exits 6 with THRESHOLD_NO_DATA when a --threshold run gets no value. On GPC v1.0.0, vitals --json is Google's raw { rows } with string values, numbers come from gpc status --json, and output is a table unless JSON is requested."
+compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Vitals data requires the app to have sufficient install volume. v0.9.83+ adds reviews fidelity fields and the unified list envelope. v0.9.97+ adds memory-rss/memory-bitmap P50-P99 memory usage (Feb 2027 P90 requirement). v0.9.93+ downloads Play bulk reports live from the account's Cloud Storage bucket (needs the 'View app information and download bulk reports (read-only)' grant on the service account). v1.0.0-rc.1+ fails vitals and anomalies with exit 4 on a Reporting API 403 and exits 6 with THRESHOLD_NO_DATA when a --threshold run gets no value. On GPC v1.0.0, vitals --json is Google's raw { rows } with string values, numbers come from gpc status --json, and output is a table unless JSON is requested. v1.1.0+ reuses a gpc status cache only for the same sections and --days/--review-days windows with no recorded errors, lets the current --ttl decide freshness, and exits 4 (STATUS_VITALS_UNREADABLE) when a threshold is set but vitals cannot be read."
 metadata:
-  version: 1.12.1
+  version: 1.13.0
 ---
 
 # GPC Vitals Monitoring
@@ -65,6 +65,16 @@ gpc status --output json      # Full structured output for scripts
 ```
 
 Exit code 6 if any vitals threshold is breached — use as a deployment gate.
+
+Cache rules for gates (v1.1.0+):
+
+- A fresh cache answers a run only when it holds every requested section, for the same `--days` and `--review-days` windows, with no recorded errors. Otherwise `gpc status` fetches live, and `--cached` fails with `STATUS_NO_CACHE` (exit 2) rather than answer a different question.
+- The current run's `--ttl` decides freshness, not the TTL saved with the cache. A `--ttl` that is not a whole number of seconds (an unset CI variable, for example) exits 2.
+- Cached vitals are always rated against the current thresholds.
+- With a threshold set (`--threshold` or `vitals.thresholds` in config), vitals that cannot be read exit 4 with `STATUS_VITALS_UNREADABLE` instead of passing. Without a threshold, the exit code stays 0.
+- `gpc status --threshold` takes percent (`crashes=1.5` is 1.5%); `vitals.thresholds.*` in config are fractions (`0.015`).
+
+For a CI gate, `gpc status --refresh` skips the cache entirely.
 
 ### 1) Per-metric vitals dashboard
 

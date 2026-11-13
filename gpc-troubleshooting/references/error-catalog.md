@@ -157,6 +157,8 @@ rc.2 fixed vitals gates that could not fire and made every gate fail closed.
 | `THRESHOLD_INVALID` | 2 | A rate threshold of 1 or more, a non-number, or `--vitals-gate` with no `vitals.thresholds.crashRate` | Rates are fractions: `--threshold 0.02` means 2%. Fix `vitals.thresholds.*` in config too |
 | `TRAIN_GATE_NO_DATA` | 6 | `gpc train advance` found no crash/ANR value for a gate, so it stayed on the current stage | Vitals lag 2-4 days; run `gpc train advance` again later |
 | `API_METRIC_GAMES_ONLY` | 4 | `gpc vitals rendering` on an app that is not a game | Expected: Google serves slow-rendering data to games only. Not a credentials problem |
+| `STATUS_NO_CACHE` | 2 | `gpc status --cached` found no cache, or (v1.1.0+) the cache lacks a requested section or covers a different `--days` / `--review-days` window | Run without `--cached` to fetch live data |
+| `STATUS_VITALS_UNREADABLE` | 4 | `gpc status` had a threshold set (`--threshold` or `vitals.thresholds`) and could not read vitals (v1.1.0+) | Check that the service account can read the Play Developer Reporting API, then retry with `--refresh` |
 | `INVALID_PACKAGE_NAME` | 2 | `--app`, `GPC_APP` or config `app` is not a valid application ID (stray space, `-a=com.x`) | Use `--app com.example.app` or `-a com.example.app` |
 
 ### `THRESHOLD_INVALID`
@@ -165,7 +167,15 @@ rc.2 fixed vitals gates that could not fire and made every gate fail closed.
 
 **Cause:** Google reports rates (crash, ANR, slow start, slow rendering, wakeup, wakelock, LMK) as fractions, so a threshold of `2.0` can never be exceeded. Older docs taught `--threshold 2.0` for 2%, which silently disabled the gate. rc.2 refuses any rate threshold of 1 or more on `gpc vitals <metric> --threshold`, `gpc vitals watch --threshold`, `gpc watch --crash-threshold` (and the other watch rate thresholds) and `vitals.thresholds.crashRate` for `releases rollout increase --vitals-gate`.
 
-**Fix:** divide by 100: `--threshold 0.02` for 2%, `0.0047` for 0.47%. `gpc train` gates (`gates.crashes.max` in the train config) are the exception: they stay percentages.
+**Fix:** divide by 100: `--threshold 0.02` for 2%, `0.0047` for 0.47%. `gpc train` gates (`gates.crashes.max` in the train config) are the exception: they stay percentages. So is `gpc status --threshold` (`crashes=1.5` is 1.5%), which rejects 100 or more with the same code (v1.1.0+); `vitals.thresholds.*` read by `gpc status` are fractions.
+
+### `STATUS_VITALS_UNREADABLE`
+
+**Exit code:** 4 (added in v1.1.0)
+
+**Cause:** `gpc status` had a threshold to check, from `--threshold` or `vitals.thresholds` in config, but the vitals section could not be read (Reporting API off, missing access, or a fetch error). Before v1.1.0 the run exited 0, so a CI gate passed without reading a metric.
+
+**Fix:** enable the Play Developer Reporting API and grant the service account access to the app, then rerun with `--refresh`. Without a threshold, unreadable vitals are shown as errors and the exit code stays 0.
 
 
 
