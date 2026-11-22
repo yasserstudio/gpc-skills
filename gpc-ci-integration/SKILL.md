@@ -606,7 +606,7 @@ gpc releases upload app.aab --track beta --retry-log retries.log
 | `THRESHOLD_NO_DATA` (exit 6) | `--threshold` set but no metric value came back | Wrong `GPC_APP`/`--app`, Play's 2-4 day data lag, or too little traffic. Widen `--days` (v1.0.0-rc.1+) |
 | Vitals step now fails with exit 4 | Reporting API disabled, or the service account cannot read the app | Enable the Play Developer Reporting API and grant access. It exited 0 before v1.0.0-rc.1 |
 | `gpc status` gate now fails with exit 4 | `STATUS_VITALS_UNREADABLE`: a threshold is set but vitals could not be read | Grant Reporting API access. It exited 0 before v1.1.0 |
-| `CONFIRMATION_REQUIRED` (exit 2) | A refund, revocation, cancel-v2, defer or offer targeting ran in CI without `--yes` | Add `--yes`, or preview with `--dry-run` (v1.0.0-rc.1+) |
+| `CONFIRMATION_REQUIRED` (exit 2) | A refund, revocation, subscription cancel, defer or offer targeting ran in CI without `--yes` | Add `--yes`, or preview with `--dry-run` (v1.0.0-rc.1+) |
 | `EDIT_CONFLICT` | Parallel runs editing same app | Serialize release jobs or use job concurrency limits |
 | `IN_REVIEW` or `REJECTED` | Previous submission pending or rejected | Use `--error-if-in-review` before uploading; resolve rejection in Play Console first |
 | Changes auto-submitted for review | Edit committed without opt-out flag | Add `--changes-not-sent-for-review` to upload/push commands |

@@ -2,13 +2,13 @@
 
 ## v1.37.0 -- 2026-11-22
 
-Minor: syncs the skills with GPC v1.2.0, which adds subscription retention offers and makes four subscriber-changing commands ask for `--yes` in CI.
+Minor: syncs the skills with GPC v1.2.0, which adds subscription retention offers and makes six subscriber-changing commands ask for `--yes` in CI.
 
 ### Updated Skills
 
 - **gpc-monetization** (0.20.0 -> 0.21.0) -- Retention offers: create a cohort or per-user offer from flags (`offers create --retention`), start from `offers template retention`, target one subscriber with `purchases subscription target-offer` / `untarget-offer`, read an accepted offer (RTDN type 21, the `planTransition` row in `subscription get`), and the experimental `cancel-transition`. `cancel`, `cancel-v2`, `defer`, `defer-v2`, `target-offer` and `untarget-offer` need `--yes` in non-interactive runs.
-- **gpc-troubleshooting** (0.27.0 -> 0.28.0) -- Error catalog adds the v1.2.0 codes: retention offer validation and targeting, `SUBSCRIPTION_EXPIRY_INVALID`, `CANCELLATION_TYPE_INVALID`, the etag guard, `API_REGIONS_VERSION_TOO_OLD`, `API_REGIONS_VERSION_INVALID` and `API_OFFER_NOT_DRAFT`. `CONFIRMATION_REQUIRED` now names the four subscriber-changing commands.
-- **gpc-ci-integration** -- The `CONFIRMATION_REQUIRED` row names cancel-v2, defer and offer targeting next to refunds and revocations.
+- **gpc-troubleshooting** (0.27.0 -> 0.28.0) -- Error catalog adds the v1.2.0 codes: retention offer validation and targeting, `SUBSCRIPTION_EXPIRY_INVALID`, `CANCELLATION_TYPE_INVALID`, the etag guard, `API_REGIONS_VERSION_TOO_OLD`, `API_REGIONS_VERSION_INVALID` and `API_OFFER_NOT_DRAFT`. `CONFIRMATION_REQUIRED` now names the six subscriber-changing commands.
+- **gpc-ci-integration** -- The `CONFIRMATION_REQUIRED` row names the subscription cancel, defer and offer-targeting commands next to refunds and revocations.
 - **gpc-preflight**, **gpc-android-cli-interop** -- A `billing-library-deprecated` finding points to Google's Android CLI upgrade skill (`android skills add play-billing-library-version-upgrade`).
 
 ## v1.36.0 -- 2026-11-13

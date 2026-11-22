@@ -138,7 +138,7 @@ Three codes added in v1.0.0-rc.1 so a silent success can no longer stand in for 
 
 | Code | Exit | Message | Fix |
 |------|------|---------|-----|
-| `CONFIRMATION_REQUIRED` | 2 | A money command ran non-interactively without `--yes` | Add `--yes` once you are sure, or preview with `--dry-run` (which never needs it) |
+| `CONFIRMATION_REQUIRED` | 2 | A money or subscriber-changing command ran non-interactively without `--yes` | Add `--yes` once you are sure, or preview with `--dry-run` (which never needs it) |
 | `IMAGE_SYNC_DIR_UNREADABLE` | 1 | `listings images sync` cannot read a local image directory | Fix the directory's permissions (and container volume ownership in CI). Nothing was changed on Google Play |
 | `THRESHOLD_NO_DATA` | 6 | `--threshold` was set but the query returned no metric value | Check `--app` and widen `--days`. Vitals lag 2-4 days and a low-traffic app may have none; drop `--threshold` for that run |
 
@@ -147,6 +147,8 @@ Three codes added in v1.0.0-rc.1 so a silent success can no longer stand in for 
 **Exit code:** 2 — added in v1.0.0-rc.1
 
 **Cause:** `gpc purchases orders refund`, `gpc purchases orders review-refund`, `gpc purchases subscription revoke` and `gpc external-transactions refund` move money and cannot be undone. Before v1.0.0-rc.1 a run without a terminal (CI, piped stdin, `--no-interactive`) confirmed them automatically. They now stop unless `--yes` is passed.
+
+Since v1.2.0 the same gate covers the commands that change a subscriber's plan: `gpc purchases subscription cancel`, `cancel-v2`, `defer`, `defer-v2`, `target-offer` and `untarget-offer`.
 
 **Fix:**
 
@@ -159,7 +161,7 @@ gpc purchases orders refund GPA.1234-5678-9012-34567 --yes
 ```
 
 **Notes:**
-- Only those four commands are gated. Every other destructive command keeps the old behaviour and proceeds without `--yes` when there is no terminal.
+- Only these ten commands are gated. Every other destructive command keeps the old behaviour and proceeds without `--yes` when there is no terminal.
 - In an interactive shell nothing changes: you still get the prompt, and the external transactions prompt states the refund amount.
 
 ### `IMAGE_SYNC_DIR_UNREADABLE`
