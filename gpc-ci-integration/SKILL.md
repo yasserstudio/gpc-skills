@@ -321,7 +321,7 @@ fi
 - A `--threshold` run that gets no value back exits **6** with `THRESHOLD_NO_DATA` rather than 0.
 
 **Changed in v1.1.0 for `gpc status` gates:** with a threshold set, unreadable vitals exit **4** (`STATUS_VITALS_UNREADABLE`) instead of 0. A cache is reused only for the same sections and `--days`/`--review-days` windows with no recorded errors, and the run's own `--ttl` decides freshness (a blank `--ttl "$VAR"` exits 2). `--all-apps` exits with a failing app's code, ahead of a breach on another app. Use `gpc status --refresh` in CI to skip the cache.
-- `gpc purchases orders refund`, `orders review-refund`, `purchases subscription revoke` and `gpc external-transactions refund` move money and now need `--yes` in CI. Without it they exit **2** with `CONFIRMATION_REQUIRED`. `--dry-run` is exempt. From v1.2.0, `purchases subscription cancel-v2`, `defer`, `target-offer` and `untarget-offer` need `--yes` too.
+- `gpc purchases orders refund`, `orders review-refund`, `purchases subscription revoke` and `gpc external-transactions refund` move money and now need `--yes` in CI. Without it they exit **2** with `CONFIRMATION_REQUIRED`. `--dry-run` is exempt. From v1.2.0, `purchases subscription cancel`, `cancel-v2`, `defer`, `defer-v2`, `target-offer` and `untarget-offer` need `--yes` too.
 
 ```yaml
 - name: Refund a disputed order

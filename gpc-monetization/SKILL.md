@@ -432,7 +432,7 @@ All write operations support `--dry-run`.
 
 `purchases orders refund`, `purchases orders review-refund`, `purchases subscription revoke` and `external-transactions refund` move money and cannot be undone. When they run without a terminal (CI, piped stdin, `--no-interactive`) they now stop with `CONFIRMATION_REQUIRED` (exit 2) unless `--yes` is passed. Earlier versions confirmed them automatically, so a pipeline could issue a refund by default. `--dry-run` sends nothing and is exempt. In an interactive shell the prompt is unchanged.
 
-From v1.2.0 the same rule covers `purchases subscription cancel-v2`, `defer`, `target-offer` and `untarget-offer`, because they change what a subscriber pays. A CI job that runs them must add `--yes`.
+From v1.2.0 the same rule covers `purchases subscription cancel`, `cancel-v2`, `defer`, `defer-v2`, `target-offer` and `untarget-offer`, because they change what a subscriber pays. A CI job that runs them must add `--yes`.
 
 `Read:` `references/purchase-verification.md` for server-side verification patterns and best practices.
 
