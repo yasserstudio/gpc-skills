@@ -72,6 +72,8 @@ gpc preflight app-release.aab --fail-on error
 
 9 offline policy scanners (target SDK, permissions, 64-bit libs, secrets, etc.). Catches Play Store rejections before upload. For deeper config, delegate to `gpc-preflight`.
 
+If preflight reports `billing-library-deprecated`, the fix is on the build side: hand back to Google's Android CLI, install its upgrade skill with `android skills add play-billing-library-version-upgrade`, upgrade the Play Billing Library, rebuild, and run preflight again before shipping.
+
 ### 4) Ship
 
 Hand off to `gpc-release-flow` for upload, rollout, and promote. Typical one-command release:

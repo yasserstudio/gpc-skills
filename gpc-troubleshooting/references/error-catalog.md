@@ -101,6 +101,37 @@ Emitted by `gpc purchases orders review-refund`, which answers a chargeback disp
 
 Validated locally before the request is sent. An empty or whitespace-only `--consumption-percent` is treated as not provided, so a typo never claims "0% consumed" on your behalf.
 
+## Retention offer errors (v1.2.0+)
+
+Emitted by `gpc subscriptions offers create|update` (checked locally, nothing sent unless noted) and `gpc purchases subscription target-offer|untarget-offer|cancel-transition`.
+
+| Code | Exit | Message | Fix |
+|------|------|---------|-----|
+| `RETENTION_OFFER_INVALID` | 2 | A retention offer file breaks Google's rules (every problem listed) | Fix each field; start from `gpc subscriptions offers template retention` |
+| `RETENTION_FLAG_INVALID` | 2 | A retention flag has a bad value, the times do not fit, or the offer is not a cohort offer | Follow the suggestion, e.g. `--discount 0.5` for 50% off, `90d` instead of `3m` |
+| `BASE_PLAN_NOT_FOUND` | 2 | The subscription has no base plan with that ID | Use an ID from `gpc subscriptions get <product-id>` |
+| `OFFER_ACTIVATE_FAILED` | 4 | `--activate` failed after the draft was created | Run the `gpc subscriptions offers activate` command shown in the error |
+| `OFFER_ID_REQUIRED` | 2 | `--offer` was empty | Pass the ID of a per-user retention offer |
+| `OFFER_NOT_PER_USER` | 4 | The offer's targeting is not `retentionPerUserRule` | Create one with `gpc subscriptions offers template retention --per-user` |
+| `OFFER_NEVER_ACTIVATED` | 4 | The offer is a never-activated draft or not on the subscription's base plan | Activate it once with `gpc subscriptions offers activate` |
+| `SUBSCRIPTION_EXPIRED` | 4 | The subscription has already expired | Check it with `gpc purchases subscription get <token>` |
+| `PRODUCT_ID_REQUIRED` | 2 | `cancel-transition --product-id` was empty | Pass the product shown by `gpc purchases subscription get <token>` |
+| `API_REGIONS_VERSION_TOO_OLD` | 4 | A region in the prices is newer than the regions version sent (default `2022/02`) | Pass a newer `--regions-version` (Google's list: support.google.com/googleplay/android-developer/answer/10532353) |
+| `API_REGIONS_VERSION_INVALID` | 4 | The `--regions-version` value does not exist | Use the latest version named in the error |
+| `API_OFFER_NOT_DRAFT` | 4 | `subscriptions offers delete` on an activated offer; Google deletes only drafts | `gpc subscriptions offers deactivate <product-id> <base-plan-id> <offer-id>` |
+| `SUBSCRIPTION_EXPIRY_INVALID` | 2 | `subscription defer --expiry` is not a real RFC 3339 time with a zone | Use e.g. `2026-12-31T23:59:59Z` |
+| `CANCELLATION_TYPE_INVALID` | 2 | `cancel-v2 --type` is not a value Google accepts (or empty) | `USER_REQUESTED_STOP_RENEWALS` or `DEVELOPER_REQUESTED_STOP_PAYMENTS` |
+| `SUBSCRIPTION_ETAG_MISMATCH` | 4 | The subscription changed since the `--etag` was read (`cancel-v2`, `cancel-transition`, `revoke`) | Re-read with `subscription get`, check its state, retry with the new etag |
+| `SUBSCRIPTION_ETAG_BLANK` | 2 | `--etag` was passed empty | Pass the etag from `subscription get --output json`, or omit `--etag` |
+
+Google documents the targeting failures by status only, so GPC uses `OFFER_*`/`SUBSCRIPTION_EXPIRED` only when Google's message names the cause. Anything else passes through as `API_HTTP_400` with Google's text in `details`.
+
+## External transaction refund errors (v0.9.99+)
+
+| Code | Exit | Message | Fix |
+|------|------|---------|-----|
+| `EXT_TXN_REFUND_INVALID` | 2 | `gpc external-transactions refund`: neither or both of `--full`/`--partial-amount`, no `--refund-id` on a partial refund, or a bad amount or refund time | Follow the suggestion in the error; nothing was sent |
+
 ## Safety-gate errors (v1.0.0-rc.1+)
 
 Three codes added in v1.0.0-rc.1 so a silent success can no longer stand in for a real result.

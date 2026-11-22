@@ -1,9 +1,9 @@
 ---
 name: gpc-monetization
-description: "Use when managing in-app purchases, subscriptions, pricing, or Real-Time Developer Notifications in Google Play. Make sure to use this skill whenever the user mentions gpc subscriptions, gpc iap, gpc purchases, gpc pricing, gpc rtdn, in-app products, base plans, subscription offers, one-time products, consumable products, purchase verification, purchase acknowledgement, purchase token, subscription cancellation, subscription deferral, voided purchases, refunds, regional pricing, currency conversion, price migration, SKU management, monetization, revenue, billing, subscription analytics, churn, trial conversion, subscriber count, RTDN, Real-Time Developer Notifications, Pub/Sub notifications, subscription events, purchase events — even if they don't explicitly say 'monetization.' Also trigger when someone wants to create or update subscriptions, manage base plan lifecycle (activate/deactivate), set up introductory offers, verify server-side purchases, handle refunds, convert prices across regions, sync IAP products from files, migrate subscribers to new prices, view subscription analytics, decode Pub/Sub notification payloads, respond to a chargeback dispute (chargeback, pending refund review, pendingRefundReviewNotification, pendingRefundToken, gpc purchases orders review-refund), or check RTDN topic configuration. For release management, see gpc-release-flow. For CI automation, see gpc-ci-integration."
-compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Subscriptions and IAP require products configured in Google Play Console. v0.9.84+ sends --regions-version to the API on subscription/OTP writes. v0.9.96+ fixes one-time-products create/update and the four single-offer commands (which now require --purchase-option), and adds gpc purchases orders review-refund for chargeback disputes. v0.9.99+ for external transaction refunds (required refund time/ID) and typed game reward / external content link fields. v1.0.0-rc.1+ requires --yes for refunds and revocations in non-interactive runs (CONFIRMATION_REQUIRED, exit 2). Commands and flags checked against the GPC v1.1.0 command tree (gpc-skills v1.36.0)."
+description: "Use when managing in-app purchases, subscriptions, pricing, or Real-Time Developer Notifications in Google Play. Make sure to use this skill whenever the user mentions gpc subscriptions, gpc iap, gpc purchases, gpc pricing, gpc rtdn, in-app products, base plans, subscription offers, one-time products, consumable products, purchase verification, purchase acknowledgement, purchase token, subscription cancellation, subscription deferral, voided purchases, refunds, regional pricing, currency conversion, price migration, SKU management, monetization, revenue, billing, subscription analytics, churn, trial conversion, subscriber count, RTDN, Real-Time Developer Notifications, Pub/Sub notifications, subscription events, purchase events — even if they don't explicitly say 'monetization.' Also trigger when someone wants to create or update subscriptions, manage base plan lifecycle (activate/deactivate), set up introductory offers, verify server-side purchases, handle refunds, convert prices across regions, sync IAP products from files, migrate subscribers to new prices, view subscription analytics, decode Pub/Sub notification payloads, create retention offers for subscribers who start to cancel (retention offer, win-back discount, cancellation offer, retentionRule, retentionPerUserRule, target-offer, untarget-offer, plan transition, SUBSCRIPTION_PLAN_TRANSITION_UPDATED, cancel-transition), respond to a chargeback dispute (chargeback, pending refund review, pendingRefundReviewNotification, pendingRefundToken, gpc purchases orders review-refund), or check RTDN topic configuration. For release management, see gpc-release-flow. For CI automation, see gpc-ci-integration."
+compatibility: "GPC v0.9.82+. Requires authenticated GPC setup (see gpc-setup skill). Subscriptions and IAP require products configured in Google Play Console. v0.9.84+ sends --regions-version to the API on subscription/OTP writes. v0.9.96+ fixes one-time-products create/update and the four single-offer commands (which now require --purchase-option), and adds gpc purchases orders review-refund for chargeback disputes. v0.9.99+ for external transaction refunds (required refund time/ID) and typed game reward / external content link fields. v1.0.0-rc.1+ requires --yes for refunds and revocations in non-interactive runs (CONFIRMATION_REQUIRED, exit 2). v1.2.0+ for retention offers from flags (`offers create --retention`), `offers template retention`, `purchases subscription target-offer/untarget-offer` and the experimental `cancel-transition`. Commands and flags checked against the GPC v1.2.0 command tree (gpc-skills v1.37.0)."
 metadata:
-  version: 0.20.0
+  version: 0.21.0
 ---
 
 # gpc-monetization
@@ -150,6 +150,37 @@ gpc subscriptions offers deactivate <product-id> <base-plan-id> <offer-id>
 # Delete an offer
 gpc subscriptions offers delete <product-id> <base-plan-id> <offer-id>
 ```
+
+#### Retention offers (v1.2.0+)
+
+A retention offer is a discount Google Play shows to a subscriber who starts to cancel, only inside Play subscription management (never in the app, never through `launchBillingFlow`). Two kinds: **cohort** (`targeting.retentionRule`, Play applies your rules) and **per-user** (`targeting.retentionPerUserRule: {}`, your backend targets single purchases).
+
+```bash
+# Cohort: 50% off for 2 billing periods, for subscribers of 90+ days. Created as DRAFT.
+gpc subscriptions offers create premium_monthly p1m --retention cohort \
+  --offer-id winback-50 --discount 0.5 --periods 2 --min-duration 90d
+gpc subscriptions offers activate premium_monthly p1m winback-50
+
+# Per-user: create and activate in one step, then target one purchase token
+gpc subscriptions offers create premium_monthly p1m --retention per-user \
+  --offer-id save-30 --discount 0.3 --activate
+gpc purchases subscription target-offer <token> --offer save-30
+gpc purchases subscription untarget-offer <token> --offer save-30
+
+# Starter JSON for --file (offline)
+gpc subscriptions offers template retention [--per-user]
+
+# Change one cohort setting without a file (GPC builds the update mask)
+gpc subscriptions offers update premium_monthly p1m winback-50 --min-duration 30d --end 2027-03-01T00:00:00Z
+```
+
+Rules GPC checks locally before sending (all problems listed at once, exit 2): `--discount` is a fraction 0 < x < 1 (`0.5` = 50% off; `50` is refused and suggests `0.5`); one phase of 1 to 52 billing periods; durations in days only (`90d` or `P90D`, 0 to 1826); `--cooldown` required with `--multiple-claims` and refused without it; `--end` in the future and after the start. `--retention` copies the base plan's billing period and regions (so the base plan must be auto-renewing). `--multiple-claims`/`--cooldown`/`--min-duration` are cohort only.
+
+Per-user targeting is stored by Google until untargeted or 60 days after expiry, does not carry over to a new purchase token, and both calls are idempotent. The offer must have been activated at least once.
+
+After acceptance: RTDN `SUBSCRIPTION_PLAN_TRANSITION_UPDATED` (type 21) arrives, the purchase token is unchanged (nothing to acknowledge), and `gpc purchases subscription get <token>` shows a `planTransition` row (`lineItems[].autoRenewingPlan.planTransitionDetails` in JSON). The discount starts at the next renewal (RTDN type 2). `gpc purchases subscription cancel-transition <token> --product-id <id>` cancels a pending transition and is **experimental** (outside the semver promise).
+
+Google picks one offer per cancellation: per-user over cohort, then highest discount %, then lowest price, then alphabetically last offer ID. Full guide: https://yasserstudio.github.io/gpc/guide/retention-offers
 
 ### 4. In-app products (IAP)
 
@@ -401,6 +432,8 @@ All write operations support `--dry-run`.
 
 `purchases orders refund`, `purchases orders review-refund`, `purchases subscription revoke` and `external-transactions refund` move money and cannot be undone. When they run without a terminal (CI, piped stdin, `--no-interactive`) they now stop with `CONFIRMATION_REQUIRED` (exit 2) unless `--yes` is passed. Earlier versions confirmed them automatically, so a pipeline could issue a refund by default. `--dry-run` sends nothing and is exempt. In an interactive shell the prompt is unchanged.
 
+From v1.2.0 the same rule covers `purchases subscription cancel-v2`, `defer`, `target-offer` and `untarget-offer`, because they change what a subscriber pays. A CI job that runs them must add `--yes`.
+
 `Read:` `references/purchase-verification.md` for server-side verification patterns and best practices.
 
 #### F. Chargeback disputes -- `purchases orders review-refund` (v0.9.96+)
@@ -472,6 +505,8 @@ Notification types include: `SUBSCRIPTION_PURCHASED`, `SUBSCRIPTION_CANCELED`, `
 > **New in v0.9.47:** RTDN commands help debug subscription lifecycle events. Set up a Pub/Sub topic in GCP, configure it in Play Console > Monetization setup, and use `gpc rtdn decode` to inspect payloads.
 
 > **New in v0.9.96:** `gpc rtdn decode` recognises `pendingRefundReviewNotification` (a chargeback sent for your review) and surfaces its `orderId` and `pendingRefundToken` -- the full token is printed only with `--output json`. It also no longer crashes on a partial chargeback notification. Answer within 24 hours with `gpc purchases orders review-refund` (section 5F).
+
+> **v1.2.0:** `SUBSCRIPTION_PLAN_TRANSITION_UPDATED` (type 21) means a subscriber accepted a retention offer or another plan transition is pending. Read it with `gpc purchases subscription get <token>` (the `planTransition` row). See "Retention offers" in section 3.
 
 ### 7. Subscription analytics
 
@@ -552,6 +587,10 @@ gpc data-safety update --file safety.csv
 | `iap sync` deletes unexpected products | Directory missing some product files | Use `--dry-run` first; sync deletes products not in the directory |
 | Missing `--purchase-option` on `otp offers get/create/update/delete` | v0.9.96 routes these through Play's batch offer endpoints, which need a concrete purchase option | Run `gpc otp offers list <product-id>` to find it; `-` works only on `list` |
 | `API_ALREADY_EXISTS` on `otp offers create` | That offer ID already exists; the batch endpoint is an upsert, so GPC probes and refuses rather than overwriting | Use `gpc otp offers update` instead |
+| `RETENTION_FLAG_INVALID` / `RETENTION_OFFER_INVALID` (exit 2) | A retention flag or offer file breaks Google's rules; nothing was sent | Follow the suggestion (for example `--discount 0.5`); start a file from `gpc subscriptions offers template retention` |
+| `BASE_PLAN_NOT_FOUND` (exit 2) | No base plan with that ID on the subscription | Use an ID from `gpc subscriptions get <product-id>` |
+| `OFFER_ACTIVATE_FAILED` (exit 4) | `--activate` failed after the draft was created | Run the `offers activate` command printed in the error |
+| `OFFER_NOT_PER_USER` / `OFFER_NEVER_ACTIVATED` (exit 4) | `target-offer` on a cohort offer, or on an offer never activated | Target only `retentionPerUserRule` offers; activate the offer once first |
 | `ORDER_REVIEW_REFUND_INVALID` | `--sample-content-provided` unanswered, `--consumption-percent` outside 0-100, or `--usage-events-file` is not a JSON array of objects | Pass one of `--sample-content-provided` / `--no-sample-content-provided`, use a plain decimal, and make the file an array |
 
 ## Related skills
